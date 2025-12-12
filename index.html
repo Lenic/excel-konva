@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Konva 虚拟滚动表格 (带冻结行列):virtual_konva_excel.html</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* 确保 Konva 容器和滚动容器尺寸一致 */
+      #container {
+        position: relative;
+        width: 90vw;
+        height: 80vh;
+        margin: 20px auto 0;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        background-color: #ffffff;
+      }
+
+      /* Konva Stage 覆盖在容器上 */
+      #konva-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 20;
+      }
+
+      /* 超大滚动容器，用于驱动滚动事件 */
+      #scroll-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: scroll;
+        z-index: 10;
+      }
+
+      /* 虚拟内容块，撑起滚动条 */
+      #virtual-content {
+        pointer-events: none;
+      }
+
+      /* 单元格编辑器样式 */
+      .cell-editor {
+        position: absolute;
+        z-index: 30; /* 确保在 Konva 上方 */
+        border: 2px solid #4e95ff;
+        outline: none;
+        padding: 0 8px;
+        margin: 0;
+        box-sizing: border-box;
+        font-size: 12px;
+        box-sizing: border-box;
+        resize: none; /* 禁止用户调整大小 */
+        overflow: hidden; /* 防止编辑时出现内部滚动条 */
+      }
+      .cell-editor.hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-100 font-sans antialiased">
+    <div id="container" class="overflow-hidden">
+      <!-- Konva Stage 容器 -->
+      <div id="konva-container"></div>
+
+      <!-- 滚动容器 -->
+      <div id="scroll-container">
+        <!-- 虚拟内容块，其尺寸决定了滚动条的范围 -->
+        <div id="virtual-content"></div>
+      </div>
+    </div>
+
+    <div class="text-center mt-4 text-gray-600">
+      <p>虚拟滚动演示：总行数 <span id="total-rows"></span>, 总列数 <span id="total-cols"></span>。</p>
+      <p class="font-bold text-indigo-600">
+        已冻结 Row <span id="frozen-rows-count">1</span> (<span id="frozen-row-height">30px</span>) 和 Column
+        <span id="frozen-cols-count">1</span>。
+      </p>
+      <p>
+        当前绘制范围：行 <span id="rendered-range-row"></span>, 列
+        <span id="rendered-range-col"></span>
+      </p>
+      <p>Scroll: X=<span id="scroll-x">0</span>, Y=<span id="scroll-y">0</span></p>
+      <p>Selection Ranges: <span id="selection-count">0</span></p>
+    </div>
+    <textarea id="cell-editor" class="cell-editor hidden" />
+  </body>
+</html>
