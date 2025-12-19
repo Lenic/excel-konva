@@ -246,30 +246,57 @@ export const renderVisibleCells$ = combineLatest([
           maxCount: number,
           viewportSize: number,
         ) => {
-          // 获取冻结部分的累计值
-          const initialValue = getAccumulatedValue(frozenCount);
+          /**
+           * 二分查找：找到第一个由于滚动而变得可见的元素
+           *
+           * - 我们要寻找第一个满足 `getAccumulatedValue(i + 1) > 0` 的 `i`
+           * - `getAccumulatedValue(i)` 返回的是元素的起始位置 (Left/Top)
+           * - 因为元素连续，`getAccumulatedValue(i + 1)` 即为元素 `i` 的结束位置 (Right/Bottom)
+           */
 
+          let low = frozenCount;
+          let high = maxCount;
           let start = frozenCount;
-          // 1. 找到第一个可见元素
-          for (let i = start + 1; i <= maxCount; i++) {
-            const value = getAccumulatedValue(i) - initialValue;
-            if (value >= 0) {
-              start = i - 1;
-              break;
+
+          while (low < high) {
+            const mid = (low + high) >> 1;
+            // 获取 mid 元素的 **结束边界**
+            const endEdge = getAccumulatedValue(mid + 1);
+
+            if (endEdge > 0) {
+              // 这个元素可能可见，尝试更前面的
+              high = mid;
+            } else {
+              // 这个元素完全在视口左/上方，不可见
+              low = mid + 1;
             }
           }
+          start = low;
 
-          // 2. 确定渲染结束边界
-          let end = start;
-          for (let i = end + 1; i <= maxCount; i++) {
-            const value = getAccumulatedValue(i) - viewportSize;
-            if (value >= 0) {
-              end = i - 1;
-              break;
+          /**
+           * 二分查找：找到第一个离开视口的元素
+           *
+           * - 我们要寻找第一个满足 `getAccumulatedValue(i) > viewportSize` 的 `i`
+           * - 即元素的起始位置已经超过了视口大小
+           */
+
+          low = start;
+          high = maxCount;
+          let end = maxCount;
+
+          while (low < high) {
+            const mid = (low + high) >> 1;
+            const startEdge = getAccumulatedValue(mid);
+
+            if (startEdge > viewportSize) {
+              high = mid; // 这个元素已经在视口外了，尝试更前面的
+            } else {
+              low = mid + 1; // 这个元素还在视口内（或部分在），继续往后找
             }
           }
+          end = low;
 
-          // 3. 应用缓冲区
+          // 应用缓冲区
           start = Math.max(frozenCount, start - buffer);
           end = Math.min(maxCount, end + buffer);
 
@@ -284,8 +311,6 @@ export const renderVisibleCells$ = combineLatest([
           columnCount,
           sheetVisualSize.width,
         );
-
-        // --------------------------------------------------------
 
         cellPool.reset();
 

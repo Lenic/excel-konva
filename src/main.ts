@@ -1,18 +1,14 @@
-import type Konva from 'konva';
-
-import { auditTime, fromEventPattern, skip, tap } from 'rxjs';
+import { auditTime } from 'rxjs';
 
 import { columnCountSubject, frozenColumnsSubject, frozenRowsSubject, rowCountSubject } from './toolkit/constants';
 import {
   renderedRangeColumn,
   renderedRangeRow,
-  scrollContainer,
   scrollXElement,
   scrollYElement,
   selectionCount,
   virtualContent,
 } from './toolkit/core-elements';
-import { stage } from './toolkit/konva-items';
 import { renderSelections$, renderVisibleCells$ } from './toolkit/render';
 import { scrollOffset$, sheetRealSize$ } from './toolkit/utils';
 
@@ -48,26 +44,10 @@ scrollOffset$.subscribe((val) => {
 });
 
 // 元素大小实时跟随变动
-sheetRealSize$.pipe(skip(1)).subscribe((size) => stage.setAttrs(size));
 sheetRealSize$.subscribe((dimension) => {
   virtualContent.style.width = `${dimension.width}px`;
   virtualContent.style.height = `${dimension.height}px`;
 });
-
-// 连接 Canvas 的鼠标滚轮事件和滚动容器的滚动事件
-fromEventPattern<Konva.KonvaEventObject<WheelEvent>>(
-  (fn) => stage.on('wheel', fn),
-  (fn) => stage.off('wheel', fn),
-)
-  .pipe(
-    tap((e) => {
-      e.evt.preventDefault();
-    }),
-  )
-  .subscribe((e) => {
-    scrollContainer.scrollTop = Math.max(0, scrollContainer.scrollTop + e.evt.deltaY);
-    scrollContainer.scrollLeft = Math.max(0, scrollContainer.scrollLeft + e.evt.deltaX);
-  });
 
 renderSelections$.pipe(auditTime(16)).subscribe((render) => {
   const count = render();

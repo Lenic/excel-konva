@@ -1,14 +1,31 @@
 import Konva from 'konva';
-import { combineLatest, map, shareReplay } from 'rxjs';
+import { combineLatest, fromEventPattern, map, shareReplay, tap } from 'rxjs';
 
 import { frozenColumnsSubject, frozenRowsSubject } from './constants';
-import { container } from './core-elements';
+import { scrollContainer } from './core-elements';
+import { sheetVisualSize$ } from './utils';
 
 export const stage = new Konva.Stage({
   container: 'konva-container',
-  width: container.clientWidth,
-  height: container.clientHeight,
+  width: 800,
+  height: 600,
 });
+sheetVisualSize$.subscribe((size) => stage.setAttrs(size));
+
+// 连接 Canvas 的鼠标滚轮事件和滚动容器的滚动事件
+fromEventPattern<Konva.KonvaEventObject<WheelEvent>>(
+  (fn) => stage.on('wheel', fn),
+  (fn) => stage.off('wheel', fn),
+)
+  .pipe(
+    tap((e) => {
+      e.evt.preventDefault();
+    }),
+  )
+  .subscribe((e) => {
+    scrollContainer.scrollTop = Math.max(0, scrollContainer.scrollTop + e.evt.deltaY);
+    scrollContainer.scrollLeft = Math.max(0, scrollContainer.scrollLeft + e.evt.deltaX);
+  });
 
 export const layer = new Konva.Layer();
 stage.add(layer);
