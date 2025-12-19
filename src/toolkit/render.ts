@@ -2,6 +2,10 @@ import type { IRegionInfo, ISelectedRange } from './types';
 
 import { combineLatest, distinctUntilChanged, map, shareReplay, withLatestFrom } from 'rxjs';
 
+import { getCellData$, getCellPoint$, getCellRectBox$ } from './utils/cell';
+import { getColumnLeft$ } from './utils/column';
+import { getRowTop$ } from './utils/row';
+import { getColumnWidth$, getRowHeight$, sheetVisualSize$ } from './utils/size';
 import {
   columnCountSubject,
   frozenColumnsSubject,
@@ -14,16 +18,6 @@ import {
 } from './constants';
 import { getCellGroup$, layer, selectionLayer } from './konva-items';
 import { activeCellMarkerPool, cellPool, selectionPool } from './pools';
-import {
-  getCellData$,
-  getCellPoint$,
-  getCellRectBox$,
-  getColumnLeft$,
-  getColumnWidth$,
-  getRowHeight$,
-  getRowTop$,
-  sheetVisualSize$,
-} from './utils';
 
 const state = {
   selectedRanges: [] as ISelectedRange[],

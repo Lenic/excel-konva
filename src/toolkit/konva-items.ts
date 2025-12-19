@@ -1,9 +1,9 @@
 import Konva from 'konva';
 import { combineLatest, fromEventPattern, map, shareReplay, tap } from 'rxjs';
 
+import { sheetVisualSize$ } from './utils/size';
 import { frozenColumnsSubject, frozenRowsSubject } from './constants';
 import { scrollContainer } from './core-elements';
-import { sheetVisualSize$ } from './utils';
 
 export const stage = new Konva.Stage({
   container: 'konva-container',

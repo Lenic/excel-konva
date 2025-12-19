@@ -10,7 +10,8 @@ import {
   virtualContent,
 } from './toolkit/core-elements';
 import { renderSelections$, renderVisibleCells$ } from './toolkit/render';
-import { scrollOffset$, sheetRealSize$ } from './toolkit/utils';
+import { scrollOffset$ } from './toolkit/utils/scroll';
+import { sheetRealSize$ } from './toolkit/utils/size';
 
 // --- 1. 配置常量与初始化 ---
 
