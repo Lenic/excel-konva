@@ -33,6 +33,19 @@ stage.add(layer);
 export const selectionLayer = new Konva.Layer();
 stage.add(selectionLayer);
 
+/**
+ * 拖拽调整尺寸时的辅助线
+ */
+export const resizeLine = new Konva.Line({
+  points: [0, 0, 0, 0],
+  stroke: '#4e95ff', // 蓝色辅助线
+  strokeWidth: 2,
+  dash: [4, 4],
+  visible: false,
+  listening: false,
+});
+selectionLayer.add(resizeLine);
+
 // 为四个区域创建独立的 Konva Group
 export const scrollableGroup = new Konva.Group(); // R1+, C1+
 export const sideGroup = new Konva.Group(); // R1+, C0

@@ -9,6 +9,8 @@ import {
   HEADER_COL_INDEX,
   HEADER_HEIGHT,
   HEADER_ROW_INDEX,
+  MIN_CELL_HEIGHT,
+  MIN_CELL_WIDTH,
   ROW_HEADER_WIDTH,
   rowCountSubject,
 } from '../constants';
@@ -28,7 +30,7 @@ const columnWidthSubject = new Subject<[number, number | null]>();
  *     - 小于等于数字 0 的宽度会被忽略
  */
 export function setColumnWidth(colIndex: number, value: number) {
-  if (value <= 0) return;
+  if (value < MIN_CELL_WIDTH) return;
   columnWidthSubject.next([colIndex, value]);
 }
 
@@ -91,7 +93,7 @@ const rowHeightSubject = new Subject<[number, number | null]>();
  *     - 小于等于数字 0 的宽度会被忽略
  */
 export function setRowHeight(rowIndex: number, value: number) {
-  if (value <= 0) return;
+  if (value < MIN_CELL_HEIGHT) return;
   rowHeightSubject.next([rowIndex, value]);
 }
 

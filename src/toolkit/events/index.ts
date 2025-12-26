@@ -1,1 +1,1 @@
-export * from './double-click';
+export * from './resize';
