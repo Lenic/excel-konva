@@ -20,7 +20,7 @@ import { sheetRealSize$, sheetVisualSize$ } from './size';
  */
 export const scrollOffset$ = combineLatest([
   fromEvent(scrollContainer, 'scroll').pipe(
-    throttleTime(0, animationFrameScheduler),
+    throttleTime(0, animationFrameScheduler, { leading: true, trailing: true }),
     startWith(null),
     map(() => ({ deltaX: scrollContainer.scrollLeft, deltaY: scrollContainer.scrollTop }) as IOffset),
   ),

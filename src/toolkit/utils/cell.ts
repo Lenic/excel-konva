@@ -1,16 +1,6 @@
 import type { ILocation, IPoint, IRectBox } from '../types';
 
-import {
-  combineLatest,
-  distinctUntilChanged,
-  filter,
-  map,
-  scan,
-  shareReplay,
-  startWith,
-  Subject,
-  withLatestFrom,
-} from 'rxjs';
+import { combineLatest, map, scan, shareReplay, startWith, Subject, withLatestFrom } from 'rxjs';
 
 import { HEADER_COL_INDEX, HEADER_ROW_INDEX } from '../constants';
 import { container } from '../core-elements';
@@ -117,13 +107,9 @@ export const getCellPoint$ = combineLatest([getColumnLeft$, getRowTop$]).pipe(
 /**
  * 获取单元格的盒子信息
  */
-export const getCellRectBox$ = combineLatest([
-  getColumnLeft$.pipe(withLatestFrom(getColumnWidth$, scrollOffset$)),
-  getRowTop$.pipe(withLatestFrom(getRowHeight$, scrollOffset$)),
-]).pipe(
-  // 保证在 `scrollOffset$` 发生变更的时候，`getColumnLeft$` 和 `getRowTop$` 都拿到最新的值后再向下游推送
-  filter(([column, row]) => column[2] === row[2]),
-  map(([[getColumnLeft, getColumnWidth], [getRowTop, getRowHeight]]) => {
+export const getCellRectBox$ = combineLatest([getColumnWidth$, getRowHeight$, scrollOffset$]).pipe(
+  withLatestFrom(getColumnLeft$, getRowTop$),
+  map(([[getColumnWidth, getRowHeight], getColumnLeft, getRowTop]) => {
     /**
      * 获取单元格的盒子信息
      *
