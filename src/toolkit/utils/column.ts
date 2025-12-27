@@ -7,7 +7,7 @@ import { scrollOffset$ } from './scroll';
 import { getColumnWidth$ } from './size';
 
 /**
- * 获取 `[0, colIndex)` 列的累计宽度
+ * 获取 `[0, columnIndex)` 列的累计宽度
  */
 export const getPrecedingColumnsWidth$ = getColumnWidth$.pipe(
   map((getColWidth) => {
@@ -21,16 +21,16 @@ export const getPrecedingColumnsWidth$ = getColumnWidth$.pipe(
     let maxIndex = 0;
 
     /**
-     * 获取 `[0, colIndex)` 列的累计宽度
+     * 获取 `[0, columnIndex)` 列的累计宽度
      *
-     * @param colIndex - 列的索引，从数字 0 开始
+     * @param columnIndex - 列的索引，从数字 0 开始
      */
-    return function getPrecedingColumnsWidth(colIndex: number) {
-      const value = cacheMap.get(colIndex);
+    return function getPrecedingColumnsWidth(columnIndex: number) {
+      const value = cacheMap.get(columnIndex);
       if (value !== undefined) return value;
 
       let currentValue = cacheMap.get(maxIndex) ?? 0;
-      for (let c = maxIndex; c < colIndex; c++) {
+      for (let c = maxIndex; c < columnIndex; c++) {
         const nextValue = currentValue + getColWidth(c);
 
         maxIndex = c + 1;
@@ -53,14 +53,14 @@ export const getColumnLeft$ = combineLatest([getPrecedingColumnsWidth$, scrollOf
     /**
      * 获取指定列左侧边缘的 X 坐标（相对于 Canvas 最左侧）
      *
-     * @param colIndex - 列的索引，从数字 0 开始
+     * @param columnIndex - 列的索引，从数字 0 开始
      */
-    return function getColumnLeft(colIndex: number) {
-      if (colIndex === 0) return 0;
+    return function getColumnLeft(columnIndex: number) {
+      if (columnIndex === 0) return 0;
 
-      const left = getPrecedingColumnsWidth(colIndex);
+      const left = getPrecedingColumnsWidth(columnIndex);
       // 冻结列不需要考虑横向滚动
-      return colIndex < frozenColumns ? left : left - scrollOffset.deltaX;
+      return columnIndex < frozenColumns ? left : left - scrollOffset.deltaX;
     };
   }),
   shareReplay({ refCount: true, bufferSize: 1 }),
@@ -98,7 +98,7 @@ export const getColumnIndex$ = combineLatest([
       });
       if (index !== -1) return index;
 
-      let colIndex = -1;
+      let columnIndex = -1;
       for (let c = maxIndex + 1; c < columnCount; c++) {
         const leftX = getPrecedingColumnsWidth(c);
         const rightX = leftX + getColumnWidth(c);
@@ -107,11 +107,11 @@ export const getColumnIndex$ = combineLatest([
         cacheMap.set(c, [leftX, rightX]);
 
         if (x < rightX) {
-          colIndex = c;
+          columnIndex = c;
           break;
         }
       }
-      return Math.max(0, Math.min(colIndex, columnCount - 1));
+      return Math.max(0, Math.min(columnIndex, columnCount - 1));
     };
   }),
   shareReplay({ refCount: true, bufferSize: 1 }),

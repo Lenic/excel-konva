@@ -24,14 +24,14 @@ const columnWidthSubject = new Subject<[number, number | null]>();
  * - 行头列的默认宽度为 `ROW_HEADER_WIDTH = 40`
  * - 其余列的默认宽度为 `CELL_WIDTH = 100`
  *
- * @param colIndex - 列的索引，从数字 0 开始
+ * @param columnIndex - 列的索引，从数字 0 开始
  * @param value - 列的宽度
  *     - 注意列的宽度必须大于数字 0
  *     - 小于等于数字 0 的宽度会被忽略
  */
-export function setColumnWidth(colIndex: number, value: number) {
+export function setColumnWidth(columnIndex: number, value: number) {
   if (value < MIN_CELL_WIDTH) return;
-  columnWidthSubject.next([colIndex, value]);
+  columnWidthSubject.next([columnIndex, value]);
 }
 
 /**
@@ -40,10 +40,10 @@ export function setColumnWidth(colIndex: number, value: number) {
  * - 行头列的默认宽度为 `ROW_HEADER_WIDTH = 40`
  * - 其余列的默认宽度为 `CELL_WIDTH = 100`
  *
- * @param colIndex - 列的索引，从数字 0 开始
+ * @param columnIndex - 列的索引，从数字 0 开始
  */
-export function resetColumnWidth(colIndex: number) {
-  columnWidthSubject.next([colIndex, null]);
+export function resetColumnWidth(columnIndex: number) {
+  columnWidthSubject.next([columnIndex, null]);
 }
 
 /**
@@ -67,13 +67,13 @@ export const getColumnWidth$ = columnWidthSubject.pipe(
     /**
      * 获取指定列的宽度
      *
-     * @param colIndex - 列的索引，从数字 0 开始
+     * @param columnIndex - 列的索引，从数字 0 开始
      */
-    return function getColumnWidth(colIndex: number) {
-      const value = store.get(colIndex);
+    return function getColumnWidth(columnIndex: number) {
+      const value = store.get(columnIndex);
       if (value !== undefined) return value;
 
-      return colIndex === HEADER_COL_INDEX ? ROW_HEADER_WIDTH : CELL_WIDTH;
+      return columnIndex === HEADER_COL_INDEX ? ROW_HEADER_WIDTH : CELL_WIDTH;
     };
   }),
   shareReplay({ bufferSize: 1, refCount: true }),

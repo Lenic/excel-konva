@@ -2,10 +2,10 @@
  * 获取单元格的 Key
  *
  * @param rowIndex - 行的索引，从数字 0 开始
- * @param colIndex - 列的索引，从数字 0 开始
+ * @param columnIndex - 列的索引，从数字 0 开始
  */
-export function getCellKey(rowIndex: number, colIndex: number) {
-  return `R${rowIndex}_C${colIndex}`;
+export function getCellKey(rowIndex: number, columnIndex: number) {
+  return `R${rowIndex}_C${columnIndex}`;
 }
 
 /**
@@ -14,11 +14,11 @@ export function getCellKey(rowIndex: number, colIndex: number) {
  * - 一般应该是 A、B、MN、XYZ 这样的字符串
  * - 相当于将十进制的数字转换为 26 进制的，以大写英文字母表示的字符串
  *
- * @param colIndex - 列的索引，从数字 0 开始
+ * @param columnIndex - 列的索引，从数字 0 开始
  */
-export function getColumnLabel(colIndex: number) {
+export function getColumnLabel(columnIndex: number) {
   let result = '';
-  let temp = colIndex;
+  let temp = columnIndex;
   while (temp >= 0) {
     const index = temp % 26;
     result = String.fromCharCode(65 + index) + result;

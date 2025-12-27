@@ -24,10 +24,10 @@ export function setCellData(key: string, value: string | null): void;
  * 设置给定单元格的内容
  *
  * @param rowIndex - 行的索引，从数字 0 开始
- * @param colIndex - 列的索引，从数字 0 开始
+ * @param columnIndex - 列的索引，从数字 0 开始
  * @param value - 单元格的值，`null` 表示清除单元格的内容，将其设置为初始值 `undefined`
  */
-export function setCellData(rowIndex: number, colIndex: number, value: string | null): void;
+export function setCellData(rowIndex: number, columnIndex: number, value: string | null): void;
 
 /**
  * @internal `setCellData` 方法具体实现
@@ -65,17 +65,17 @@ export const getCellData$ = cellDataSubject.pipe(
      * 获取指定单元格的内容
      *
      * @param rowIndex - 行的索引，从数字 0 开始
-     * @param colIndex - 列的索引，从数字 0 开始
+     * @param columnIndex - 列的索引，从数字 0 开始
      */
-    return function getCellData(rowIndex: number, colIndex: number) {
+    return function getCellData(rowIndex: number, columnIndex: number) {
       const isHeaderRow = rowIndex === HEADER_ROW_INDEX;
-      const isRowIndexCol = colIndex === HEADER_COL_INDEX;
+      const isRowIndexCol = columnIndex === HEADER_COL_INDEX;
 
       if (isHeaderRow && isRowIndexCol) return '';
-      if (isHeaderRow) return getColumnLabel(colIndex - 1);
+      if (isHeaderRow) return getColumnLabel(columnIndex - 1);
       if (isRowIndexCol) return rowIndex.toLocaleString();
 
-      const key = getCellKey(rowIndex, colIndex);
+      const key = getCellKey(rowIndex, columnIndex);
       const value = store[key];
       return typeof value !== 'undefined' ? value : key;
     };
@@ -92,11 +92,11 @@ export const getCellPoint$ = combineLatest([getColumnLeft$, getRowTop$]).pipe(
      * 获取单元格左上角的坐标
      *
      * @param rowIndex - 行的索引，从数字 0 开始
-     * @param colIndex - 列的索引，从数字 0 开始
+     * @param columnIndex - 列的索引，从数字 0 开始
      */
-    return function getCellPoint(rowIndex: number, colIndex: number): IPoint {
+    return function getCellPoint(rowIndex: number, columnIndex: number): IPoint {
       return {
-        x: getColumnLeft(colIndex),
+        x: getColumnLeft(columnIndex),
         y: getRowTop(rowIndex),
       };
     };
@@ -114,13 +114,13 @@ export const getCellRectBox$ = combineLatest([getColumnWidth$, getRowHeight$, sc
      * 获取单元格的盒子信息
      *
      * @param rowIndex - 行的索引，从数字 0 开始
-     * @param colIndex - 列的索引，从数字 0 开始
+     * @param columnIndex - 列的索引，从数字 0 开始
      */
-    return function getCellRectBox(rowIndex: number, colIndex: number): IRectBox {
+    return function getCellRectBox(rowIndex: number, columnIndex: number): IRectBox {
       return {
-        x: getColumnLeft(colIndex),
+        x: getColumnLeft(columnIndex),
         y: getRowTop(rowIndex),
-        width: getColumnWidth(colIndex),
+        width: getColumnWidth(columnIndex),
         height: getRowHeight(rowIndex),
       };
     };

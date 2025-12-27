@@ -7,7 +7,7 @@ import { scrollOffset$ } from './scroll';
 import { getRowHeight$ } from './size';
 
 /**
- * 获取 `[0, colIndex)` 行的累计高度
+ * 获取 `[0, columnIndex)` 行的累计高度
  */
 export const getPrecedingRowsHeight$ = getRowHeight$.pipe(
   map((getRowHeight) => {
@@ -21,7 +21,7 @@ export const getPrecedingRowsHeight$ = getRowHeight$.pipe(
     let maxIndex = 0;
 
     /**
-     * 获取 `[0, colIndex)` 行的累计高度
+     * 获取 `[0, columnIndex)` 行的累计高度
      *
      * @param rowIndex - 行的索引，从数字 0 开始
      */
@@ -98,7 +98,7 @@ export const getRowIndex$ = combineLatest([
       });
       if (index !== -1) return index;
 
-      let colIndex = -1;
+      let columnIndex = -1;
       for (let r = maxIndex + 1; r < rowCount; r++) {
         const topY = getPrecedingRowsHeight(r);
         const bottomY = topY + getRowHeight(r);
@@ -107,11 +107,11 @@ export const getRowIndex$ = combineLatest([
         cacheMap.set(r, [topY, bottomY]);
 
         if (y < bottomY) {
-          colIndex = r;
+          columnIndex = r;
           break;
         }
       }
-      return Math.max(0, Math.min(colIndex, rowCount - 1));
+      return Math.max(0, Math.min(columnIndex, rowCount - 1));
     };
   }),
   shareReplay({ refCount: true, bufferSize: 1 }),
