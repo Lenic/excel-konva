@@ -8,6 +8,7 @@ export function getCellKey(rowIndex: number, columnIndex: number) {
   return `R${rowIndex}_C${columnIndex}`;
 }
 
+const columnLablMap = new Map<number, string>();
 /**
  * 获取列的列头字符串
  *
@@ -17,13 +18,17 @@ export function getCellKey(rowIndex: number, columnIndex: number) {
  * @param columnIndex - 列的索引，从数字 0 开始
  */
 export function getColumnLabel(columnIndex: number) {
-  let result = '';
+  let result = columnLablMap.get(columnIndex) ?? '';
+  if (result) return result;
+
   let temp = columnIndex;
   while (temp >= 0) {
     const index = temp % 26;
     result = String.fromCharCode(65 + index) + result;
     temp = Math.floor(temp / 26) - 1;
   }
+
+  columnLablMap.set(columnIndex, result);
   return result;
 }
 
