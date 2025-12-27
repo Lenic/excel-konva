@@ -1,22 +1,19 @@
-import type { IRegionInfo, ISelectedRange } from './types';
+import type { ISelectedRange } from './types';
 
-import { combineLatest, distinctUntilChanged, map, shareReplay, withLatestFrom } from 'rxjs';
+import { combineLatest, map, shareReplay, withLatestFrom } from 'rxjs';
 
-import { getCellData$, getCellPoint$, getCellRectBox$ } from './utils/cell';
-import { getColumnLeft$ } from './utils/column';
-import { getRowTop$ } from './utils/row';
+import { getCellPoint$ } from './utils/cell';
+import { dataRegionInfo$, renderCellRegion$ } from './utils/region';
 import { getColumnWidth$, getRowHeight$, sheetVisualSize$ } from './utils/size';
 import {
-  columnCountSubject,
   frozenColumnsSubject,
   frozenRowsSubject,
   HEADER_COL_INDEX,
   HEADER_ROW_INDEX,
-  rowCountSubject,
   SELECTION_FILL_COLOR,
   SELECTION_STROKE_COLOR,
 } from './constants';
-import { getCellGroup$, layer, selectionLayer } from './konva-items';
+import { backgroundLayer, selectionLayer } from './konva-items';
 import { activeCellMarkerPool, cellPool, selectionPool } from './pools';
 
 const state = {
@@ -26,7 +23,6 @@ const state = {
   animationFrameId: null,
 };
 
-const buffer = 5; // 缓冲单元格数量
 const BORDER_STROKE = 2; // 选区边界统一使用 2px 边框
 
 /**
@@ -212,269 +208,91 @@ export const renderSelections$ = combineLatest([
  * 渲染所有可见单元格到对应的 Konva Group
  */
 export const renderVisibleCells$ = combineLatest([
-  combineLatest([getCellRectBox$, getColumnLeft$, getRowTop$]).pipe(distinctUntilChanged((x, y) => x[0] === y[0])),
-  getCellGroup$,
+  renderCellRegion$.pipe(withLatestFrom(dataRegionInfo$)),
   frozenColumnsSubject,
   frozenRowsSubject,
-  columnCountSubject,
-  rowCountSubject,
-  getCellData$,
-  sheetVisualSize$,
 ]).pipe(
-  map(
-    ([
-      [getCellRectBox, getColumnLeft, getRowTop],
-      getCellGroup,
-      frozenColumns,
-      frozenRows,
-      columnCount,
-      rowCount,
-      getCellData,
-      sheetVisualSize,
-    ]) => {
-      return function renderVisibleCells() {
-        // 确定渲染范围
-        const findVisibleRange = (
-          getAccumulatedValue: (value: number) => number,
-          frozenCount: number,
-          maxCount: number,
-          viewportSize: number,
-        ) => {
-          /**
-           * 二分查找：找到第一个由于滚动而变得可见的元素
-           *
-           * - 我们要寻找第一个满足 `getAccumulatedValue(i + 1) > 0` 的 `i`
-           * - `getAccumulatedValue(i)` 返回的是元素的起始位置 (Left/Top)
-           * - 因为元素连续，`getAccumulatedValue(i + 1)` 即为元素 `i` 的结束位置 (Right/Bottom)
-           */
+  map(([[renderCellRegion, dataRegionInfo], frozenColumns, frozenRows]) => {
+    const { startRow, endRow, startColumn, endColumn } = dataRegionInfo;
 
-          let low = frozenCount;
-          let high = maxCount;
-          let start = frozenCount;
+    cellPool.reset();
 
-          while (low < high) {
-            const mid = (low + high) >> 1;
-            // 获取 mid 元素的 **结束边界**
-            const endEdge = getAccumulatedValue(mid + 1);
+    // 渲染 Scrollable Data
+    for (let r = startRow; r < endRow; r++) {
+      for (let c = startColumn; c < endColumn; c++) {
+        renderCellRegion(r, c, {
+          rectAttrs: { fill: r % 2 === 0 ? '#ffffff' : '#f9f9f9', stroke: '#e8e8e8', strokeWidth: 0.5 },
+          textAttrs: { fill: '#333333', fontSize: 12, align: 'left', padding: 8, ellipsis: true, wrap: 'none' },
+        });
+      }
+    }
 
-            if (endEdge > 0) {
-              // 这个元素可能可见，尝试更前面的
-              high = mid;
-            } else {
-              // 这个元素完全在视口左/上方，不可见
-              low = mid + 1;
-            }
-          }
-          start = low;
+    // 渲染 Frozen Header
+    for (let r = 0; r < frozenRows; r++) {
+      for (let c = startColumn; c < endColumn; c++) {
+        renderCellRegion(r, c, {
+          rectAttrs: {
+            fill: r === HEADER_ROW_INDEX ? '#f0f0f0' : r % 2 === 0 ? '#ffffff' : '#f9f9f9',
+            stroke: '#cccccc',
+            strokeWidth: 1,
+          },
+          textAttrs: {
+            fill: '#000000',
+            fontSize: r === HEADER_ROW_INDEX ? 14 : 12,
+            align: r === HEADER_ROW_INDEX ? 'center' : 'left',
+            padding: 8,
+            ellipsis: true,
+            wrap: 'none',
+          },
+        });
+      }
+    }
 
-          /**
-           * 二分查找：找到第一个离开视口的元素
-           *
-           * - 我们要寻找第一个满足 `getAccumulatedValue(i) > viewportSize` 的 `i`
-           * - 即元素的起始位置已经超过了视口大小
-           */
+    // 渲染 Frozen Side
+    for (let c = 0; c < frozenColumns; c++) {
+      for (let r = startRow; r < endRow; r++) {
+        renderCellRegion(r, c, {
+          rectAttrs: {
+            fill: c === HEADER_COL_INDEX ? '#f0f0f0' : r % 2 === 0 ? '#ffffff' : '#f9f9f9',
+            stroke: '#cccccc',
+            strokeWidth: 1,
+          },
+          textAttrs: {
+            fill: '#333333',
+            fontSize: 12,
+            align: c === HEADER_COL_INDEX ? 'center' : 'left',
+            padding: c === HEADER_COL_INDEX ? 0 : 8,
+            ellipsis: true,
+            wrap: 'none',
+          },
+        });
+      }
+    }
 
-          low = start;
-          high = maxCount;
-          let end = maxCount;
+    // 渲染 Corner
+    for (let r = 0; r < frozenRows; r++) {
+      for (let c = 0; c < frozenColumns; c++) {
+        renderCellRegion(r, c, {
+          rectAttrs: {
+            fill: r === HEADER_ROW_INDEX && c === HEADER_COL_INDEX ? '#e0e0e0' : '#f0f0f0',
+            stroke: '#cccccc',
+            strokeWidth: 1,
+          },
+          textAttrs: {
+            fill: '#000000',
+            fontSize: r === HEADER_ROW_INDEX ? 14 : 12,
+            align: c === HEADER_COL_INDEX ? 'center' : r === HEADER_ROW_INDEX ? 'center' : 'left',
+            padding: c === HEADER_COL_INDEX ? 0 : 8,
+            ellipsis: true,
+            wrap: 'none',
+          },
+        });
+      }
+    }
 
-          while (low < high) {
-            const mid = (low + high) >> 1;
-            const startEdge = getAccumulatedValue(mid);
+    backgroundLayer.batchDraw();
 
-            if (startEdge > viewportSize) {
-              high = mid; // 这个元素已经在视口外了，尝试更前面的
-            } else {
-              low = mid + 1; // 这个元素还在视口内（或部分在），继续往后找
-            }
-          }
-          end = low;
-
-          // 应用缓冲区
-          start = Math.max(frozenCount, start - buffer);
-          end = Math.min(maxCount, end + buffer);
-
-          return [start, end] as const;
-        };
-
-        const [dataStartRow, dataEndRow] = findVisibleRange(getRowTop, frozenRows, rowCount, sheetVisualSize.height);
-
-        const [dataStartCol, dataEndCol] = findVisibleRange(
-          getColumnLeft,
-          frozenColumns,
-          columnCount,
-          sheetVisualSize.width,
-        );
-
-        cellPool.reset();
-
-        // 渲染 Scrollable Data (R1+, C1+)
-        for (let r = dataStartRow; r < dataEndRow; r++) {
-          for (let c = dataStartCol; c < dataEndCol; c++) {
-            const group = getCellGroup(r, c);
-            const { x, y, width, height } = getCellRectBox(r, c);
-
-            const rect = cellPool.getRect();
-            rect.setAttrs({
-              x,
-              y,
-              width,
-              height,
-              fill: r % 2 === 0 ? '#ffffff' : '#f9f9f9',
-              stroke: '#e8e8e8',
-              strokeWidth: 0.5,
-            });
-            if (rect.parent !== group) rect.moveTo(group);
-
-            const text = cellPool.getText();
-            text.setAttrs({
-              x,
-              y,
-              width,
-              height,
-              text: getCellData(r, c),
-              fill: '#333333',
-              fontSize: 12,
-              align: 'left',
-              padding: 8,
-              ellipsis: true,
-              wrap: 'none',
-            });
-            if (text.parent !== group) text.moveTo(group);
-          }
-        }
-
-        // 渲染 Frozen Header (R0, C1+) - FIX 1: 遍历所有冻结行
-        if (frozenRows > 0) {
-          for (let r = 0; r < frozenRows; r++) {
-            // <--- 修复
-            for (let c = dataStartCol; c < dataEndCol; c++) {
-              const group = getCellGroup(r, c);
-              const { x, y, width, height } = getCellRectBox(r, c);
-              const rect = cellPool.getRect();
-              rect.setAttrs({
-                x,
-                y,
-                width,
-                height,
-                // R0 浅灰色，R1+ 交替色 (与 Scrollable Data 保持一致)
-                fill: r === HEADER_ROW_INDEX ? '#f0f0f0' : r % 2 === 0 ? '#ffffff' : '#f9f9f9',
-                stroke: '#cccccc',
-                strokeWidth: 1,
-              });
-              if (rect.parent !== group) rect.moveTo(group);
-
-              const text = cellPool.getText();
-              text.setAttrs({
-                x,
-                y,
-                width,
-                height,
-                text: getCellData(r, c),
-                fill: '#000000',
-                // R0 居中，R1+ 左对齐
-                fontSize: r === HEADER_ROW_INDEX ? 14 : 12,
-                align: r === HEADER_ROW_INDEX ? 'center' : 'left',
-                padding: 8,
-                ellipsis: true,
-                wrap: 'none',
-              });
-              if (text.parent !== group) text.moveTo(group);
-            }
-          }
-        }
-
-        // 渲染 Frozen Side (R1+, C0) - FIX 2: 遍历所有冻结列
-        if (frozenColumns > 0) {
-          for (let c = 0; c < frozenColumns; c++) {
-            // <--- 修复
-            for (let r = dataStartRow; r < dataEndRow; r++) {
-              const group = getCellGroup(r, c);
-              const { x, y, width, height } = getCellRectBox(r, c);
-              const rect = cellPool.getRect();
-              rect.setAttrs({
-                x,
-                y,
-                width,
-                height,
-                // C0 浅灰色，C1+ 交替色
-                fill: c === HEADER_COL_INDEX ? '#f0f0f0' : r % 2 === 0 ? '#ffffff' : '#f9f9f9',
-                stroke: '#cccccc', // 使用与表头一致的边框
-                strokeWidth: 1,
-              });
-              if (rect.parent !== group) rect.moveTo(group);
-
-              const text = cellPool.getText();
-              text.setAttrs({
-                x,
-                y,
-                width,
-                height,
-                text: getCellData(r, c),
-                fill: '#333333',
-                fontSize: 12,
-                // C0 居中，C1+ 左对齐
-                align: c === HEADER_COL_INDEX ? 'center' : 'left',
-                padding: c === HEADER_COL_INDEX ? 0 : 8, // C0 列宽 40px，padding 设为 0 以便居中
-                ellipsis: true,
-                wrap: 'none',
-              });
-              if (text.parent !== group) text.moveTo(group);
-            }
-          }
-        }
-
-        // 渲染 Corner (R0, C0)
-        if (frozenRows > 0 && frozenColumns > 0) {
-          for (let r = 0; r < frozenRows; r++) {
-            for (let c = 0; c < frozenColumns; c++) {
-              const group = getCellGroup(r, c);
-              const { x, y, width, height } = getCellRectBox(r, c);
-              const rect = cellPool.getRect();
-              rect.setAttrs({
-                x,
-                y,
-                width,
-                height,
-                // Corner Cell R0, C0 独特背景色
-                fill: r === HEADER_ROW_INDEX && c === HEADER_COL_INDEX ? '#e0e0e0' : '#f0f0f0',
-                stroke: '#cccccc',
-                strokeWidth: 1,
-              });
-              if (rect.parent !== group) rect.moveTo(group);
-
-              const text = cellPool.getText();
-              text.setAttrs({
-                x,
-                y,
-                width,
-                height,
-                text: getCellData(r, c),
-                fill: '#000000',
-                // C0 列（行号列）所有行居中，其他列 R0 居中，R1+ 左对齐
-                fontSize: r === HEADER_ROW_INDEX ? 14 : 12,
-                align: c === HEADER_COL_INDEX ? 'center' : r === HEADER_ROW_INDEX ? 'center' : 'left',
-                padding: c === HEADER_COL_INDEX ? 0 : 8, // C0 列宽 40px，padding 设为 0 以便居中
-                ellipsis: true,
-                wrap: 'none',
-              });
-              if (text.parent !== group) text.moveTo(group);
-            }
-          }
-        }
-
-        layer.batchDraw();
-
-        // 更新状态信息
-        const region: IRegionInfo = {
-          startRow: dataStartRow,
-          endRow: dataEndRow,
-          startColumn: dataStartCol,
-          endColumn: dataEndCol,
-        };
-        return region;
-      };
-    },
-  ),
+    return dataRegionInfo;
+  }),
   shareReplay({ refCount: true, bufferSize: 1 }),
 );

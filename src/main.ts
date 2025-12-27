@@ -56,8 +56,8 @@ renderSelections$.pipe(auditTime(16)).subscribe((render) => {
 
   selectionCount.textContent = count.toLocaleString();
 });
-renderVisibleCells$.pipe(auditTime(16)).subscribe((render) => {
-  const { startRow, endRow, startColumn, endColumn } = render();
+renderVisibleCells$.pipe(auditTime(16)).subscribe((dataRegionInfo) => {
+  const { startRow, endRow, startColumn, endColumn } = dataRegionInfo;
 
   renderedRangeRow.textContent = `${startRow.toLocaleString()} - ${endRow.toLocaleString()}`;
   renderedRangeColumn.textContent = `${startColumn} - ${endColumn}`;

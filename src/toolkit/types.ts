@@ -1,3 +1,5 @@
+import type Konva from 'konva';
+
 export interface ISelectedRange {
   startRow: number;
   endRow: number;
@@ -103,4 +105,9 @@ export interface IUserState {
   startCell: ILocation | null;
   lastRenderTime: number;
   animationFrameId: number | null;
+}
+
+export interface ICellRegionOptions {
+  rectAttrs: Omit<Konva.RectConfig, 'x' | 'y' | 'width' | 'height'>;
+  textAttrs: Omit<Konva.TextConfig, 'x' | 'y' | 'width' | 'height' | 'text'>;
 }

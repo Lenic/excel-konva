@@ -54,3 +54,8 @@ export const HEADER_HEIGHT = 30;
 
 export const SELECTION_FILL_COLOR = 'rgba(78, 149, 255, 0.15)';
 export const SELECTION_STROKE_COLOR = '#4e95ff';
+
+/**
+ * 缓冲单元格数量
+ */
+export const BUFFER_CELL_COUNT = 5;
