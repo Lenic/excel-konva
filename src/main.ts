@@ -19,7 +19,7 @@ import { sheetRealSize$ } from './toolkit/utils/size';
 // const MIN_CELL_WIDTH = 20;
 // const MIN_CELL_HEIGHT = 15;
 // const CELL_WIDTH = 100; // 默认数据单元格宽度 (C1+)
-// const ROW_HEADER_WIDTH = 40; // 默认行头单元格宽度 (C0)
+// const HEADER_WIDTH = 40; // 默认行头单元格宽度 (C0)
 // const CELL_HEIGHT = 28; // 默认数据单元格高度 (R1+)
 // const HEADER_HEIGHT = 30; // 默认表头高度 (R0)
 // const RESIZE_TOLERANCE = 5; // 鼠标检测边界的容差 (像素)

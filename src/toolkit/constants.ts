@@ -38,7 +38,7 @@ export const MIN_CELL_WIDTH = 20;
 /**
  * 默认行头单元格宽度
  */
-export const ROW_HEADER_WIDTH = 40;
+export const HEADER_WIDTH = 40;
 /**
  * 默认数据单元格高度
  */
