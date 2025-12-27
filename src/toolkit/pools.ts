@@ -45,8 +45,8 @@ export const cellPool = {
     return newText;
   },
   reset(): void {
-    for (let i = this.nextRectIndex; i < this.rects.length; i++) this.rects[i].visible(false);
-    for (let i = this.nextTextIndex; i < this.texts.length; i++) this.texts[i].visible(false);
+    this.rects.forEach((rect) => rect.visible(false));
+    this.texts.forEach((text) => text.visible(false));
     this.nextRectIndex = 0;
     this.nextTextIndex = 0;
   },

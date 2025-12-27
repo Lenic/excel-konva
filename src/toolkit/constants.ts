@@ -58,4 +58,4 @@ export const SELECTION_STROKE_COLOR = '#4e95ff';
 /**
  * 缓冲单元格数量
  */
-export const BUFFER_CELL_COUNT = 5;
+export const BUFFER_CELL_COUNT = 1;
