@@ -1,6 +1,9 @@
-import { map, Observable, shareReplay } from 'rxjs';
-import { Disposable } from '../core';
 import type { IAccumulatedDimension, IDimensionManager } from './types';
+import type { Observable } from 'rxjs';
+
+import { map, shareReplay } from 'rxjs';
+
+import { Disposable } from '../core';
 
 /**
  * Accumulated dimension

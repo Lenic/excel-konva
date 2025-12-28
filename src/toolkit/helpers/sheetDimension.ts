@@ -1,8 +1,11 @@
-import { combineLatest, fromEvent, map, of, shareReplay, startWith, type Observable } from 'rxjs';
-import { Disposable } from '../core';
-import { container } from '../core-elements';
 import type { IDimension } from '../types';
 import type { IAccumulatedDimension, ISheet, ISheetDimension } from './types';
+import type { Observable } from 'rxjs';
+
+import { combineLatest, fromEvent, map, shareReplay, startWith } from 'rxjs';
+
+import { Disposable } from '../core';
+import { container } from '../core-elements';
 
 /**
  * Sheet dimension

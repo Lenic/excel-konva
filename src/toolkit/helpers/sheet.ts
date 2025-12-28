@@ -1,7 +1,8 @@
-import type { Observable } from 'rxjs';
 import type { ISheet } from './types';
+import type { Observable } from 'rxjs';
 
 import { BehaviorSubject } from 'rxjs';
+
 import { Disposable } from '../core';
 
 /**
@@ -53,10 +54,10 @@ export class Sheet extends Disposable implements ISheet {
     frozenColumns: number,
     frozenRows: number,
 
-    headerHeight: number = 30,
-    headerWidth: number = 40,
-    rowHeight: number = 28,
-    columnWidth: number = 100,
+    headerHeight = 30,
+    headerWidth = 40,
+    rowHeight = 28,
+    columnWidth = 100,
   ) {
     super();
 
@@ -70,28 +71,44 @@ export class Sheet extends Disposable implements ISheet {
     this.columnCount = 0;
 
     this.headerHeightSubject = new BehaviorSubject(headerHeight);
-    this.disposeWithMe(() => this.headerHeightSubject.complete());
+    this.disposeWithMe(() => {
+      this.headerHeightSubject.complete();
+    });
 
     this.headerWidthSubject = new BehaviorSubject(headerWidth);
-    this.disposeWithMe(() => this.headerWidthSubject.complete());
+    this.disposeWithMe(() => {
+      this.headerWidthSubject.complete();
+    });
 
     this.rowHeightSubject = new BehaviorSubject(rowHeight);
-    this.disposeWithMe(() => this.rowHeightSubject.complete());
+    this.disposeWithMe(() => {
+      this.rowHeightSubject.complete();
+    });
 
     this.columnWidthSubject = new BehaviorSubject(columnWidth);
-    this.disposeWithMe(() => this.columnWidthSubject.complete());
+    this.disposeWithMe(() => {
+      this.columnWidthSubject.complete();
+    });
 
     this.rowCountSubject = new BehaviorSubject(rowCount);
-    this.disposeWithMe(() => this.rowCountSubject.complete());
+    this.disposeWithMe(() => {
+      this.rowCountSubject.complete();
+    });
 
     this.columnCountSubject = new BehaviorSubject(columnCount);
-    this.disposeWithMe(() => this.columnCountSubject.complete());
+    this.disposeWithMe(() => {
+      this.columnCountSubject.complete();
+    });
 
     this.frozenColumnsSubject = new BehaviorSubject(frozenColumns);
-    this.disposeWithMe(() => this.frozenColumnsSubject.complete());
+    this.disposeWithMe(() => {
+      this.frozenColumnsSubject.complete();
+    });
 
     this.frozenRowsSubject = new BehaviorSubject(frozenRows);
-    this.disposeWithMe(() => this.frozenRowsSubject.complete());
+    this.disposeWithMe(() => {
+      this.frozenRowsSubject.complete();
+    });
 
     this.headerHeight$ = this.headerHeightSubject.asObservable();
     this.disposeWithMe(

@@ -1,18 +1,20 @@
+import type { IDimension, IOffset } from '../types';
+import type { IScrollOffset, ISheetDimension } from './types';
+import type { Observable } from 'rxjs';
+
 import {
   animationFrameScheduler,
   combineLatest,
   distinctUntilChanged,
   fromEvent,
   map,
-  Observable,
   shareReplay,
   startWith,
   throttleTime,
 } from 'rxjs';
+
 import { Disposable } from '../core';
 import { scrollContainer } from '../core-elements';
-import type { IDimension, IOffset } from '../types';
-import type { IScrollOffset, ISheetDimension } from './types';
 
 /**
  * Scroll offset

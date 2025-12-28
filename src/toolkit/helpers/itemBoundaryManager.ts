@@ -1,6 +1,8 @@
-import { combineLatest, map, shareReplay, type Observable } from 'rxjs';
-import { Disposable } from '../core';
 import type { IAccumulatedDimension, IItemBoundaryManager, IScrollOffset, ISheet } from './types';
+
+import { combineLatest, map, type Observable, shareReplay } from 'rxjs';
+
+import { Disposable } from '../core';
 
 /**
  * Item boundary manager

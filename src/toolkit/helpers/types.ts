@@ -1,7 +1,6 @@
-import type { Observable } from 'rxjs';
-
 import type { IDisposable } from '../core';
 import type { IDimension, IOffset, IRectBox } from '../types';
+import type { Observable } from 'rxjs';
 
 /**
  * Sheet

@@ -1,6 +1,9 @@
-import { map, Observable, scan, shareReplay, startWith, Subject } from 'rxjs';
-import { Disposable } from '../core';
 import type { IDimensionManager, IDimensionManagerOptions } from './types';
+import type { Observable } from 'rxjs';
+
+import { map, scan, shareReplay, startWith, Subject } from 'rxjs';
+
+import { Disposable } from '../core';
 
 /**
  * Dimension manager
@@ -23,7 +26,9 @@ export class DimensionManager extends Disposable implements IDimensionManager {
 
     this.options = options;
     this.dimensionSubject = new Subject<[number, number | null]>();
-    this.disposeWithMe(() => this.dimensionSubject.complete());
+    this.disposeWithMe(() => {
+      this.dimensionSubject.complete();
+    });
 
     this.dimensionStore = new Map();
 
