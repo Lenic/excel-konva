@@ -1,0 +1,353 @@
+import type { Observable } from 'rxjs';
+
+import type { IDisposable } from '../core';
+import type { IDimension, IOffset, IRectBox } from '../types';
+
+/**
+ * Sheet
+ */
+export interface ISheet extends IDisposable {
+  /**
+   * Header height
+   */
+  headerHeight: number;
+  /**
+   * Header width
+   */
+  headerWidth: number;
+  /**
+   * Row height
+   */
+  rowHeight: number;
+  /**
+   * Column width
+   */
+  columnWidth: number;
+  /**
+   * Row count
+   */
+  rowCount: number;
+  /**
+   * Column count
+   */
+  columnCount: number;
+  /**
+   * Frozen columns
+   */
+  frozenColumns: number;
+  /**
+   * Frozen rows
+   */
+  frozenRows: number;
+
+  /**
+   * Observable header height
+   */
+  headerHeight$: Observable<number>;
+  /**
+   * Observable header width
+   */
+  headerWidth$: Observable<number>;
+  /**
+   * Observable row height
+   */
+  rowHeight$: Observable<number>;
+  /**
+   * Observable column width
+   */
+  columnWidth$: Observable<number>;
+  /**
+   * Observable row count
+   */
+  rowCount$: Observable<number>;
+  /**
+   * Observable column count
+   */
+  columnCount$: Observable<number>;
+  /**
+   * Observable frozen columns
+   */
+  frozenColumns$: Observable<number>;
+  /**
+   * Observable frozen rows
+   */
+  frozenRows$: Observable<number>;
+
+  /**
+   * Set header height
+   */
+  setHeaderHeight(height: number): void;
+  /**
+   * Set header width
+   */
+  setHeaderWidth(width: number): void;
+  /**
+   * Set row height
+   */
+  setRowHeight(height: number): void;
+  /**
+   * Set column width
+   */
+  setColumnWidth(width: number): void;
+  /**
+   * Set row count
+   */
+  setRowCount(count: number): void;
+  /**
+   * Set column count
+   */
+  setColumnCount(count: number): void;
+  /**
+   * Set frozen columns
+   */
+  setFrozenColumns(count: number): void;
+  /**
+   * Set frozen rows
+   */
+  setFrozenRows(count: number): void;
+}
+
+/**
+ * Dimension manager options
+ */
+export interface IDimensionManagerOptions {
+  /**
+   * Minimum dimension
+   */
+  minDimension: number;
+  /**
+   * Header dimension
+   */
+  headerDimension: number;
+  /**
+   * Default dimension
+   */
+  defaultDimension: number;
+}
+
+/**
+ * Dimension manager
+ */
+export interface IDimensionManager extends IDisposable {
+  /**
+   * Dimension store
+   */
+  dimensionStore: Map<number, number>;
+
+  /**
+   * An Observable that emits a function to retrieve the dimension value for a specific index.
+   *
+   * The emitted function signature is: `(index: number) => number`
+   * - `index`: The index of the item.
+   * - Returns: The item size.
+   */
+  getDimension$: Observable<(index: number) => number>;
+
+  /**
+   * Set dimension
+   *
+   * @param index - Dimension index
+   * @param value - Dimension value
+   */
+  setDimension(index: number, value: number): void;
+  /**
+   * Reset dimension
+   *
+   * @param index - Dimension index
+   */
+  resetDimension(index: number): void;
+}
+
+/**
+ * Accumulated dimension
+ */
+export interface IAccumulatedDimension extends IDisposable {
+  /**
+   * Accumulated store
+   */
+  accumulatedStore: Map<number, number>;
+  /**
+   * Dimension manager
+   */
+  dimensionManager: IDimensionManager;
+
+  /**
+   * An Observable that emits a function to retrieve the preceding total dimension for a specific index.
+   *
+   * The emitted function signature is: `(index: number) => number`
+   * - `index`: The index of the item.
+   * - Returns: The preceding total dimension.
+   */
+  getPrecedingTotalDimension$: Observable<(index: number) => number>;
+}
+
+/**
+ * Sheet dimension
+ */
+export interface ISheetDimension extends IDisposable {
+  /**
+   * Sheet
+   */
+  sheet: ISheet;
+  /**
+   * Accumulated column dimension
+   */
+  accumulatedColumnDimension: IAccumulatedDimension;
+  /**
+   * Accumulated row dimension
+   */
+  accumulatedRowDimension: IAccumulatedDimension;
+  /**
+   * Visual size
+   */
+  visualSize: IDimension;
+  /**
+   * Real width
+   */
+  realWidth: number;
+  /**
+   * Real height
+   */
+  realHeight: number;
+  /**
+   * Real size
+   */
+  realSize: IDimension;
+
+  /**
+   * Observable visual size
+   */
+  visualSize$: Observable<IDimension>;
+  /**
+   * Observable real width
+   */
+  realWidth$: Observable<number>;
+  /**
+   * Observable real height
+   */
+  realHeight$: Observable<number>;
+  /**
+   * Observable real size
+   */
+  realSize$: Observable<IDimension>;
+}
+
+/**
+ * Scroll offset
+ */
+export interface IScrollOffset extends IDisposable {
+  /**
+   * Sheet dimension
+   */
+  sheetDimension: ISheetDimension;
+  /**
+   * Scroll top
+   */
+  scrollTop: number;
+  /**
+   * Scroll left
+   */
+  scrollLeft: number;
+  /**
+   * Scroll offset
+   */
+  scrollOffset: IOffset;
+
+  /**
+   * Observable scroll top
+   */
+  scrollTop$: Observable<number>;
+  /**
+   * Observable scroll left
+   */
+  scrollLeft$: Observable<number>;
+  /**
+   * Observable scroll offset
+   */
+  scrollOffset$: Observable<IOffset>;
+}
+
+/**
+ * Item boundary manager
+ */
+export interface IItemBoundaryManager extends IDisposable {
+  /**
+   * Scroll offset
+   */
+  readonly scrollOffset: IScrollOffset;
+  /**
+   * Accumulated column dimension
+   */
+  readonly accumulatedColumnDimension: IAccumulatedDimension;
+  /**
+   * Accumulated row dimension
+   */
+  readonly accumulatedRowDimension: IAccumulatedDimension;
+  /**
+   * Sheet
+   */
+  readonly sheet: ISheet;
+
+  /**
+   * An Observable that emits a function to retrieve the preceding boundary for a specific column index.
+   *
+   * The emitted function signature is: `(columnIndex: number) => number`
+   * - `columnIndex`: The index of the column.
+   * - Returns: The preceding boundary.
+   */
+  readonly getColumnPrecedingBoundary$: Observable<(columnIndex: number) => number>;
+  /**
+   * An Observable that emits a function to retrieve the preceding boundary for a specific row index.
+   *
+   * The emitted function signature is: `(rowIndex: number) => number`
+   * - `rowIndex`: The index of the row.
+   * - Returns: The preceding boundary.
+   */
+  readonly getRowPrecedingBoundary$: Observable<(rowIndex: number) => number>;
+}
+
+/**
+ * Cell manager
+ */
+export interface ICellManager extends IDisposable {
+  /**
+   * Column dimension manager
+   */
+  columnDimensionManager: IDimensionManager;
+  /**
+   * Row dimension manager
+   */
+  rowDimensionManager: IDimensionManager;
+  /**
+   * Column boundary manager
+   */
+  columnBoundaryManager: IItemBoundaryManager;
+  /**
+   * Row boundary manager
+   */
+  rowBoundaryManager: IItemBoundaryManager;
+
+  /**
+   * Cell content store
+   */
+  cellContentStore: Record<string, string>;
+
+  /**
+   * An Observable that emits a function to retrieve the cell data for a specific row and column.
+   *
+   * The emitted function signature is: `(rowIndex: number, columnIndex: number) => string`
+   * - `rowIndex`: The index of the row.
+   * - `columnIndex`: The index of the column.
+   * - Returns: The cell data.
+   */
+  getCellData$: Observable<(rowIndex: number, columnIndex: number) => string>;
+  /**
+   * An Observable that emits a function to retrieve the cell rect box for a specific row and column.
+   *
+   * The emitted function signature is: `(rowIndex: number, columnIndex: number) => IRectBox`
+   * - `rowIndex`: The index of the row.
+   * - `columnIndex`: The index of the column.
+   * - Returns: The cell rect box.
+   */
+  getCellRectBox$: Observable<(rowIndex: number, columnIndex: number) => IRectBox>;
+}
