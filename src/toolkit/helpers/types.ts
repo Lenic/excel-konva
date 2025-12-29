@@ -318,18 +318,30 @@ export interface ICellManager extends IDisposable {
    */
   rowDimensionManager: IDimensionManager;
   /**
-   * Column boundary manager
+   * Item boundary manager
    */
-  columnBoundaryManager: IItemBoundaryManager;
-  /**
-   * Row boundary manager
-   */
-  rowBoundaryManager: IItemBoundaryManager;
+  itemBoundaryManager: IItemBoundaryManager;
 
   /**
    * Cell content store
    */
-  cellContentStore: Record<string, string>;
+  cellContentStore: Map<string, string>;
+
+  /**
+   * Set the content of the given cell.
+   *
+   * @param key - The key of the cell.
+   * @param value - The value of the cell. `null` means clearing the cell content and setting it to the default value `undefined`.
+   */
+  setCellData(key: string, value: string | null): void;
+  /**
+   * Set the content of the given cell.
+   *
+   * @param rowIndex - The row index, starting from 0.
+   * @param columnIndex - The column index, starting from 0.
+   * @param value - The value of the cell. `null` means clearing the cell content and setting it to the default value `undefined`.
+   */
+  setCellData(rowIndex: number, columnIndex: number, value: string | null): void;
 
   /**
    * An Observable that emits a function to retrieve the cell data for a specific row and column.
