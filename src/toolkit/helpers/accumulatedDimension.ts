@@ -1,4 +1,4 @@
-import type { IAccumulatedDimension, IDimensionManager } from './types';
+import type { IAccumulatedDimension, IItemDimension } from './types';
 import type { Observable } from 'rxjs';
 
 import { map, shareReplay } from 'rxjs';
@@ -9,33 +9,33 @@ import { Disposable } from '../core';
  * Accumulated dimension
  */
 export class AccumulatedDimension extends Disposable implements IAccumulatedDimension {
-  accumulatedStore: Map<number, number>;
-  dimensionManager: IDimensionManager;
+  store: Map<number, number>;
+  dimension: IItemDimension;
 
-  getPrecedingTotalDimension$: Observable<(index: number) => number>;
+  get$: Observable<(index: number) => number>;
 
   /**
    * Constructor
    *
-   * @param dimensionManager - Dimension manager
+   * @param itemDimension - Dimension manager
    */
-  constructor(dimensionManager: IDimensionManager) {
+  constructor(itemDimension: IItemDimension) {
     super();
 
-    this.accumulatedStore = new Map();
+    this.store = new Map();
     this.disposeWithMe(() => {
-      this.accumulatedStore.clear();
+      this.store.clear();
     });
-    this.dimensionManager = dimensionManager;
+    this.dimension = itemDimension;
 
-    this.getPrecedingTotalDimension$ = this.rebuild();
-    this.disposeWithMe(this.getPrecedingTotalDimension$.subscribe());
+    this.get$ = this.build();
+    this.disposeWithMe(this.get$.subscribe());
   }
 
-  private rebuild(): Observable<(index: number) => number> {
-    return this.dimensionManager.getDimension$.pipe(
+  private build(): Observable<(index: number) => number> {
+    return this.dimension.get$.pipe(
       map((getDimension) => {
-        this.accumulatedStore.clear();
+        this.store.clear();
 
         /**
          * The maximum index of the item in the cache
@@ -48,15 +48,15 @@ export class AccumulatedDimension extends Disposable implements IAccumulatedDime
          * @param index - The index of the item, starting from the number 0
          */
         return (index: number) => {
-          const value = this.accumulatedStore.get(index);
+          const value = this.store.get(index);
           if (value !== undefined) return value;
 
-          let currentValue = this.accumulatedStore.get(maxIndex) ?? 0;
+          let currentValue = this.store.get(maxIndex) ?? 0;
           for (let c = maxIndex; c < index; c++) {
             const nextValue = currentValue + getDimension(c);
 
             maxIndex = c + 1;
-            this.accumulatedStore.set(maxIndex, nextValue);
+            this.store.set(maxIndex, nextValue);
 
             currentValue = nextValue;
           }

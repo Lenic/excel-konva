@@ -1,16 +1,11 @@
 import Konva from 'konva';
 import { combineLatest, fromEventPattern, map, shareReplay, tap } from 'rxjs';
 
-import { sheetVisualSize$ } from './utils/size';
-import { frozenColumnsSubject, frozenRowsSubject } from './constants';
 import { scrollContainer } from './core-elements';
+import { sheet, sheetDimension } from './helpers';
 
-export const stage = new Konva.Stage({
-  container: 'konva-container',
-  width: 800,
-  height: 600,
-});
-sheetVisualSize$.subscribe((size) => stage.setAttrs(size));
+export const stage = new Konva.Stage({ container: 'konva-container', width: 0, height: 0 });
+sheetDimension.visualSize$.subscribe((size) => stage.setAttrs(size));
 
 // 连接 Canvas 的鼠标滚轮事件和滚动容器的滚动事件
 fromEventPattern<Konva.KonvaEventObject<WheelEvent>>(
@@ -54,7 +49,7 @@ export const cornerGroup = new Konva.Group(); // R0, C0
 
 backgroundLayer.add(scrollableGroup, sideGroup, headerGroup, cornerGroup);
 
-export const getCellGroup$ = combineLatest([frozenRowsSubject, frozenColumnsSubject]).pipe(
+export const getCellGroup$ = combineLatest([sheet.frozenRows$, sheet.frozenColumns$]).pipe(
   map(([frozenRows, frozenColumns]) => {
     return function getCellGroup(row: number, col: number) {
       const isHeader = row < frozenRows;

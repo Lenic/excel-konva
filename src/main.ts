@@ -51,13 +51,13 @@ sheetRealSize$.subscribe((dimension) => {
   virtualContent.style.height = `${dimension.height}px`;
 });
 
-renderSelections$.pipe(auditTime(16)).subscribe((render) => {
-  const count = render();
+// renderSelections$.pipe(auditTime(16)).subscribe((render) => {
+//   const count = render();
 
-  selectionCount.textContent = count.toLocaleString();
-});
-renderVisibleCells$.pipe(auditTime(16)).subscribe((dataRegionInfo) => {
-  const { startRow, endRow, startColumn, endColumn } = dataRegionInfo;
+//   selectionCount.textContent = count.toLocaleString();
+// });
+renderVisibleCells$.pipe(auditTime(16)).subscribe((dataRegion) => {
+  const { startRow, endRow, startColumn, endColumn } = dataRegion;
 
   renderedRangeRow.textContent = `${startRow.toLocaleString()} - ${endRow.toLocaleString()}`;
   renderedRangeColumn.textContent = `${startColumn} - ${endColumn}`;

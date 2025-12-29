@@ -1,51 +1,42 @@
 import type { IRectBox } from '../types';
-import type { ICellManager, IDimensionManager, IItemBoundaryManager } from './types';
+import type { ICellDimension, IItemBoundary } from './types';
 import type { Observable } from 'rxjs';
 
-import { combineLatest, map, scan, shareReplay, startWith, Subject, withLatestFrom } from 'rxjs';
+import { combineLatest, distinctUntilChanged, map, scan, shareReplay, startWith, Subject, withLatestFrom } from 'rxjs';
 
 import { Disposable, getCellKey, getColumnLabel } from '../core';
 
 /**
- * Cell manager
+ * Cell dimension
  */
-export class CellManager extends Disposable implements ICellManager {
+export class CellDimension extends Disposable implements ICellDimension {
   private cellDataSubject: Subject<[string, string | null]>;
 
-  columnDimensionManager: IDimensionManager;
-  rowDimensionManager: IDimensionManager;
-  itemBoundaryManager: IItemBoundaryManager;
+  boundary: IItemBoundary;
 
-  cellContentStore: Map<string, string>;
+  cellDataStore: Map<string, string>;
+
   getCellData$: Observable<(rowIndex: number, columnIndex: number) => string>;
   getCellRectBox$: Observable<(rowIndex: number, columnIndex: number) => IRectBox>;
 
   /**
    * Constructor
    *
-   * @param columnDimensionManager - Column dimension manager
-   * @param rowDimensionManager - Row dimension manager
    * @param itemBoundaryManager - Item boundary manager
    */
-  constructor(
-    columnDimensionManager: IDimensionManager,
-    rowDimensionManager: IDimensionManager,
-    itemBoundaryManager: IItemBoundaryManager,
-  ) {
+  constructor(itemBoundaryManager: IItemBoundary) {
     super();
 
-    this.columnDimensionManager = columnDimensionManager;
-    this.rowDimensionManager = rowDimensionManager;
-    this.itemBoundaryManager = itemBoundaryManager;
+    this.boundary = itemBoundaryManager;
 
     this.cellDataSubject = new Subject<[string, string | null]>();
     this.disposeWithMe(() => {
       this.cellDataSubject.complete();
     });
 
-    this.cellContentStore = new Map<string, string>();
+    this.cellDataStore = new Map<string, string>();
     this.disposeWithMe(() => {
-      this.cellContentStore.clear();
+      this.cellDataStore.clear();
     });
 
     this.getCellData$ = this.buildGetCellData();
@@ -79,7 +70,7 @@ export class CellManager extends Disposable implements ICellManager {
           acc.set(key, value);
           return acc;
         }
-      }, this.cellContentStore),
+      }, this.cellDataStore),
       map((store) => {
         /**
          * Get the content of the specified cell.
@@ -106,11 +97,14 @@ export class CellManager extends Disposable implements ICellManager {
 
   private buildGetCellRectBox() {
     return combineLatest([
-      this.itemBoundaryManager.getColumnPrecedingBoundary$,
-      this.itemBoundaryManager.getRowPrecedingBoundary$,
+      combineLatest([this.boundary.getColumnLeft$, this.boundary.column.dimension.get$]).pipe(
+        distinctUntilChanged((prev, curr) => prev[0] === curr[0]),
+      ),
+      combineLatest([this.boundary.getRowTop$, this.boundary.row.dimension.get$]).pipe(
+        distinctUntilChanged((prev, curr) => prev[0] === curr[0]),
+      ),
     ]).pipe(
-      withLatestFrom(this.columnDimensionManager.getDimension$, this.rowDimensionManager.getDimension$),
-      map(([[getColumnLeft, getRowTop], getColumnWidth, getRowHeight]) => {
+      map(([[getColumnLeft, getColumnWidth], [getRowTop, getRowHeight]]) => {
         /**
          * Get the rectangle box of the specified cell.
          *

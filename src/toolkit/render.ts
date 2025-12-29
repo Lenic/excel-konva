@@ -1,19 +1,12 @@
-import type { ISelectedRange } from './types';
+import type { ICellRegionOptions, ISelectedRange } from './types';
 
-import { combineLatest, map, shareReplay, withLatestFrom } from 'rxjs';
+import { combineLatest, distinctUntilChanged, map, shareReplay, withLatestFrom } from 'rxjs';
 
 import { getCellPoint$ } from './utils/cell';
-import { dataRegionInfo$, renderCellRegion$ } from './utils/region';
 import { getColumnWidth$, getRowHeight$, sheetVisualSize$ } from './utils/size';
-import {
-  frozenColumnsSubject,
-  frozenRowsSubject,
-  HEADER_COL_INDEX,
-  HEADER_ROW_INDEX,
-  SELECTION_FILL_COLOR,
-  SELECTION_STROKE_COLOR,
-} from './constants';
-import { backgroundLayer, selectionLayer } from './konva-items';
+import { frozenColumnsSubject, frozenRowsSubject, SELECTION_FILL_COLOR, SELECTION_STROKE_COLOR } from './constants';
+import { cellDimension, dataRegion, sheet } from './helpers';
+import { backgroundLayer, getCellGroup$, selectionLayer } from './konva-items';
 import { activeCellMarkerPool, cellPool, selectionPool } from './pools';
 
 const state = {
@@ -204,16 +197,60 @@ export const renderSelections$ = combineLatest([
   shareReplay({ refCount: true, bufferSize: 1 }),
 );
 
+export const renderCellRegion$ = combineLatest([
+  getCellGroup$,
+  cellDimension.getCellRectBox$,
+  cellDimension.getCellData$,
+]).pipe(
+  map(([getCellGroup, getCellRectBox, getCellData]) => {
+    /**
+     * 绘制目标单元格
+     *
+     * @param rowIndex - 单元格所在的行索引
+     * @param columnIndex - 单元格所在的列索引
+     * @param options - 单元格的设置信息
+     */
+    return function renderCellRegion(rowIndex: number, columnIndex: number, options: ICellRegionOptions) {
+      const group = getCellGroup(rowIndex, columnIndex);
+      const { x, y, width, height } = getCellRectBox(rowIndex, columnIndex);
+
+      const rect = cellPool.getRect();
+      rect.setAttrs({
+        ...options.rectAttrs,
+        x,
+        y,
+        width,
+        height,
+      });
+      if (rect.parent !== group) rect.moveTo(group);
+
+      const text = cellPool.getText();
+      text.setAttrs({
+        ...options.textAttrs,
+        x,
+        y,
+        width,
+        height,
+        text: getCellData(rowIndex, columnIndex),
+      });
+      if (text.parent !== group) text.moveTo(group);
+    };
+  }),
+  shareReplay({ refCount: true, bufferSize: 1 }),
+);
+
 /**
  * 渲染所有可见单元格到对应的 Konva Group
  */
 export const renderVisibleCells$ = combineLatest([
-  renderCellRegion$.pipe(withLatestFrom(dataRegionInfo$)),
-  frozenColumnsSubject,
-  frozenRowsSubject,
+  renderCellRegion$,
+  dataRegion.region$,
+  sheet.frozenColumns$,
+  sheet.frozenRows$,
 ]).pipe(
-  map(([[renderCellRegion, dataRegionInfo], frozenColumns, frozenRows]) => {
-    const { startRow, endRow, startColumn, endColumn } = dataRegionInfo;
+  distinctUntilChanged((prev, curr) => prev[0] === curr[0]),
+  map(([renderCellRegion, dataRegion, frozenColumns, frozenRows]) => {
+    const { startRow, endRow, startColumn, endColumn } = dataRegion;
 
     cellPool.reset();
 
@@ -232,14 +269,14 @@ export const renderVisibleCells$ = combineLatest([
       for (let c = startColumn; c < endColumn; c++) {
         renderCellRegion(r, c, {
           rectAttrs: {
-            fill: r === HEADER_ROW_INDEX ? '#f0f0f0' : r % 2 === 0 ? '#ffffff' : '#f9f9f9',
+            fill: r === 0 ? '#f0f0f0' : r % 2 === 0 ? '#ffffff' : '#f9f9f9',
             stroke: '#cccccc',
             strokeWidth: 1,
           },
           textAttrs: {
             fill: '#000000',
-            fontSize: r === HEADER_ROW_INDEX ? 14 : 12,
-            align: r === HEADER_ROW_INDEX ? 'center' : 'left',
+            fontSize: r === 0 ? 14 : 12,
+            align: r === 0 ? 'center' : 'left',
             padding: 8,
             ellipsis: true,
             wrap: 'none',
@@ -253,15 +290,15 @@ export const renderVisibleCells$ = combineLatest([
       for (let r = startRow; r < endRow; r++) {
         renderCellRegion(r, c, {
           rectAttrs: {
-            fill: c === HEADER_COL_INDEX ? '#f0f0f0' : r % 2 === 0 ? '#ffffff' : '#f9f9f9',
+            fill: c === 0 ? '#f0f0f0' : r % 2 === 0 ? '#ffffff' : '#f9f9f9',
             stroke: '#cccccc',
             strokeWidth: 1,
           },
           textAttrs: {
             fill: '#333333',
             fontSize: 12,
-            align: c === HEADER_COL_INDEX ? 'center' : 'left',
-            padding: c === HEADER_COL_INDEX ? 0 : 8,
+            align: c === 0 ? 'center' : 'left',
+            padding: c === 0 ? 0 : 8,
             ellipsis: true,
             wrap: 'none',
           },
@@ -274,15 +311,15 @@ export const renderVisibleCells$ = combineLatest([
       for (let c = 0; c < frozenColumns; c++) {
         renderCellRegion(r, c, {
           rectAttrs: {
-            fill: r === HEADER_ROW_INDEX && c === HEADER_COL_INDEX ? '#e0e0e0' : '#f0f0f0',
+            fill: r === 0 && c === 0 ? '#e0e0e0' : '#f0f0f0',
             stroke: '#cccccc',
             strokeWidth: 1,
           },
           textAttrs: {
             fill: '#000000',
-            fontSize: r === HEADER_ROW_INDEX ? 14 : 12,
-            align: c === HEADER_COL_INDEX ? 'center' : r === HEADER_ROW_INDEX ? 'center' : 'left',
-            padding: c === HEADER_COL_INDEX ? 0 : 8,
+            fontSize: r === 0 ? 14 : 12,
+            align: c === 0 ? 'center' : r === 0 ? 'center' : 'left',
+            padding: c === 0 ? 0 : 8,
             ellipsis: true,
             wrap: 'none',
           },
@@ -292,7 +329,7 @@ export const renderVisibleCells$ = combineLatest([
 
     backgroundLayer.batchDraw();
 
-    return dataRegionInfo;
+    return dataRegion;
   }),
   shareReplay({ refCount: true, bufferSize: 1 }),
 );

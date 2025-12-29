@@ -1,14 +1,21 @@
 import type { IBoundaryInfo, TMousedownEvent } from './types';
 import type Konva from 'konva';
 
-import { combineLatest, EMPTY, exhaustMap, fromEventPattern, map, of, shareReplay, withLatestFrom } from 'rxjs';
+import {
+  combineLatest,
+  distinctUntilChanged,
+  EMPTY,
+  exhaustMap,
+  fromEventPattern,
+  map,
+  of,
+  shareReplay,
+  withLatestFrom,
+} from 'rxjs';
 
-import { columnCountSubject, HEADER_COL_INDEX, HEADER_ROW_INDEX, rowCountSubject } from '../constants';
 import { container } from '../core-elements';
+import { columnDimension, itemBoundary, rowDimension, sheet, sheetDimension } from '../helpers';
 import { stage } from '../konva-items';
-import { getColumnLeft$ } from '../utils/column';
-import { getRowTop$ } from '../utils/row';
-import { getColumnWidth$, getRowHeight$, sheetVisualSize$ } from '../utils/size';
 
 import { MousedownTypes, RESIZE_TOLERANCE } from './constants';
 
@@ -27,11 +34,15 @@ export const mouseUp$ = getMouseEvent$('mouseup');
  * 检查当前位置的边界信息，如果不是边界就返回 `null`
  */
 const checkResizeBoundary$ = combineLatest([
-  getColumnLeft$.pipe(withLatestFrom(getRowHeight$)),
-  getRowTop$.pipe(withLatestFrom(getColumnWidth$)),
-  columnCountSubject,
-  rowCountSubject,
-  sheetVisualSize$,
+  combineLatest([itemBoundary.getColumnLeft$, columnDimension.get$]).pipe(
+    distinctUntilChanged((prev, curr) => prev[0] === curr[0]),
+  ),
+  combineLatest([itemBoundary.getRowTop$, rowDimension.get$]).pipe(
+    distinctUntilChanged((prev, curr) => prev[0] === curr[0]),
+  ),
+  sheet.columnCount$,
+  sheet.rowCount$,
+  sheetDimension.visualSize$,
 ]).pipe(
   map(([[getColumnLeft, getRowHeight], [getRowTop, getColumnWidth], columnCount, rowCount, sheetVisualSize]) => {
     /**
@@ -47,7 +58,7 @@ const checkResizeBoundary$ = combineLatest([
        * - 只有列头区域内才会触发这个事件
        * - 在正常的单元格区域内不会触发列边界 resize 事件
        */
-      if (relY < getRowHeight(HEADER_ROW_INDEX) + RESIZE_TOLERANCE) {
+      if (relY < getRowHeight(0) + RESIZE_TOLERANCE) {
         for (let c = 0; c < columnCount; c++) {
           // 使用 getColumnLeft 获取列 c 右侧边界的准确坐标值
           const boundary = getColumnLeft(c + 1);
@@ -68,7 +79,7 @@ const checkResizeBoundary$ = combineLatest([
        * - 只有行头区域内才会触发这个事件
        * - 在正常的单元格区域内不会触发行边界 resize 事件
        */
-      if (relX < getColumnWidth(HEADER_COL_INDEX) + RESIZE_TOLERANCE) {
+      if (relX < getColumnWidth(0) + RESIZE_TOLERANCE) {
         for (let r = 0; r < rowCount; r++) {
           // 使用 getRowTop 获取行 r 底部边界的准确坐标值
           const boundary = getRowTop(r + 1);

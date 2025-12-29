@@ -1,11 +1,11 @@
 import type { IDisposable } from '../core';
-import type { IDimension, IOffset, IRectBox } from '../types';
+import type { IDimension, IOffset, IRectBox, IRegionInfo } from '../types';
 import type { Observable } from 'rxjs';
 
 /**
- * Sheet
+ * Sheet meta
  */
-export interface ISheet extends IDisposable {
+export interface ISheetMeta extends IDisposable {
   /**
    * Header height
    */
@@ -19,9 +19,17 @@ export interface ISheet extends IDisposable {
    */
   rowHeight: number;
   /**
+   * Min row height
+   */
+  minRowHeight: number;
+  /**
    * Column width
    */
   columnWidth: number;
+  /**
+   * Min column width
+   */
+  minColumnWidth: number;
   /**
    * Row count
    */
@@ -52,9 +60,17 @@ export interface ISheet extends IDisposable {
    */
   rowHeight$: Observable<number>;
   /**
+   * Observable min row height
+   */
+  minRowHeight$: Observable<number>;
+  /**
    * Observable column width
    */
   columnWidth$: Observable<number>;
+  /**
+   * Observable min column width
+   */
+  minColumnWidth$: Observable<number>;
   /**
    * Observable row count
    */
@@ -104,14 +120,22 @@ export interface ISheet extends IDisposable {
    * Set frozen rows
    */
   setFrozenRows(count: number): void;
+  /**
+   * Set min row height
+   */
+  setMinRowHeight(height: number): void;
+  /**
+   * Set min column width
+   */
+  setMinColumnWidth(width: number): void;
 }
 
 /**
  * Dimension manager options
  */
-export interface IDimensionManagerOptions {
+export interface IItemDimensionOptions {
   /**
-   * Minimum dimension
+   * Min dimension
    */
   minDimension: number;
   /**
@@ -127,12 +151,16 @@ export interface IDimensionManagerOptions {
 /**
  * Dimension manager
  */
-export interface IDimensionManager extends IDisposable {
+export interface IItemDimension extends IDisposable {
   /**
    * Dimension store
    */
-  dimensionStore: Map<number, number>;
+  store: Map<number, number>;
 
+  /**
+   * Observable options
+   */
+  options$: Observable<IItemDimensionOptions>;
   /**
    * An Observable that emits a function to retrieve the dimension value for a specific index.
    *
@@ -140,7 +168,7 @@ export interface IDimensionManager extends IDisposable {
    * - `index`: The index of the item.
    * - Returns: The item size.
    */
-  getDimension$: Observable<(index: number) => number>;
+  get$: Observable<(index: number) => number>;
 
   /**
    * Set dimension
@@ -148,13 +176,13 @@ export interface IDimensionManager extends IDisposable {
    * @param index - Dimension index
    * @param value - Dimension value
    */
-  setDimension(index: number, value: number): void;
+  set(index: number, value: number): void;
   /**
    * Reset dimension
    *
    * @param index - Dimension index
    */
-  resetDimension(index: number): void;
+  reset(index: number): void;
 }
 
 /**
@@ -164,11 +192,11 @@ export interface IAccumulatedDimension extends IDisposable {
   /**
    * Accumulated store
    */
-  accumulatedStore: Map<number, number>;
+  store: Map<number, number>;
   /**
    * Dimension manager
    */
-  dimensionManager: IDimensionManager;
+  dimension: IItemDimension;
 
   /**
    * An Observable that emits a function to retrieve the preceding total dimension for a specific index.
@@ -177,7 +205,7 @@ export interface IAccumulatedDimension extends IDisposable {
    * - `index`: The index of the item.
    * - Returns: The preceding total dimension.
    */
-  getPrecedingTotalDimension$: Observable<(index: number) => number>;
+  get$: Observable<(index: number) => number>;
 }
 
 /**
@@ -187,15 +215,16 @@ export interface ISheetDimension extends IDisposable {
   /**
    * Sheet
    */
-  sheet: ISheet;
+  sheet: ISheetMeta;
   /**
    * Accumulated column dimension
    */
-  accumulatedColumnDimension: IAccumulatedDimension;
+  column: IAccumulatedDimension;
   /**
    * Accumulated row dimension
    */
-  accumulatedRowDimension: IAccumulatedDimension;
+  row: IAccumulatedDimension;
+
   /**
    * Visual size
    */
@@ -267,25 +296,25 @@ export interface IScrollOffset extends IDisposable {
 }
 
 /**
- * Item boundary manager
+ * Item boundary
  */
-export interface IItemBoundaryManager extends IDisposable {
+export interface IItemBoundary extends IDisposable {
   /**
    * Scroll offset
    */
-  scrollOffset: IScrollOffset;
+  offset: IScrollOffset;
   /**
    * Accumulated column dimension
    */
-  accumulatedColumnDimension: IAccumulatedDimension;
+  column: IAccumulatedDimension;
   /**
    * Accumulated row dimension
    */
-  accumulatedRowDimension: IAccumulatedDimension;
+  row: IAccumulatedDimension;
   /**
    * Sheet
    */
-  sheet: ISheet;
+  sheet: ISheetMeta;
 
   /**
    * An Observable that emits a function to retrieve the preceding boundary for a specific column index.
@@ -294,7 +323,7 @@ export interface IItemBoundaryManager extends IDisposable {
    * - `columnIndex`: The index of the column.
    * - Returns: The preceding boundary.
    */
-  getColumnPrecedingBoundary$: Observable<(columnIndex: number) => number>;
+  getColumnLeft$: Observable<(columnIndex: number) => number>;
   /**
    * An Observable that emits a function to retrieve the preceding boundary for a specific row index.
    *
@@ -302,30 +331,22 @@ export interface IItemBoundaryManager extends IDisposable {
    * - `rowIndex`: The index of the row.
    * - Returns: The preceding boundary.
    */
-  getRowPrecedingBoundary$: Observable<(rowIndex: number) => number>;
+  getRowTop$: Observable<(rowIndex: number) => number>;
 }
 
 /**
- * Cell manager
+ * Cell dimension
  */
-export interface ICellManager extends IDisposable {
-  /**
-   * Column dimension manager
-   */
-  columnDimensionManager: IDimensionManager;
-  /**
-   * Row dimension manager
-   */
-  rowDimensionManager: IDimensionManager;
+export interface ICellDimension extends IDisposable {
   /**
    * Item boundary manager
    */
-  itemBoundaryManager: IItemBoundaryManager;
+  boundary: IItemBoundary;
 
   /**
-   * Cell content store
+   * Cell data store
    */
-  cellContentStore: Map<string, string>;
+  cellDataStore: Map<string, string>;
 
   /**
    * Set the content of the given cell.
@@ -361,4 +382,32 @@ export interface ICellManager extends IDisposable {
    * - Returns: The cell rect box.
    */
   getCellRectBox$: Observable<(rowIndex: number, columnIndex: number) => IRectBox>;
+}
+
+/**
+ * Data region info
+ */
+export interface IDataRegion {
+  /**
+   * Sheet
+   */
+  sheet: ISheetMeta;
+  /**
+   * Item boundary manager
+   */
+  boundary: IItemBoundary;
+  /**
+   * Sheet dimension
+   */
+  sheetDimension: ISheetDimension;
+
+  /**
+   * Data region
+   */
+  region: IRegionInfo;
+
+  /**
+   * Observable data region
+   */
+  region$: Observable<IRegionInfo>;
 }

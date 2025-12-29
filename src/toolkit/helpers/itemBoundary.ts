@@ -1,20 +1,20 @@
-import type { IAccumulatedDimension, IItemBoundaryManager, IScrollOffset, ISheet } from './types';
+import type { IAccumulatedDimension, IItemBoundary, IScrollOffset, ISheetMeta } from './types';
 
 import { combineLatest, map, type Observable, shareReplay } from 'rxjs';
 
 import { Disposable } from '../core';
 
 /**
- * Item boundary manager
+ * Item boundary
  */
-export class ItemBoundaryManager extends Disposable implements IItemBoundaryManager {
-  scrollOffset: IScrollOffset;
-  accumulatedColumnDimension: IAccumulatedDimension;
-  accumulatedRowDimension: IAccumulatedDimension;
-  sheet: ISheet;
+export class ItemBoundary extends Disposable implements IItemBoundary {
+  offset: IScrollOffset;
+  column: IAccumulatedDimension;
+  row: IAccumulatedDimension;
+  sheet: ISheetMeta;
 
-  getColumnPrecedingBoundary$: Observable<(index: number) => number>;
-  getRowPrecedingBoundary$: Observable<(index: number) => number>;
+  getColumnLeft$: Observable<(index: number) => number>;
+  getRowTop$: Observable<(index: number) => number>;
 
   /**
    * Constructor
@@ -29,28 +29,28 @@ export class ItemBoundaryManager extends Disposable implements IItemBoundaryMana
     scrollOffset: IScrollOffset,
     accumulatedColumnDimension: IAccumulatedDimension,
     accumulatedRowDimension: IAccumulatedDimension,
-    sheet: ISheet,
+    sheet: ISheetMeta,
   ) {
     super();
 
-    this.scrollOffset = scrollOffset;
-    this.accumulatedColumnDimension = accumulatedColumnDimension;
-    this.accumulatedRowDimension = accumulatedRowDimension;
+    this.offset = scrollOffset;
+    this.column = accumulatedColumnDimension;
+    this.row = accumulatedRowDimension;
     this.sheet = sheet;
 
-    this.getColumnPrecedingBoundary$ = this.buildPrecedingBoundary$(
-      accumulatedColumnDimension.getPrecedingTotalDimension$,
+    this.getColumnLeft$ = this.buildPrecedingBoundary$(
+      accumulatedColumnDimension.get$,
       scrollOffset.scrollLeft$,
       sheet.frozenColumns$,
     );
-    this.disposeWithMe(this.getColumnPrecedingBoundary$.subscribe());
+    this.disposeWithMe(this.getColumnLeft$.subscribe());
 
-    this.getRowPrecedingBoundary$ = this.buildPrecedingBoundary$(
-      accumulatedRowDimension.getPrecedingTotalDimension$,
+    this.getRowTop$ = this.buildPrecedingBoundary$(
+      accumulatedRowDimension.get$,
       scrollOffset.scrollTop$,
       sheet.frozenRows$,
     );
-    this.disposeWithMe(this.getRowPrecedingBoundary$.subscribe());
+    this.disposeWithMe(this.getRowTop$.subscribe());
   }
 
   private buildPrecedingBoundary$(

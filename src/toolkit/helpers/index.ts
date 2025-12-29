@@ -1,39 +1,29 @@
-import { CELL_HEIGHT, CELL_WIDTH, HEADER_HEIGHT, HEADER_WIDTH, MIN_CELL_HEIGHT, MIN_CELL_WIDTH } from '../constants';
+import { combineLatest, map } from 'rxjs';
 
 import { AccumulatedDimension } from './accumulatedDimension';
-import { CellManager } from './cellManager';
-import { DimensionManager } from './dimensionManager';
-import { ItemBoundaryManager } from './itemBoundaryManager';
+import { CellDimension } from './cellDimension';
+import { DataRegion } from './dataRegion';
+import { ItemBoundary } from './itemBoundary';
+import { ItemDimension } from './itemDimension';
 import { ScrollOffset } from './scrollOffset';
-import { Sheet } from './sheet';
 import { SheetDimension } from './sheetDimension';
+import { SheetMeta } from './sheetMeta';
 
-export const sheet = new Sheet(50000, 5000, 4, 3);
-
-export const columnDimensionManager = new DimensionManager({
-  minDimension: MIN_CELL_WIDTH,
-  headerDimension: HEADER_WIDTH,
-  defaultDimension: CELL_WIDTH,
-});
-
-export const rowDimensionManager = new DimensionManager({
-  minDimension: MIN_CELL_HEIGHT,
-  headerDimension: HEADER_HEIGHT,
-  defaultDimension: CELL_HEIGHT,
-});
-
-export const accumulatedColumnDimension = new AccumulatedDimension(columnDimensionManager);
-export const accumulatedRowDimension = new AccumulatedDimension(rowDimensionManager);
-
-export const sheetDimension = new SheetDimension(sheet, accumulatedColumnDimension, accumulatedRowDimension);
-
-export const scrollOffset = new ScrollOffset(sheetDimension);
-
-export const itemBoundaryManager = new ItemBoundaryManager(
-  scrollOffset,
-  accumulatedColumnDimension,
-  accumulatedRowDimension,
-  sheet,
+export const sheet = new SheetMeta(50000, 5000, 4, 3);
+export const columnDimension = new ItemDimension(
+  combineLatest([sheet.minColumnWidth$, sheet.headerWidth$, sheet.columnWidth$]).pipe(
+    map((v) => ({ minDimension: v[0], headerDimension: v[1], defaultDimension: v[2] })),
+  ),
 );
-
-export const cellManager = new CellManager(columnDimensionManager, rowDimensionManager, itemBoundaryManager);
+export const rowDimension = new ItemDimension(
+  combineLatest([sheet.minRowHeight$, sheet.headerHeight$, sheet.rowHeight$]).pipe(
+    map((v) => ({ minDimension: v[0], headerDimension: v[1], defaultDimension: v[2] })),
+  ),
+);
+export const accumulatedColumnDimension = new AccumulatedDimension(columnDimension);
+export const accumulatedRowDimension = new AccumulatedDimension(rowDimension);
+export const sheetDimension = new SheetDimension(sheet, accumulatedColumnDimension, accumulatedRowDimension);
+export const scrollOffset = new ScrollOffset(sheetDimension);
+export const itemBoundary = new ItemBoundary(scrollOffset, accumulatedColumnDimension, accumulatedRowDimension, sheet);
+export const cellDimension = new CellDimension(itemBoundary);
+export const dataRegion = new DataRegion(sheet, itemBoundary, sheetDimension);

@@ -1,5 +1,5 @@
 import type { IDimension } from '../types';
-import type { IAccumulatedDimension, ISheet, ISheetDimension } from './types';
+import type { IAccumulatedDimension, ISheetDimension, ISheetMeta } from './types';
 import type { Observable } from 'rxjs';
 
 import { combineLatest, fromEvent, map, shareReplay, startWith } from 'rxjs';
@@ -11,9 +11,9 @@ import { container } from '../core-elements';
  * Sheet dimension
  */
 export class SheetDimension extends Disposable implements ISheetDimension {
-  sheet: ISheet;
-  accumulatedColumnDimension: IAccumulatedDimension;
-  accumulatedRowDimension: IAccumulatedDimension;
+  sheet: ISheetMeta;
+  column: IAccumulatedDimension;
+  row: IAccumulatedDimension;
 
   visualSize: IDimension;
   realWidth: number;
@@ -33,15 +33,15 @@ export class SheetDimension extends Disposable implements ISheetDimension {
    * @param accumulatedRowDimension - Accumulated row dimension
    */
   constructor(
-    sheet: ISheet,
+    sheet: ISheetMeta,
     accumulatedColumnDimension: IAccumulatedDimension,
     accumulatedRowDimension: IAccumulatedDimension,
   ) {
     super();
 
     this.sheet = sheet;
-    this.accumulatedColumnDimension = accumulatedColumnDimension;
-    this.accumulatedRowDimension = accumulatedRowDimension;
+    this.column = accumulatedColumnDimension;
+    this.row = accumulatedRowDimension;
 
     this.visualSize = { width: 0, height: 0 };
     this.realWidth = 0;
@@ -59,20 +59,14 @@ export class SheetDimension extends Disposable implements ISheetDimension {
       }),
     );
 
-    this.realWidth$ = this.buildRealDimension(
-      this.sheet.columnCount$,
-      this.accumulatedColumnDimension.getPrecedingTotalDimension$,
-    );
+    this.realWidth$ = this.buildRealDimension(this.sheet.columnCount$, this.column.get$);
     this.disposeWithMe(
       this.realWidth$.subscribe((width) => {
         this.realWidth = width;
       }),
     );
 
-    this.realHeight$ = this.buildRealDimension(
-      this.sheet.rowCount$,
-      this.accumulatedRowDimension.getPrecedingTotalDimension$,
-    );
+    this.realHeight$ = this.buildRealDimension(this.sheet.rowCount$, this.row.get$);
     this.disposeWithMe(
       this.realHeight$.subscribe((height) => {
         this.realHeight = height;
