@@ -33,32 +33,69 @@ export function getColumnLabel(columnIndex: number) {
 }
 
 /**
- * 在一个已排序的数组中使用二分查找法查找目标元素
+ * Enhanced binary search function.
  *
- * @param list - 已排序的数组
- * @param comparer - 用于比较数组中的元素和目标元素的比较器
- *     - 返回数字 0 表示相等
- *     - 返回数字 >0 表示应该向左侧查找
- *     - 返回数字 <0 表示应该向右侧查找
+ * - Assumes the original data is a sorted list in ascending order, and `comparer` returns the result of [value at mid index - target value];
+ * - If `begin > end`, returns -1 indicating no matching index found;
+ *
+ * @param begin - The starting index of the search (inclusive).
+ * @param end - The ending index of the search (inclusive).
+ * @param comparer - Comparison function, receives the current mid index and returns the comparison result with the target value.
+ * @param exact - Search precision mode, defaults to exact search mode.
+ *  - `0` for exact search;
+ *  - `>0` to search for the minimum value greater than or equal to the target;
+ *  - `<0` to search for the maximum value less than or equal to the target;
+ * @returns The found index, or -1 if no matching index is found.
  */
-export function findIndexInSortedList<T>(list: T[], comparer: (value: T) => number): number {
-  let low = 0;
-  let high = list.length - 1;
+export function binarySearch(begin: number, end: number, comparer: (mid: number) => number, exact = 0): number {
+  // Basic validity check
+  if (begin > end) return -1;
 
-  while (low <= high) {
-    const mid = (low + high) >> 1;
-    const cmp = comparer(list[mid]);
+  // 1. Boundary test: Start point
+  const resBegin = comparer(begin);
+  if (resBegin === 0) return begin; // Exactly the start point
+  if (resBegin > 0) {
+    // Target value < list minimum (list[begin])
+    // exact > 0 (find >=): The first item in the list
+    // exact <= 0 (find == or <=): Not found or nothing on the left
+    return exact > 0 ? begin : -1;
+  }
 
-    if (cmp === 0) {
+  // 2. Boundary test: End point
+  const resEnd = comparer(end);
+  if (resEnd === 0) return end; // Exactly the end point
+  if (resEnd < 0) {
+    // Target value > list maximum (list[end])
+    // exact < 0 (find <=): The last item in the list
+    // exact >= 0 (find == or >=): Not found or nothing on the right
+    return exact < 0 ? end : -1;
+  }
+
+  // 3. Core loop: The target value must be within the range (begin, end)
+  let left = begin + 1;
+  let right = end - 1;
+
+  // Preset candidate value
+  // If exact > 0, no equal value found, the closest "greater" value is at least end
+  // If exact < 0, no equal value found, the closest "smaller" value is at least begin
+  let candidate = exact > 0 ? end : exact < 0 ? begin : -1;
+
+  while (left <= right) {
+    const mid = Math.floor(left + (right - left) / 2);
+    const result = comparer(mid);
+
+    if (result === 0) {
       return mid;
-    }
-
-    if (cmp > 0) {
-      high = mid - 1;
+    } else if (result < 0) {
+      // mid value is too small, look to the right
+      if (exact < 0) candidate = mid;
+      left = mid + 1;
     } else {
-      low = mid + 1;
+      // mid value is too large, look to the left
+      if (exact > 0) candidate = mid;
+      right = mid - 1;
     }
   }
 
-  return -1;
+  return exact === 0 ? -1 : candidate;
 }
