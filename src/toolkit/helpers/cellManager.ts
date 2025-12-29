@@ -4,9 +4,11 @@ import type { Observable } from 'rxjs';
 
 import { combineLatest, map, scan, shareReplay, startWith, Subject, withLatestFrom } from 'rxjs';
 
-import { Disposable } from '../core';
-import { getCellKey, getColumnLabel } from '../utils/core';
+import { Disposable, getCellKey, getColumnLabel } from '../core';
 
+/**
+ * Cell manager
+ */
 export class CellManager extends Disposable implements ICellManager {
   private cellDataSubject: Subject<[string, string | null]>;
 
@@ -18,6 +20,13 @@ export class CellManager extends Disposable implements ICellManager {
   getCellData$: Observable<(rowIndex: number, columnIndex: number) => string>;
   getCellRectBox$: Observable<(rowIndex: number, columnIndex: number) => IRectBox>;
 
+  /**
+   * Constructor
+   *
+   * @param columnDimensionManager - Column dimension manager
+   * @param rowDimensionManager - Row dimension manager
+   * @param itemBoundaryManager - Item boundary manager
+   */
   constructor(
     columnDimensionManager: IDimensionManager,
     rowDimensionManager: IDimensionManager,
