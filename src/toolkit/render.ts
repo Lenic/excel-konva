@@ -1,6 +1,6 @@
 import type { ICellRegionOptions, ISelectedRange } from './types';
 
-import { combineLatest, distinctUntilChanged, map, shareReplay, withLatestFrom } from 'rxjs';
+import { combineLatest, map, shareReplay, switchMap, take, withLatestFrom } from 'rxjs';
 
 import { getCellPoint$ } from './utils/cell';
 import { getColumnWidth$, getRowHeight$, sheetVisualSize$ } from './utils/size';
@@ -197,12 +197,15 @@ export const renderSelections$ = combineLatest([
   shareReplay({ refCount: true, bufferSize: 1 }),
 );
 
-export const renderCellRegion$ = combineLatest([
+/**
+ * 渲染所有可见单元格到对应的 Konva Group
+ */
+export const renderVisibleCells$ = combineLatest([
   getCellGroup$,
   cellDimension.getCellRectBox$,
   cellDimension.getCellData$,
 ]).pipe(
-  map(([getCellGroup, getCellRectBox, getCellData]) => {
+  switchMap(([getCellGroup, getCellRectBox, getCellData]) => {
     /**
      * 绘制目标单元格
      *
@@ -210,7 +213,7 @@ export const renderCellRegion$ = combineLatest([
      * @param columnIndex - 单元格所在的列索引
      * @param options - 单元格的设置信息
      */
-    return function renderCellRegion(rowIndex: number, columnIndex: number, options: ICellRegionOptions) {
+    function renderCellRegion(rowIndex: number, columnIndex: number, options: ICellRegionOptions) {
       const group = getCellGroup(rowIndex, columnIndex);
       const { x, y, width, height } = getCellRectBox(rowIndex, columnIndex);
 
@@ -234,21 +237,13 @@ export const renderCellRegion$ = combineLatest([
         text: getCellData(rowIndex, columnIndex),
       });
       if (text.parent !== group) text.moveTo(group);
-    };
-  }),
-  shareReplay({ refCount: true, bufferSize: 1 }),
-);
+    }
 
-/**
- * 渲染所有可见单元格到对应的 Konva Group
- */
-export const renderVisibleCells$ = combineLatest([
-  renderCellRegion$,
-  dataRegion.region$,
-  sheet.frozenColumns$,
-  sheet.frozenRows$,
-]).pipe(
-  distinctUntilChanged((prev, curr) => prev[0] === curr[0]),
+    return combineLatest([dataRegion.region$, sheet.frozenColumns$, sheet.frozenRows$]).pipe(
+      take(1),
+      map((items) => [renderCellRegion, ...items] as const),
+    );
+  }),
   map(([renderCellRegion, dataRegion, frozenColumns, frozenRows]) => {
     const { startRow, endRow, startColumn, endColumn } = dataRegion;
 
@@ -258,8 +253,19 @@ export const renderVisibleCells$ = combineLatest([
     for (let r = startRow; r < endRow; r++) {
       for (let c = startColumn; c < endColumn; c++) {
         renderCellRegion(r, c, {
-          rectAttrs: { fill: r % 2 === 0 ? '#ffffff' : '#f9f9f9', stroke: '#e8e8e8', strokeWidth: 0.5 },
-          textAttrs: { fill: '#333333', fontSize: 12, align: 'left', padding: 8, ellipsis: true, wrap: 'none' },
+          rectAttrs: {
+            fill: r % 2 === 0 ? '#ffffff' : '#f9f9f9',
+            stroke: '#e8e8e8',
+            strokeWidth: 0.5,
+          },
+          textAttrs: {
+            fill: '#333333',
+            fontSize: 12,
+            align: 'left',
+            padding: 8,
+            ellipsis: true,
+            wrap: 'none',
+          },
         });
       }
     }
