@@ -131,7 +131,7 @@ export interface ISheetMeta extends IDisposable {
 }
 
 /**
- * Dimension manager options
+ * Item dimension manager options
  */
 export interface IItemDimensionOptions {
   /**
@@ -149,7 +149,7 @@ export interface IItemDimensionOptions {
 }
 
 /**
- * Dimension manager
+ * Item dimension manager
  */
 export interface IItemDimension extends IDisposable {
   /**
@@ -194,7 +194,7 @@ export interface IAccumulatedDimension extends IDisposable {
    */
   store: Map<number, number>;
   /**
-   * Dimension manager
+   * Item dimension manager
    */
   dimension: IItemDimension;
 

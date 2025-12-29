@@ -6,7 +6,7 @@ import { combineLatest, map, scan, shareReplay, startWith, Subject } from 'rxjs'
 import { Disposable } from '../core';
 
 /**
- * Dimension manager
+ * Item dimension manager
  */
 export class ItemDimension extends Disposable implements IItemDimension {
   private minDimension: number;

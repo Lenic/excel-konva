@@ -2,7 +2,7 @@ import type { IRectBox } from '../types';
 import type { ICellDimension, IItemBoundary } from './types';
 import type { Observable } from 'rxjs';
 
-import { combineLatest, distinctUntilChanged, map, scan, shareReplay, startWith, Subject, withLatestFrom } from 'rxjs';
+import { combineLatest, distinctUntilChanged, map, scan, shareReplay, startWith, Subject } from 'rxjs';
 
 import { Disposable, getCellKey, getColumnLabel } from '../core';
 
@@ -22,12 +22,12 @@ export class CellDimension extends Disposable implements ICellDimension {
   /**
    * Constructor
    *
-   * @param itemBoundaryManager - Item boundary manager
+   * @param itemBoundary - Item boundary manager
    */
-  constructor(itemBoundaryManager: IItemBoundary) {
+  constructor(itemBoundary: IItemBoundary) {
     super();
 
-    this.boundary = itemBoundaryManager;
+    this.boundary = itemBoundary;
 
     this.cellDataSubject = new Subject<[string, string | null]>();
     this.disposeWithMe(() => {

@@ -17,7 +17,7 @@ export class AccumulatedDimension extends Disposable implements IAccumulatedDime
   /**
    * Constructor
    *
-   * @param itemDimension - Dimension manager
+   * @param itemDimension - Item dimension manager
    */
   constructor(itemDimension: IItemDimension) {
     super();
