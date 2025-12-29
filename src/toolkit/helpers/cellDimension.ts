@@ -168,7 +168,7 @@ export class CellDimension extends Disposable implements ICellDimension {
           const rect = container.getBoundingClientRect();
           return {
             rowIndex: getRowIndex(clientX - rect.left),
-            colIndex: getColumnIndex(clientY - rect.top),
+            columnIndex: getColumnIndex(clientY - rect.top),
           };
         };
       }),

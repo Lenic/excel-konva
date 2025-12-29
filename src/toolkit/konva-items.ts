@@ -51,9 +51,9 @@ backgroundLayer.add(scrollableGroup, sideGroup, headerGroup, cornerGroup);
 
 export const getCellGroup$ = combineLatest([sheet.frozenRows$, sheet.frozenColumns$]).pipe(
   map(([frozenRows, frozenColumns]) => {
-    return function getCellGroup(row: number, col: number) {
-      const isHeader = row < frozenRows;
-      const isFrozenCol = col < frozenColumns;
+    return function getCellGroup(rowIndex: number, columnIndex: number) {
+      const isHeader = rowIndex < frozenRows;
+      const isFrozenCol = columnIndex < frozenColumns;
 
       if (isHeader && isFrozenCol) return cornerGroup; // R0, C0
       if (isHeader) return headerGroup; // R0, C1+

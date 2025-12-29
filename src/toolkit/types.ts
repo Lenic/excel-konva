@@ -20,7 +20,7 @@ export interface ILocation {
   /**
    * 列索引
    */
-  colIndex: number;
+  columnIndex: number;
 }
 
 /**
