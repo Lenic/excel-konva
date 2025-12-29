@@ -29,20 +29,27 @@ function isDisposable(disposable: any): disposable is IDisposable {
 export class Disposable implements IDisposable {
   private subscriptionList: (() => void)[] = [];
 
-  isDisposed: boolean = false;
+  isDisposed = false;
 
   dispose(): void {
     if (this.isDisposed) return;
 
-    this.subscriptionList.forEach((fn) => fn());
+    this.subscriptionList.forEach((fn) => {
+      fn();
+    });
+    this.subscriptionList = [];
     this.isDisposed = true;
   }
 
   disposeWithMe(disposable: Subscription | IDisposable | (() => void)): void {
     if (disposable instanceof Subscription) {
-      this.subscriptionList.push(() => disposable.unsubscribe());
+      this.subscriptionList.push(() => {
+        disposable.unsubscribe();
+      });
     } else if (isDisposable(disposable)) {
-      this.subscriptionList.push(() => disposable.dispose());
+      this.subscriptionList.push(() => {
+        disposable.dispose();
+      });
     } else {
       this.subscriptionList.push(disposable);
     }

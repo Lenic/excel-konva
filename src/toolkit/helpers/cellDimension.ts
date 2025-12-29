@@ -1,17 +1,8 @@
 import type { ILocation, IRectBox } from '../types';
 import type { ICellDimension, IItemBoundary } from './types';
+import type { Observable } from 'rxjs';
 
-import { type Observable, switchMap, take, withLatestFrom } from 'rxjs';
-import {
-  combineLatest,
-  combineLatestWith,
-  distinctUntilChanged,
-  map,
-  scan,
-  shareReplay,
-  startWith,
-  Subject,
-} from 'rxjs';
+import { combineLatest, combineLatestWith, map, scan, shareReplay, startWith, Subject, switchMap, take } from 'rxjs';
 
 import { binarySearch, Disposable, getCellKey, getColumnLabel } from '../core';
 import { container } from '../core-elements';
@@ -67,7 +58,7 @@ export class CellDimension extends Disposable implements ICellDimension {
   setCellData(...args: any[]) {
     if (args.length === 2) {
       this.cellDataSubject.next(args as [string, string | null]);
-    } else {
+    } else if (args.length === 3) {
       this.cellDataSubject.next([getCellKey(args[0] as number, args[1] as number), args[2]] as [string, string | null]);
     }
   }
@@ -113,11 +104,21 @@ export class CellDimension extends Disposable implements ICellDimension {
 
   private buildGetCellRectBox() {
     return combineLatest([
-      combineLatest([this.boundary.getColumnLeft$, this.boundary.column.dimension.get$]).pipe(
-        distinctUntilChanged((prev, curr) => prev[0] === curr[0]),
+      this.boundary.getColumnLeft$.pipe(
+        switchMap((getColumnLeft) =>
+          this.boundary.column.dimension.get$.pipe(
+            take(1),
+            map((getColumnWidth) => [getColumnLeft, getColumnWidth] as const),
+          ),
+        ),
       ),
-      combineLatest([this.boundary.getRowTop$, this.boundary.row.dimension.get$]).pipe(
-        distinctUntilChanged((prev, curr) => prev[0] === curr[0]),
+      this.boundary.getRowTop$.pipe(
+        switchMap((getRowTop) =>
+          this.boundary.row.dimension.get$.pipe(
+            take(1),
+            map((getRowHeight) => [getRowTop, getRowHeight] as const),
+          ),
+        ),
       ),
     ]).pipe(
       map(([[getColumnLeft, getColumnWidth], [getRowTop, getRowHeight]]) => {
@@ -166,8 +167,8 @@ export class CellDimension extends Disposable implements ICellDimension {
         return function getCellLocation(clientX: number, clientY: number): ILocation {
           const rect = container.getBoundingClientRect();
           return {
-            row: getRowIndex(clientX - rect.left),
-            col: getColumnIndex(clientY - rect.top),
+            rowIndex: getRowIndex(clientX - rect.left),
+            colIndex: getColumnIndex(clientY - rect.top),
           };
         };
       }),
@@ -182,10 +183,11 @@ export class CellDimension extends Disposable implements ICellDimension {
     count$: Observable<number>,
     scrollValue$: Observable<number>,
   ) {
-    return getItemDimension$.pipe(
-      switchMap((getItemDimension) =>
-        getAccumulatedDimension$.pipe(
-          map((getAccumulatedDimension) => [getAccumulatedDimension, getItemDimension] as const),
+    return getAccumulatedDimension$.pipe(
+      switchMap((getAccumulatedDimension) =>
+        getItemDimension$.pipe(
+          take(1),
+          map((getItemDimension) => [getAccumulatedDimension, getItemDimension] as const),
         ),
       ),
       switchMap(([getAccumulatedDimension, getItemDimension]) => {

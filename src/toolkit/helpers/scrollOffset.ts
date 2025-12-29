@@ -76,8 +76,11 @@ export class ScrollOffset extends Disposable implements IScrollOffset {
     getOffsetValue: (value: [real: IDimension, visual: IDimension]) => number,
   ) {
     return combineLatest([
-      scrollValue$,
-      combineLatest([this.sheetDimension.realSize$, this.sheetDimension.visualSize$]).pipe(map(getOffsetValue)),
+      scrollValue$.pipe(distinctUntilChanged()),
+      combineLatest([this.sheetDimension.realSize$, this.sheetDimension.visualSize$]).pipe(
+        map(getOffsetValue),
+        distinctUntilChanged(),
+      ),
     ]).pipe(
       map(([scrollValue, max]) => Math.max(0, Math.min(max, scrollValue))),
       distinctUntilChanged(),

@@ -17,16 +17,17 @@ export class AccumulatedDimension extends Disposable implements IAccumulatedDime
   /**
    * Constructor
    *
-   * @param itemDimension - Item dimension manager
+   * @param dimension - Item dimension manager
    */
-  constructor(itemDimension: IItemDimension) {
+  constructor(dimension: IItemDimension) {
     super();
 
     this.store = new Map();
     this.disposeWithMe(() => {
       this.store.clear();
     });
-    this.dimension = itemDimension;
+
+    this.dimension = dimension;
 
     this.get$ = this.build();
     this.disposeWithMe(this.get$.subscribe());

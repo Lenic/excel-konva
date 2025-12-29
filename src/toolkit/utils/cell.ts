@@ -144,8 +144,8 @@ export const getCellLocation$ = combineLatest([getColumnIndex$, getRowIndex$]).p
     return function getCellLocation(clientX: number, clientY: number): ILocation {
       const rect = container.getBoundingClientRect();
       return {
-        row: getRowIndex(clientX - rect.left),
-        col: getColumnIndex(clientY - rect.top),
+        rowIndex: getRowIndex(clientX - rect.left),
+        colIndex: getColumnIndex(clientY - rect.top),
       };
     };
   }),

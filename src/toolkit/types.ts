@@ -16,11 +16,11 @@ export interface ILocation {
   /**
    * 行索引
    */
-  row: number;
+  rowIndex: number;
   /**
    * 列索引
    */
-  col: number;
+  colIndex: number;
 }
 
 /**

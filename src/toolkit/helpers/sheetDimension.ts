@@ -2,7 +2,7 @@ import type { IDimension } from '../types';
 import type { IAccumulatedDimension, ISheetDimension, ISheetMeta } from './types';
 import type { Observable } from 'rxjs';
 
-import { combineLatest, fromEvent, map, shareReplay, startWith } from 'rxjs';
+import { animationFrameScheduler, combineLatest, fromEvent, map, shareReplay, startWith, throttleTime } from 'rxjs';
 
 import { Disposable } from '../core';
 import { container } from '../core-elements';
@@ -29,19 +29,15 @@ export class SheetDimension extends Disposable implements ISheetDimension {
    * Constructor
    *
    * @param sheet - Sheet
-   * @param accumulatedColumnDimension - Accumulated column dimension
-   * @param accumulatedRowDimension - Accumulated row dimension
+   * @param column - Accumulated column dimension
+   * @param row - Accumulated row dimension
    */
-  constructor(
-    sheet: ISheetMeta,
-    accumulatedColumnDimension: IAccumulatedDimension,
-    accumulatedRowDimension: IAccumulatedDimension,
-  ) {
+  constructor(sheet: ISheetMeta, column: IAccumulatedDimension, row: IAccumulatedDimension) {
     super();
 
     this.sheet = sheet;
-    this.column = accumulatedColumnDimension;
-    this.row = accumulatedRowDimension;
+    this.column = column;
+    this.row = row;
 
     this.visualSize = { width: 0, height: 0 };
     this.realWidth = 0;
@@ -49,6 +45,7 @@ export class SheetDimension extends Disposable implements ISheetDimension {
     this.realSize = { width: 0, height: 0 };
 
     this.visualSize$ = fromEvent(window, 'resize').pipe(
+      throttleTime(0, animationFrameScheduler, { leading: true, trailing: true }),
       startWith(null),
       map(() => ({ width: container.clientWidth, height: container.clientHeight }) as IDimension),
       shareReplay({ refCount: true, bufferSize: 1 }),
@@ -89,7 +86,7 @@ export class SheetDimension extends Disposable implements ISheetDimension {
     getPrecedingTotalDimension$: Observable<(index: number) => number>,
   ) {
     return combineLatest([count$, getPrecedingTotalDimension$]).pipe(
-      map(([count, getPrecedingTotalDimension]) => getPrecedingTotalDimension(count + 1)),
+      map(([count, getPrecedingTotalDimension]) => getPrecedingTotalDimension(count)),
       shareReplay({ refCount: true, bufferSize: 1 }),
     );
   }

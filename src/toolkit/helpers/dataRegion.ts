@@ -1,7 +1,7 @@
 import type { IRegionInfo } from '../types';
 import type { IDataRegion, IItemBoundary, ISheetDimension, ISheetMeta } from './types';
 
-import { combineLatest, map, type Observable, of, pairwise, startWith, switchMap, withLatestFrom } from 'rxjs';
+import { combineLatest, map, type Observable, switchMap, take } from 'rxjs';
 
 import { BUFFER_CELL_COUNT } from '../constants';
 import { binarySearch, Disposable } from '../core';
@@ -31,41 +31,25 @@ export class DataRegion extends Disposable implements IDataRegion {
   }
 
   private buildDataRegion() {
-    type ItemDataType = [
-      [(index: number) => number, (columnIndex: number) => number],
-      [number, (columnIndex: number) => number],
-      [number, (columnIndex: number) => number],
-    ];
-    function convert(obs: Observable<ItemDataType>) {
-      return obs.pipe(
-        startWith(null),
-        pairwise(),
-        switchMap(([prev, x]) => {
-          const curr = x as unknown as Exclude<typeof x, null>;
-
-          // order: getPrecedingTotal<XX>, get<XX>, frozen<XX>
-          if (!prev || prev[0] !== curr[0]) return of([...curr[0], curr[1][0]] as const);
-          if (prev[1] !== curr[1]) return of([curr[0][0], curr[1][1], curr[1][0]] as const);
-
-          return of([curr[0][0], curr[2][1], curr[1][0]] as const);
-        }),
-      );
-    }
-
-    const column$ = convert(
-      combineLatest([
-        this.boundary.column.get$.pipe(withLatestFrom(this.boundary.getColumnLeft$)),
-        this.sheet.frozenColumns$.pipe(withLatestFrom(this.boundary.getColumnLeft$)),
-        this.boundary.offset.scrollLeft$.pipe(withLatestFrom(this.boundary.getColumnLeft$)),
-      ]),
+    const column$ = this.boundary.getColumnLeft$.pipe(
+      switchMap((getColumnLeft) =>
+        combineLatest([this.boundary.column.get$.pipe(take(1)), this.sheet.frozenColumns$]).pipe(
+          map(
+            ([getPrecedingTotalColumnWidth, frozenColumns]) =>
+              [getColumnLeft, getPrecedingTotalColumnWidth, frozenColumns] as const,
+          ),
+        ),
+      ),
     );
 
-    const row$ = convert(
-      combineLatest([
-        this.boundary.row.get$.pipe(withLatestFrom(this.boundary.getRowTop$)),
-        this.sheet.frozenRows$.pipe(withLatestFrom(this.boundary.getRowTop$)),
-        this.boundary.offset.scrollTop$.pipe(withLatestFrom(this.boundary.getRowTop$)),
-      ]),
+    const row$ = this.boundary.getRowTop$.pipe(
+      switchMap((getRowTop) =>
+        combineLatest([this.boundary.row.get$.pipe(take(1)), this.sheet.frozenRows$]).pipe(
+          map(
+            ([getPrecedingTotalRowHeight, frozenRows]) => [getRowTop, getPrecedingTotalRowHeight, frozenRows] as const,
+          ),
+        ),
+      ),
     );
 
     return combineLatest([
@@ -77,8 +61,8 @@ export class DataRegion extends Disposable implements IDataRegion {
     ]).pipe(
       map(
         ([
-          [getPrecedingTotalColumnWidth, getColumnLeft, frozenColumns],
-          [getPrecedingTotalRowHeight, getRowTop, frozenRows],
+          [getColumnLeft, getPrecedingTotalColumnWidth, frozenColumns],
+          [getRowTop, getPrecedingTotalRowHeight, frozenRows],
           columnCount,
           rowCount,
           sheetVisualSize,

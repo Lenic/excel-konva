@@ -1,6 +1,7 @@
 import type { IAccumulatedDimension, IItemBoundary, IScrollOffset, ISheetMeta } from './types';
+import type { Observable } from 'rxjs';
 
-import { combineLatest, map, type Observable, shareReplay } from 'rxjs';
+import { combineLatest, map, shareReplay } from 'rxjs';
 
 import { Disposable } from '../core';
 
@@ -19,37 +20,23 @@ export class ItemBoundary extends Disposable implements IItemBoundary {
   /**
    * Constructor
    *
-   * @param boundaryType - Boundary type
-   * @param scrollOffset - Scroll offset
-   * @param accumulatedColumnDimension - Accumulated column dimension
-   * @param accumulatedRowDimension - Accumulated row dimension
+   * @param offset - Scroll offset
+   * @param column - Accumulated column dimension
+   * @param row - Accumulated row dimension
    * @param sheet - Sheet
    */
-  constructor(
-    scrollOffset: IScrollOffset,
-    accumulatedColumnDimension: IAccumulatedDimension,
-    accumulatedRowDimension: IAccumulatedDimension,
-    sheet: ISheetMeta,
-  ) {
+  constructor(offset: IScrollOffset, column: IAccumulatedDimension, row: IAccumulatedDimension, sheet: ISheetMeta) {
     super();
 
-    this.offset = scrollOffset;
-    this.column = accumulatedColumnDimension;
-    this.row = accumulatedRowDimension;
+    this.offset = offset;
+    this.column = column;
+    this.row = row;
     this.sheet = sheet;
 
-    this.getColumnLeft$ = this.buildPrecedingBoundary$(
-      accumulatedColumnDimension.get$,
-      scrollOffset.scrollLeft$,
-      sheet.frozenColumns$,
-    );
+    this.getColumnLeft$ = this.buildPrecedingBoundary$(column.get$, offset.scrollLeft$, sheet.frozenColumns$);
     this.disposeWithMe(this.getColumnLeft$.subscribe());
 
-    this.getRowTop$ = this.buildPrecedingBoundary$(
-      accumulatedRowDimension.get$,
-      scrollOffset.scrollTop$,
-      sheet.frozenRows$,
-    );
+    this.getRowTop$ = this.buildPrecedingBoundary$(row.get$, offset.scrollTop$, sheet.frozenRows$);
     this.disposeWithMe(this.getRowTop$.subscribe());
   }
 
@@ -69,7 +56,7 @@ export class ItemBoundary extends Disposable implements IItemBoundary {
           if (index === 0) return 0;
 
           const size = getPrecedingTotalDimension(index);
-          return index < frozenCount ? size : size - scrollOffset;
+          return index < frozenCount ? size : Math.max(0, size - scrollOffset);
         };
       }),
       shareReplay({ refCount: true, bufferSize: 1 }),
