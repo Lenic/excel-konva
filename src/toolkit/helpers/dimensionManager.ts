@@ -31,6 +31,9 @@ export class DimensionManager extends Disposable implements IDimensionManager {
     });
 
     this.dimensionStore = new Map();
+    this.disposeWithMe(() => {
+      this.dimensionStore.clear();
+    });
 
     this.getDimension$ = this.rebuild();
     this.disposeWithMe(this.getDimension$.subscribe());

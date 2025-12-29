@@ -8,13 +8,13 @@ import { Disposable } from '../core';
  * Item boundary manager
  */
 export class ItemBoundaryManager extends Disposable implements IItemBoundaryManager {
-  readonly scrollOffset: IScrollOffset;
-  readonly accumulatedColumnDimension: IAccumulatedDimension;
-  readonly accumulatedRowDimension: IAccumulatedDimension;
-  readonly sheet: ISheet;
+  scrollOffset: IScrollOffset;
+  accumulatedColumnDimension: IAccumulatedDimension;
+  accumulatedRowDimension: IAccumulatedDimension;
+  sheet: ISheet;
 
-  readonly getColumnPrecedingBoundary$: Observable<(index: number) => number>;
-  readonly getRowPrecedingBoundary$: Observable<(index: number) => number>;
+  getColumnPrecedingBoundary$: Observable<(index: number) => number>;
+  getRowPrecedingBoundary$: Observable<(index: number) => number>;
 
   /**
    * Constructor

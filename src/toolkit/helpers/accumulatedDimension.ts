@@ -23,6 +23,9 @@ export class AccumulatedDimension extends Disposable implements IAccumulatedDime
     super();
 
     this.accumulatedStore = new Map();
+    this.disposeWithMe(() => {
+      this.accumulatedStore.clear();
+    });
     this.dimensionManager = dimensionManager;
 
     this.getPrecedingTotalDimension$ = this.rebuild();

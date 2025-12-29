@@ -273,19 +273,19 @@ export interface IItemBoundaryManager extends IDisposable {
   /**
    * Scroll offset
    */
-  readonly scrollOffset: IScrollOffset;
+  scrollOffset: IScrollOffset;
   /**
    * Accumulated column dimension
    */
-  readonly accumulatedColumnDimension: IAccumulatedDimension;
+  accumulatedColumnDimension: IAccumulatedDimension;
   /**
    * Accumulated row dimension
    */
-  readonly accumulatedRowDimension: IAccumulatedDimension;
+  accumulatedRowDimension: IAccumulatedDimension;
   /**
    * Sheet
    */
-  readonly sheet: ISheet;
+  sheet: ISheet;
 
   /**
    * An Observable that emits a function to retrieve the preceding boundary for a specific column index.
@@ -294,7 +294,7 @@ export interface IItemBoundaryManager extends IDisposable {
    * - `columnIndex`: The index of the column.
    * - Returns: The preceding boundary.
    */
-  readonly getColumnPrecedingBoundary$: Observable<(columnIndex: number) => number>;
+  getColumnPrecedingBoundary$: Observable<(columnIndex: number) => number>;
   /**
    * An Observable that emits a function to retrieve the preceding boundary for a specific row index.
    *
@@ -302,7 +302,7 @@ export interface IItemBoundaryManager extends IDisposable {
    * - `rowIndex`: The index of the row.
    * - Returns: The preceding boundary.
    */
-  readonly getRowPrecedingBoundary$: Observable<(rowIndex: number) => number>;
+  getRowPrecedingBoundary$: Observable<(rowIndex: number) => number>;
 }
 
 /**
