@@ -1,5 +1,5 @@
 import type { IDisposable } from '../core';
-import type { IDimension, IOffset, IRectBox, IRegionInfo } from '../types';
+import type { IDimension, ILocation, IOffset, IRectBox, IRegionInfo } from '../types';
 import type { Observable } from 'rxjs';
 
 /**
@@ -382,6 +382,15 @@ export interface ICellDimension extends IDisposable {
    * - Returns: The cell rect box.
    */
   getCellRectBox$: Observable<(rowIndex: number, columnIndex: number) => IRectBox>;
+  /**
+   * An Observable that emits a function to retrieve the cell location for a specific row and column.
+   *
+   * The emitted function signature is: `(rowIndex: number, columnIndex: number) => ILocation`
+   * - `rowIndex`: The index of the row.
+   * - `columnIndex`: The index of the column.
+   * - Returns: The cell location.
+   */
+  getCellLocation$: Observable<(rowIndex: number, columnIndex: number) => ILocation>;
 }
 
 /**
