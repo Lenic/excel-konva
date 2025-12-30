@@ -1,54 +1,54 @@
 import { BehaviorSubject } from 'rxjs';
 
 /**
- * 表格的总行数
+ * Total number of rows in the table
  */
 export const rowCountSubject = new BehaviorSubject(50000);
 /**
- * 表格的总列数
+ * Total number of columns in the table
  */
 export const columnCountSubject = new BehaviorSubject(5000);
 
 /**
- * 冻结行的数量
+ * Number of frozen rows
  */
 export const frozenRowsSubject = new BehaviorSubject(3);
 /**
- * 冻结列的数量
+ * Number of frozen columns
  */
 export const frozenColumnsSubject = new BehaviorSubject(4);
 
 /**
- * 列头行的索引：0
+ * Index of the column header row: 0
  */
 export const HEADER_ROW_INDEX = 0;
 /**
- * 行头列的索引：0
+ * Index of the row header column: 0
  */
 export const HEADER_COL_INDEX = 0;
 
 /**
- * 默认数据单元格宽度
+ * Default data cell width
  */
 export const CELL_WIDTH = 100;
 /**
- * 最小表头宽度
+ * Minimum column header width
  */
 export const MIN_CELL_WIDTH = 20;
 /**
- * 默认行头单元格宽度
+ * Default row header cell width
  */
 export const HEADER_WIDTH = 40;
 /**
- * 默认数据单元格高度
+ * Default data cell height
  */
 export const CELL_HEIGHT = 28;
 /**
- * 最小数据单元格高度
+ * Minimum data cell height
  */
 export const MIN_CELL_HEIGHT = 15;
 /**
- * 默认表头高度
+ * Default column header height
  */
 export const HEADER_HEIGHT = 30;
 
@@ -56,6 +56,6 @@ export const SELECTION_FILL_COLOR = 'rgba(78, 149, 255, 0.15)';
 export const SELECTION_STROKE_COLOR = '#4e95ff';
 
 /**
- * 缓冲单元格数量
+ * Number of buffer cells
  */
 export const BUFFER_CELL_COUNT = 1;

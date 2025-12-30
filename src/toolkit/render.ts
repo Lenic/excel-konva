@@ -10,14 +10,14 @@ import { activeCellMarkerPool, cellPool, selectionPool } from './pools';
 const state = {
   selectedRanges: [] as ISelectedRange[],
   startCell: null,
-  isDragging: false, // 用于单元格选区拖拽
+  isDragging: false, // Used for dragging cell selection
   animationFrameId: null,
 };
 
-const BORDER_STROKE = 2; // 选区边界统一使用 2px 边框
+const BORDER_STROKE = 2; // Selection boundary uses a unified 2px border
 
 /**
- * 渲染所有选区和活动单元格标记。
+ * Render all selections and active cell markers.
  */
 export const renderSelections$ = combineLatest([
   cellDimension.getCellPoint$.pipe(
@@ -42,7 +42,7 @@ export const renderSelections$ = combineLatest([
 
       const { selectedRanges } = state;
 
-      // 辅助函数：绘制一个子选区矩形
+      // Helper function: Draw a sub-selection rectangle
       const drawSubRange = (
         rowStartIndex: number,
         rowEndIndex: number,
@@ -52,13 +52,13 @@ export const renderSelections$ = combineLatest([
       ) => {
         if (rowStartIndex > rowEndIndex || columnStartIndex > columnEndIndex) return;
 
-        // 1. 获取左上角 Konva 坐标 (起点位置)
+        // 1. Get top-left Konva coordinate (start position)
         const topLeftPos = getCellPoint(rowStartIndex, columnStartIndex);
 
-        // 2. 获取右下角 Konva 坐标 (使用 Boundary 函数)
+        // 2. Get bottom-right Konva coordinate (using Boundary function)
         const rightBottomPos = getCellPoint(rowEndIndex + 1, columnEndIndex + 1);
 
-        // 检查选区是否在视口内可见 (简单视口裁剪)
+        // Check if the selection is visible in the viewport (simple viewport clipping)
         if (
           rightBottomPos.x <= 0 ||
           rightBottomPos.y <= 0 ||
@@ -81,27 +81,27 @@ export const renderSelections$ = combineLatest([
         });
       };
 
-      // 收集需要高亮的行列头索引
+      // Collect row/column header indices that need highlighting
       const highlightedColumns = new Set<number>();
       const highlightedRows = new Set<number>();
 
-      // 绘制选中的区域
+      // Draw selected areas
       selectedRanges.forEach((range) => {
         const { startRow, endRow, startCol, endCol } = range;
 
-        // D. 绘制 Data Area 选区 (R_SCROLLABLE, C_SCROLLABLE)
+        // D. Draw Data Area selection (R_SCROLLABLE, C_SCROLLABLE)
         const dataStartRow = Math.max(startRow, frozenRows);
         const dataStartColumn = Math.max(startCol, frozenColumns);
 
         if (dataStartRow <= endRow && dataStartColumn <= endCol) {
           drawSubRange(dataStartRow, endRow, dataStartColumn, endCol, BORDER_STROKE);
 
-          // 收集用于行列头高亮的索引
+          // Collect indices for row/column header highlighting
           for (let r = dataStartRow; r <= endRow; r++) highlightedRows.add(r);
           for (let c = dataStartColumn; c <= endCol; c++) highlightedColumns.add(c);
         }
 
-        // C. 绘制 Frozen Side Area 选区 (R_SCROLLABLE, C_FROZEN)
+        // C. Draw Frozen Side Area selection (R_SCROLLABLE, C_FROZEN)
         const sideStartRow = Math.max(startRow, frozenRows);
         const sideEndRow = endRow;
         const sideStartColumn = startCol;
@@ -110,11 +110,11 @@ export const renderSelections$ = combineLatest([
         if (sideStartRow <= sideEndRow && sideStartColumn <= sideEndColumn) {
           drawSubRange(sideStartRow, sideEndRow, sideStartColumn, sideEndColumn, BORDER_STROKE);
 
-          // 收集用于行列头高亮的索引
+          // Collect indices for row/column header highlighting
           for (let r = sideStartRow; r <= sideEndRow; r++) highlightedRows.add(r);
         }
 
-        // B. 绘制 Frozen Header Area 选区 (R_FROZEN, C_SCROLLABLE)
+        // B. Draw Frozen Header Area selection (R_FROZEN, C_SCROLLABLE)
         const headerStartRow = startRow;
         const headerEndRow = Math.min(endRow, frozenRows - 1);
         const headerStartColumn = Math.max(startCol, frozenColumns);
@@ -123,11 +123,11 @@ export const renderSelections$ = combineLatest([
         if (headerStartRow <= headerEndRow && headerStartColumn <= headerEndColumn) {
           drawSubRange(headerStartRow, headerEndRow, headerStartColumn, headerEndColumn, BORDER_STROKE);
 
-          // 收集用于行列头高亮的索引
+          // Collect indices for row/column header highlighting
           for (let c = headerStartColumn; c <= headerEndColumn; c++) highlightedColumns.add(c);
         }
 
-        // A. 绘制 Frozen Corner Area 选区 (R_FROZEN, C_FROZEN)
+        // A. Draw Frozen Corner Area selection (R_FROZEN, C_FROZEN)
         const cornerStartRow = startRow;
         const cornerEndRow = Math.min(endRow, frozenRows - 1);
         const cornerStartColumn = startCol;
@@ -137,7 +137,7 @@ export const renderSelections$ = combineLatest([
           drawSubRange(cornerStartRow, cornerEndRow, cornerStartColumn, cornerEndColumn, BORDER_STROKE);
         }
 
-        // D. 绘制活动单元格标记 (Active Cell Marker)
+        // D. Draw Active Cell Marker
         const activeRow = range.activeRow;
         const activeCol = range.activeCol;
         const activePos = getCellPoint(activeRow, activeCol);
@@ -151,46 +151,46 @@ export const renderSelections$ = combineLatest([
         });
       });
 
-      // 绘制列头部分的高亮
+      // Draw highlighting for column headers
       if (highlightedColumns.size > 0) {
         const sortedColumns = Array.from(highlightedColumns).sort((a, b) => a - b);
-        // 绘制列头部分
+        // Draw column header part
         let startBatchCol = -1;
         for (let i = 0; i < sortedColumns.length; i++) {
           if (startBatchCol === -1) {
             startBatchCol = sortedColumns[i];
           }
           if (i === sortedColumns.length - 1 || sortedColumns[i + 1] !== sortedColumns[i] + 1) {
-            // 绘制所有冻结行的列头高亮
+            // Draw highlighting for column headers of all frozen rows
             drawSubRange(
               0,
               0,
               startBatchCol,
               sortedColumns[i],
-              0, // 无边框
+              0, // No border
             );
             startBatchCol = -1;
           }
         }
       }
 
-      // 绘制行头部分的高亮
+      // Draw highlighting for row headers
       if (highlightedRows.size > 0) {
         const sortedRows = Array.from(highlightedRows).sort((a, b) => a - b);
-        // 绘制所有冻结列的行头高亮
+        // Draw highlighting for row headers of all frozen columns
         let startBatchRow = -1;
         for (let i = 0; i < sortedRows.length; i++) {
           if (startBatchRow === -1) {
             startBatchRow = sortedRows[i];
           }
           if (i === sortedRows.length - 1 || sortedRows[i + 1] !== sortedRows[i] + 1) {
-            // 绘制选区中涉及的行范围，覆盖所有冻结列 (C0 到 frozenColumns-1)
+            // Draw row range involved in selection, covering all frozen columns (C0 to frozenColumns-1)
             drawSubRange(
               startBatchRow,
               sortedRows[i],
               0,
               0,
-              0, // 无边框
+              0, // No border
             );
             startBatchRow = -1;
           }
@@ -206,7 +206,7 @@ export const renderSelections$ = combineLatest([
 );
 
 /**
- * 渲染所有可见单元格到对应的 Konva Group
+ * Render all visible cells to the corresponding Konva Group
  */
 export const renderVisibleCells$ = combineLatest([
   getCellGroup$,
@@ -215,11 +215,11 @@ export const renderVisibleCells$ = combineLatest([
 ]).pipe(
   switchMap(([getCellGroup, getCellRectBox, getCellData]) => {
     /**
-     * 绘制目标单元格
+     * Draw target cell
      *
-     * @param rowIndex - 单元格所在的行索引
-     * @param columnIndex - 单元格所在的列索引
-     * @param options - 单元格的设置信息
+     * @param rowIndex - The row index of the cell
+     * @param columnIndex - The column index of the cell
+     * @param options - Configuration options for the cell
      */
     function renderCellRegion(rowIndex: number, columnIndex: number, options: ICellRegionOptions) {
       const group = getCellGroup(rowIndex, columnIndex);
@@ -257,7 +257,7 @@ export const renderVisibleCells$ = combineLatest([
 
     cellPool.reset();
 
-    // 渲染 Scrollable Data
+    // Render Scrollable Data
     for (let r = startRowIndex; r < endRowIndex; r++) {
       for (let c = startColumnIndex; c < endColumnIndex; c++) {
         renderCellRegion(r, c, {
@@ -278,7 +278,7 @@ export const renderVisibleCells$ = combineLatest([
       }
     }
 
-    // 渲染 Frozen Header
+    // Render Frozen Header
     for (let r = 0; r < frozenRows; r++) {
       for (let c = startColumnIndex; c < endColumnIndex; c++) {
         renderCellRegion(r, c, {
@@ -299,7 +299,7 @@ export const renderVisibleCells$ = combineLatest([
       }
     }
 
-    // 渲染 Frozen Side
+    // Render Frozen Side
     for (let c = 0; c < frozenColumns; c++) {
       for (let r = startRowIndex; r < endRowIndex; r++) {
         renderCellRegion(r, c, {
@@ -320,7 +320,7 @@ export const renderVisibleCells$ = combineLatest([
       }
     }
 
-    // 渲染 Corner
+    // Render Corner
     for (let r = 0; r < frozenRows; r++) {
       for (let c = 0; c < frozenColumns; c++) {
         renderCellRegion(r, c, {

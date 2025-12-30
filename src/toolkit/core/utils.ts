@@ -1,8 +1,8 @@
 /**
- * 获取单元格的 Key
+ * Get the key of the cell
  *
- * @param rowIndex - 行的索引，从数字 0 开始
- * @param columnIndex - 列的索引，从数字 0 开始
+ * @param rowIndex - The index of the row, starting from 0
+ * @param columnIndex - The index of the column, starting from 0
  */
 export function getCellKey(rowIndex: number, columnIndex: number) {
   return `R${rowIndex}_C${columnIndex}`;
@@ -10,12 +10,12 @@ export function getCellKey(rowIndex: number, columnIndex: number) {
 
 const columnLablMap = new Map<number, string>();
 /**
- * 获取列的列头字符串
+ * Get the column header string
  *
- * - 一般应该是 A、B、MN、XYZ 这样的字符串
- * - 相当于将十进制的数字转换为 26 进制的，以大写英文字母表示的字符串
+ * - Usually strings like A, B, MN, XYZ
+ * - Equivalent to converting a decimal number to a base-26 string represented by uppercase English letters
  *
- * @param columnIndex - 列的索引，从数字 0 开始
+ * @param columnIndex - The index of the column, starting from 0
  */
 export function getColumnLabel(columnIndex: number) {
   let result = columnLablMap.get(columnIndex) ?? '';

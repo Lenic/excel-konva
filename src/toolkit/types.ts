@@ -10,90 +10,90 @@ export interface ISelectedRange {
 }
 
 /**
- * 单元格的位置信息
+ * Location information of the cell
  */
 export interface ILocation {
   /**
-   * 行索引
+   * Row index
    */
   rowIndex: number;
   /**
-   * 列索引
+   * Column index
    */
   columnIndex: number;
 }
 
 /**
- * 坐标点
+ * Coordinate point
  */
 export interface IPoint {
   /**
-   * 横轴坐标
+   * X-axis coordinate
    */
   x: number;
   /**
-   * 纵轴坐标
+   * Y-axis coordinate
    */
   y: number;
 }
 
 /**
- * 滚动偏移量
+ * Scroll offset
  */
 export interface IOffset {
   /**
-   * 水平位置上的位移
+   * Horizontal displacement
    *
-   * - 向右移动为正数
-   * - 向左移动为负数
+   * - Positive for right movement
+   * - Negative for left movement
    */
   deltaX: number;
   /**
-   * 垂直位置上的位移
+   * Vertical displacement
    *
-   * - 向下移动为正数
-   * - 向上移动为负数
+   * - Positive for downward movement
+   * - Negative for upward movement
    */
   deltaY: number;
 }
 
 /**
- * 目标尺寸大小
+ * Target dimension size
  */
 export interface IDimension {
   /**
-   * 宽度
+   * Width
    */
   width: number;
   /**
-   * 高度
+   * Height
    */
   height: number;
 }
 
 /**
- * 目标盒子的位置和大小
+ * Position and size of the target box
  */
 export interface IRectBox extends IPoint, IDimension {}
 
 /**
- * Sheet 的区域信息
+ * Area information of the Sheet
  */
 export interface IRegionInfo {
   /**
-   * 开始的行索引
+   * Starting row index
    */
   startRowIndex: number;
   /**
-   * 结束的行索引
+   * Ending row index
    */
   endRowIndex: number;
   /**
-   * 开始的列索引
+   * Starting column index
    */
   startColumnIndex: number;
   /**
-   * 结束的列索引
+   * Ending column index
    */
   endColumnIndex: number;
 }

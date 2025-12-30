@@ -24,18 +24,18 @@ export const typedLeftMouseDown$ = mouseDown$.pipe(
   exhaustMap((e) => (e.evt.button === 0 ? of(e) : EMPTY)),
   withLatestFrom(checkResizeBoundary$, cellDimension.getCellLocation$, sheet.columnCount$, sheet.rowCount$),
   map(([e, checkResizeBoundary, getCellLocation, columnCount, rowCount]) => {
-    // 1. 检查是否启动尺寸调整
+    // 1. Check if resize is triggered
     const boundary = checkResizeBoundary(e.evt.clientX, e.evt.clientY);
     if (boundary) {
       return { mousedownType: EMousedownTypes.ResizeBoundary, data: boundary, event: e } as TMousedownEvent;
     }
 
-    // 2. 检查是否点击了 Konva Stage 空白处 (非单元格)
+    // 2. Check if clicked on empty area of Konva Stage (not a cell)
     if (e.target === stage) {
       return { mousedownType: EMousedownTypes.Empty, event: e } as TMousedownEvent;
     }
 
-    // 3. 启动单元格选区
+    // 3. Start cell selection
     const startCell = getCellLocation(e.evt.clientX, e.evt.clientY);
     const isMultiSelect = e.evt.ctrlKey || e.evt.metaKey;
 
@@ -102,7 +102,7 @@ export const typedLeftMouseDown$ = mouseDown$.pipe(
       } as TMousedownEvent;
     }
 
-    // 点击了数据单元格
+    // Clicked on a data cell
     return {
       mousedownType: EMousedownTypes.HeaderClick,
       data: {

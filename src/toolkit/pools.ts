@@ -87,7 +87,7 @@ export const activeCellMarkerPool = {
       rect.visible(true);
       return rect;
     }
-    // 活动单元格标记使用绿色边框
+    // Active cell marker uses a green border
     const newRect = new Konva.Rect({
       stroke: '#10B981',
       strokeWidth: 3,

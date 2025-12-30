@@ -92,13 +92,13 @@ export class DataRegion extends Disposable implements IDataRegion {
   }
 
   /**
-   * 确定渲染范围
+   * Determine the rendering range
    *
-   * @param getBoundaryValue - 获取当前行（列）的左侧（顶部）边界值
-   * @param frozenCount - 被冻结的行（列）数量
-   * @param totalCount - 行（列）的数量
-   * @param viewportMin - 可视区域的最小坐标值
-   * @param viewportMax - 可视区域的最大坐标值
+   * @param getBoundaryValue - Get the left (top) boundary value of the current row (column)
+   * @param frozenCount - Number of frozen rows (columns)
+   * @param totalCount - Total number of rows (columns)
+   * @param viewportMin - Minimum coordinate value of the visible area
+   * @param viewportMax - Maximum coordinate value of the visible area
    */
   private findVisibleRange(
     getBoundaryValue: (value: number) => number,
@@ -108,37 +108,39 @@ export class DataRegion extends Disposable implements IDataRegion {
     viewportMax: number,
   ) {
     /**
-     * 二分查找：找到第一个由于滚动而变得可见的元素
+     * Binary search: Find the first element that becomes visible due to scrolling
      *
-     * - 我们要寻找第一个满足 `getBoundaryValue(i + 1) > 0` 的 `i`
-     * - `getBoundaryValue(i)` 返回的是元素的起始位置 (Left/Top)
-     * - 因为元素连续，`getBoundaryValue(i + 1)` 即为元素 `i` 的结束位置 (Right/Bottom)
+     * - We want to find the first `i` that satisfies `getBoundaryValue(i + 1) > 0`
+     * - `getBoundaryValue(i)` returns the start position (Left/Top) of the element
+     * - Since elements are continuous, `getBoundaryValue(i + 1)` is the end position (Right/Bottom) of element `i`
      */
     let start = binarySearch(
       frozenCount,
       totalCount,
       (mid) =>
-        // 判断当前行（列）的边界值大于视口开始值，需要的就是右侧（底部）边界值，所以此处需要 +1 获取下一个行（列）的边界值
+        // Determine if the boundary of the current row (column) is greater than the viewport start value.
+        // We need the right (bottom) boundary, so +1 is used to get the boundary of the next row (column).
         getBoundaryValue(mid + 1) - viewportMin,
       1,
     );
 
     /**
-     * 二分查找：找到第一个离开视口的元素
+     * Binary search: Find the first element that leaves the viewport
      *
-     * - 我们要寻找第一个满足 `getBoundaryValue(i) > viewportSize` 的 `i`
-     * - 即元素的起始位置已经超过了视口大小
+     * - We want to find the first `i` that satisfies `getBoundaryValue(i) > viewportSize`
+     * - i.e., the start position of the element exceeds the viewport size
      */
     let end = binarySearch(
       start,
       totalCount,
       (mid) =>
-        // 判断当前行（列）的边界值小于视口结束值，需要的就是左侧（顶部）边界值，所以此处不需要 +1，而是直接使用自身的边界值即可
+        // Determine if the boundary of the current row (column) is less than the viewport end value.
+        // We need the left (top) boundary, so no +1 is needed, use the element's own boundary directly.
         getBoundaryValue(mid) - viewportMax,
       1,
     );
 
-    // 应用缓冲区
+    // Apply buffer
     start = Math.max(frozenCount, start - BUFFER_CELL_COUNT);
     end = Math.min(totalCount, end + BUFFER_CELL_COUNT);
 
