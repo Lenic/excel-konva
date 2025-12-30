@@ -3,18 +3,19 @@ import type Konva from 'konva';
 
 import {
   combineLatest,
-  distinctUntilChanged,
   EMPTY,
   exhaustMap,
   fromEventPattern,
   map,
   of,
   shareReplay,
+  switchMap,
+  take,
   withLatestFrom,
 } from 'rxjs';
 
 import { container } from '../core-elements';
-import { columnDimension, itemBoundary, rowDimension, sheet, sheetDimension } from '../helpers';
+import { itemBoundary, sheet, sheetDimension } from '../helpers';
 import { stage } from '../konva-items';
 
 import { MousedownTypes, RESIZE_TOLERANCE } from './constants';
@@ -34,17 +35,27 @@ export const mouseUp$ = getMouseEvent$('mouseup');
  * 检查当前位置的边界信息，如果不是边界就返回 `null`
  */
 const checkResizeBoundary$ = combineLatest([
-  combineLatest([itemBoundary.getColumnLeft$, columnDimension.get$]).pipe(
-    distinctUntilChanged((prev, curr) => prev[0] === curr[0]),
+  itemBoundary.getColumnLeft$.pipe(
+    switchMap((getColumnLeft) =>
+      itemBoundary.column.get$.pipe(
+        take(1),
+        map((getColumnWidth) => [getColumnLeft, getColumnWidth] as const),
+      ),
+    ),
   ),
-  combineLatest([itemBoundary.getRowTop$, rowDimension.get$]).pipe(
-    distinctUntilChanged((prev, curr) => prev[0] === curr[0]),
+  itemBoundary.getRowTop$.pipe(
+    switchMap((getRowTop) =>
+      itemBoundary.row.get$.pipe(
+        take(1),
+        map((getRowHeight) => [getRowTop, getRowHeight] as const),
+      ),
+    ),
   ),
   sheet.columnCount$,
   sheet.rowCount$,
   sheetDimension.visualSize$,
 ]).pipe(
-  map(([[getColumnLeft, getRowHeight], [getRowTop, getColumnWidth], columnCount, rowCount, sheetVisualSize]) => {
+  map(([[getColumnLeft, getColumnWidth], [getRowTop, getRowHeight], columnCount, rowCount, sheetVisualSize]) => {
     /**
      * 检查当前位置的边界信息，如果不是边界就返回 `null`
      *

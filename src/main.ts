@@ -1,18 +1,15 @@
 import { auditTime } from 'rxjs';
 
-import { columnCountSubject, frozenColumnsSubject, frozenRowsSubject, rowCountSubject } from './toolkit/constants';
 import {
   renderedRangeColumn,
   renderedRangeRow,
   scrollXElement,
   scrollYElement,
-  selectionCount,
   virtualContent,
 } from './toolkit/core-elements';
 import { resizeBoundary$ } from './toolkit/events';
-import { renderSelections$, renderVisibleCells$ } from './toolkit/render';
-import { scrollOffset$ } from './toolkit/utils/scroll';
-import { sheetRealSize$ } from './toolkit/utils/size';
+import { scrollOffset, sheet, sheetDimension } from './toolkit/helpers';
+import { renderVisibleCells$ } from './toolkit/render';
 
 // --- 1. 配置常量与初始化 ---
 
@@ -24,29 +21,29 @@ import { sheetRealSize$ } from './toolkit/utils/size';
 // const HEADER_HEIGHT = 30; // 默认表头高度 (R0)
 // const RESIZE_TOLERANCE = 5; // 鼠标检测边界的容差 (像素)
 
-rowCountSubject.subscribe((val) => {
+sheet.rowCount$.subscribe((val) => {
   document.getElementById('total-rows')!.textContent = val.toLocaleString();
 });
 
-columnCountSubject.subscribe((val) => {
+sheet.columnCount$.subscribe((val) => {
   document.getElementById('total-cols')!.textContent = val.toLocaleString();
 });
 
-frozenRowsSubject.subscribe((val) => {
+sheet.frozenRows$.subscribe((val) => {
   document.getElementById('frozen-rows-count')!.textContent = val.toLocaleString();
 });
 
-frozenColumnsSubject.subscribe((val) => {
+sheet.frozenColumns$.subscribe((val) => {
   document.getElementById('frozen-cols-count')!.textContent = val.toLocaleString();
 });
 
-scrollOffset$.subscribe((val) => {
+scrollOffset.scrollOffset$.subscribe((val) => {
   scrollXElement.textContent = val.deltaX.toFixed(0);
   scrollYElement.textContent = val.deltaY.toFixed(0);
 });
 
 // 元素大小实时跟随变动
-sheetRealSize$.subscribe((dimension) => {
+sheetDimension.realSize$.subscribe((dimension) => {
   virtualContent.style.width = `${dimension.width}px`;
   virtualContent.style.height = `${dimension.height}px`;
 });

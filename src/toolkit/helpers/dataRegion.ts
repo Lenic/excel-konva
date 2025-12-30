@@ -33,7 +33,8 @@ export class DataRegion extends Disposable implements IDataRegion {
   private buildDataRegion() {
     const column$ = this.boundary.getColumnLeft$.pipe(
       switchMap((getColumnLeft) =>
-        combineLatest([this.boundary.column.get$.pipe(take(1)), this.sheet.frozenColumns$]).pipe(
+        combineLatest([this.boundary.column.get$, this.sheet.frozenColumns$]).pipe(
+          take(1),
           map(
             ([getPrecedingTotalColumnWidth, frozenColumns]) =>
               [getColumnLeft, getPrecedingTotalColumnWidth, frozenColumns] as const,
@@ -44,7 +45,8 @@ export class DataRegion extends Disposable implements IDataRegion {
 
     const row$ = this.boundary.getRowTop$.pipe(
       switchMap((getRowTop) =>
-        combineLatest([this.boundary.row.get$.pipe(take(1)), this.sheet.frozenRows$]).pipe(
+        combineLatest([this.boundary.row.get$, this.sheet.frozenRows$]).pipe(
+          take(1),
           map(
             ([getPrecedingTotalRowHeight, frozenRows]) => [getRowTop, getPrecedingTotalRowHeight, frozenRows] as const,
           ),

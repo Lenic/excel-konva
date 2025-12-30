@@ -144,14 +144,12 @@ export class CellDimension extends Disposable implements ICellDimension {
   private buildGetCellLocation() {
     const getColumnIndex$ = this.buildGetItemIndex(
       this.boundary.column.get$,
-      this.boundary.column.dimension.get$,
       sheet.frozenColumns$,
       sheet.columnCount$,
       scrollOffset.scrollLeft$,
     );
     const getRowIndex$ = this.buildGetItemIndex(
       this.boundary.row.get$,
-      this.boundary.row.dimension.get$,
       sheet.frozenRows$,
       sheet.rowCount$,
       scrollOffset.scrollTop$,
@@ -178,19 +176,12 @@ export class CellDimension extends Disposable implements ICellDimension {
 
   private buildGetItemIndex(
     getAccumulatedDimension$: Observable<(index: number) => number>,
-    getItemDimension$: Observable<(index: number) => number>,
     frozenCount$: Observable<number>,
     count$: Observable<number>,
     scrollValue$: Observable<number>,
   ) {
     return getAccumulatedDimension$.pipe(
-      switchMap((getAccumulatedDimension) =>
-        getItemDimension$.pipe(
-          take(1),
-          map((getItemDimension) => [getAccumulatedDimension, getItemDimension] as const),
-        ),
-      ),
-      switchMap(([getAccumulatedDimension, getItemDimension]) => {
+      switchMap((getAccumulatedDimension) => {
         const getItemIndexByPosition$ = count$.pipe(
           map((count) => {
             // beginValue endValue
@@ -208,7 +199,7 @@ export class CellDimension extends Disposable implements ICellDimension {
               let resultIndex = -1;
               for (let i = maxIndex + 1; i < count; i++) {
                 const beginValue = getAccumulatedDimension(i);
-                const endValue = beginValue + getItemDimension(i);
+                const endValue = getAccumulatedDimension(i + 1);
 
                 maxIndex = i;
                 list.push([beginValue, endValue]);
