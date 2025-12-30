@@ -69,7 +69,7 @@ export class ItemBoundary extends Disposable implements IItemBoundary {
           if (index === 0) return 0;
 
           const size = getPrecedingTotalDimension(index);
-          return index < frozenCount ? size : Math.max(0, size - scrollOffset);
+          return index < frozenCount ? size : size - scrollOffset;
         };
       }),
       shareReplay({ refCount: true, bufferSize: 1 }),
