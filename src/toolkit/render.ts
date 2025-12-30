@@ -1,10 +1,9 @@
 import type { ICellRegionOptions, ISelectedRange } from './types';
 
-import { combineLatest, map, shareReplay, switchMap, take, withLatestFrom } from 'rxjs';
+import { combineLatest, map, shareReplay, switchMap, take } from 'rxjs';
 
-import { getCellPoint$ } from './utils/cell';
-import { getColumnWidth$, getRowHeight$, sheetVisualSize$ } from './utils/size';
-import { frozenColumnsSubject, frozenRowsSubject, SELECTION_FILL_COLOR, SELECTION_STROKE_COLOR } from './constants';
+import { sheetVisualSize$ } from './utils/size';
+import { SELECTION_FILL_COLOR, SELECTION_STROKE_COLOR } from './constants';
 import { cellDimension, dataRegion, sheet } from './helpers';
 import { backgroundLayer, getCellGroup$, selectionLayer } from './konva-items';
 import { activeCellMarkerPool, cellPool, selectionPool } from './pools';
@@ -22,12 +21,22 @@ const BORDER_STROKE = 2; // 选区边界统一使用 2px 边框
  * 渲染所有选区和活动单元格标记。
  */
 export const renderSelections$ = combineLatest([
-  getCellPoint$.pipe(withLatestFrom(getColumnWidth$, getRowHeight$)),
+  cellDimension.getCellPoint$.pipe(
+    switchMap((getCellPoint) =>
+      combineLatest([
+        cellDimension.boundary.column.dimension.get$,
+        sheet.frozenColumns$,
+        cellDimension.boundary.row.dimension.get$,
+        sheet.frozenRows$,
+      ]).pipe(
+        take(1),
+        map((items) => [getCellPoint, ...items] as const),
+      ),
+    ),
+  ),
   sheetVisualSize$,
-  frozenRowsSubject,
-  frozenColumnsSubject,
 ]).pipe(
-  map(([[getCellPoint, getColumnWidth, getRowHeight], sheetVisualSize, frozenRows, frozenColumns]) => {
+  map(([[getCellPoint, getColumnWidth, frozenColumns, getRowHeight, frozenRows], sheetVisualSize]) => {
     return function renderSelections() {
       selectionPool.reset();
       activeCellMarkerPool.reset();

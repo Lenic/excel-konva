@@ -1,4 +1,4 @@
-import type { ILocation, IRectBox } from '../types';
+import type { ILocation, IPoint, IRectBox } from '../types';
 import type { ICellDimension, IItemBoundary } from './types';
 import type { Observable } from 'rxjs';
 
@@ -22,6 +22,7 @@ export class CellDimension extends Disposable implements ICellDimension {
   getCellData$: Observable<(rowIndex: number, columnIndex: number) => string>;
   getCellRectBox$: Observable<(rowIndex: number, columnIndex: number) => IRectBox>;
   getCellLocation$: Observable<(rowIndex: number, columnIndex: number) => ILocation>;
+  getCellPoint$: Observable<(rowIndex: number, columnIndex: number) => IPoint>;
 
   /**
    * Constructor
@@ -51,6 +52,9 @@ export class CellDimension extends Disposable implements ICellDimension {
 
     this.getCellLocation$ = this.buildGetCellLocation();
     this.disposeWithMe(this.getCellLocation$.subscribe());
+
+    this.getCellPoint$ = this.buildGetCellPoint();
+    this.disposeWithMe(this.getCellPoint$.subscribe());
   }
 
   setCellData(key: string, value: string | null): void;
@@ -226,6 +230,26 @@ export class CellDimension extends Disposable implements ICellDimension {
             : getItemIndexByPosition(position + scrollValue);
         };
       }),
+    );
+  }
+
+  private buildGetCellPoint() {
+    return combineLatest([this.boundary.column.get$, this.boundary.row.get$]).pipe(
+      map(([getColumnLeft, getRowTop]) => {
+        /**
+         * Get the cell point of the specified cell.
+         *
+         * @param rowIndex - The row index, starting from 0.
+         * @param columnIndex - The column index, starting from 0.
+         */
+        return function getCellPoint(rowIndex: number, columnIndex: number): IPoint {
+          return {
+            x: getColumnLeft(columnIndex),
+            y: getRowTop(rowIndex),
+          };
+        };
+      }),
+      shareReplay({ refCount: true, bufferSize: 1 }),
     );
   }
 }
