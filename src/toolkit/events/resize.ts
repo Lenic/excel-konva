@@ -3,11 +3,11 @@ import { EMPTY, finalize, of, switchMap, takeUntil, tap, withLatestFrom } from '
 import { columnDimension, itemBoundary, rowDimension, sheet, sheetDimension } from '../helpers';
 import { resizeLine, selectionLayer, stage } from '../konva-items';
 
-import { BoundaryTypes, MousedownTypes } from './constants';
 import { mouseMove$, mouseUp$, typedLeftMouseDown$ } from './core';
+import { EBoundaryTypes, EMousedownTypes } from './types';
 
 export const resizeBoundary$ = typedLeftMouseDown$.pipe(
-  switchMap((v) => (v.mousedownType === MousedownTypes.ResizeBoundary ? of([v.data, v.event] as const) : EMPTY)),
+  switchMap((v) => (v.mousedownType === EMousedownTypes.ResizeBoundary ? of([v.data, v.event] as const) : EMPTY)),
   withLatestFrom(
     columnDimension.get$,
     rowDimension.get$,
@@ -31,10 +31,10 @@ export const resizeBoundary$ = typedLeftMouseDown$.pipe(
       // 阻止默认的 mousedown 行为
       e.evt.preventDefault();
       // 设置当前的鼠标样式
-      stage.container().style.cursor = info.type === BoundaryTypes.Column ? 'col-resize' : 'row-resize';
+      stage.container().style.cursor = info.type === EBoundaryTypes.Column ? 'col-resize' : 'row-resize';
 
       let initialDimension = 0;
-      if (info.type === BoundaryTypes.Column) {
+      if (info.type === EBoundaryTypes.Column) {
         initialDimension = getColumnWidth(info.index);
         resizeLine.points([info.boundary, 0, info.boundary, sheetVisualSize.height]);
       } else {
@@ -49,7 +49,7 @@ export const resizeBoundary$ = typedLeftMouseDown$.pipe(
         tap((ue) => {
           resizeLine.visible(false);
 
-          if (info.type === BoundaryTypes.Column) {
+          if (info.type === EBoundaryTypes.Column) {
             const dx = ue.evt.clientX - e.evt.clientX;
             const newWidth = Math.max(initialDimension + dx, minColumnWidth);
             columnDimension.set(info.index, Math.round(newWidth));
@@ -67,7 +67,7 @@ export const resizeBoundary$ = typedLeftMouseDown$.pipe(
       return mouseMove$.pipe(
         takeUntil(clear$),
         tap((me) => {
-          if (info.type === BoundaryTypes.Column) {
+          if (info.type === EBoundaryTypes.Column) {
             const dx = me.evt.clientX - e.evt.clientX;
             const newWidth = Math.max(initialDimension + dx, minColumnWidth);
 
