@@ -20,8 +20,8 @@ export const rowDimension = new ItemDimension(
     map((v) => ({ minDimension: v[0], headerDimension: v[1], defaultDimension: v[2] })),
   ),
 );
-export const accumulatedColumnDimension = new AccumulatedDimension(columnDimension);
-export const accumulatedRowDimension = new AccumulatedDimension(rowDimension);
+export const accumulatedColumnDimension = new AccumulatedDimension(columnDimension, sheet.columnCount$);
+export const accumulatedRowDimension = new AccumulatedDimension(rowDimension, sheet.rowCount$);
 export const sheetDimension = new SheetDimension(sheet, accumulatedColumnDimension, accumulatedRowDimension);
 export const scrollOffset = new ScrollOffset(sheetDimension);
 export const itemBoundary = new ItemBoundary(scrollOffset, accumulatedColumnDimension, accumulatedRowDimension, sheet);

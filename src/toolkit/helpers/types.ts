@@ -206,6 +206,14 @@ export interface IAccumulatedDimension extends IDisposable {
    * - Returns: The preceding total dimension.
    */
   get$: Observable<(index: number) => number>;
+  /**
+   * An Observable that emits a function to retrieve the item index for a specific offset.
+   *
+   * The emitted function signature is: `(offset: number) => number`
+   * - `offset`: The offset.
+   * - Returns: The item index.
+   */
+  getItemIndex$: Observable<(offset: number) => number>;
 }
 
 /**

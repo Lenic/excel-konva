@@ -1,9 +1,9 @@
 import type { IAccumulatedDimension, IItemDimension } from './types';
 import type { Observable } from 'rxjs';
 
-import { map, shareReplay } from 'rxjs';
+import { combineLatest, map, shareReplay } from 'rxjs';
 
-import { Disposable } from '../core';
+import { binarySearch, Disposable } from '../core';
 
 /**
  * Accumulated dimension
@@ -13,13 +13,15 @@ export class AccumulatedDimension extends Disposable implements IAccumulatedDime
   dimension: IItemDimension;
 
   get$: Observable<(index: number) => number>;
+  getItemIndex$: Observable<(offset: number) => number>;
 
   /**
    * Constructor
    *
    * @param dimension - Item dimension manager
+   * @param count$ - Observable count
    */
-  constructor(dimension: IItemDimension) {
+  constructor(dimension: IItemDimension, count$: Observable<number>) {
     super();
 
     this.store = new Map();
@@ -29,11 +31,14 @@ export class AccumulatedDimension extends Disposable implements IAccumulatedDime
 
     this.dimension = dimension;
 
-    this.get$ = this.build();
+    this.get$ = this.buildGet();
     this.disposeWithMe(this.get$.subscribe());
+
+    this.getItemIndex$ = this.buildGetItemIndex(count$);
+    this.disposeWithMe(this.getItemIndex$.subscribe());
   }
 
-  private build(): Observable<(index: number) => number> {
+  private buildGet(): Observable<(index: number) => number> {
     return this.dimension.get$.pipe(
       map((getDimension) => {
         this.store.clear();
@@ -63,6 +68,45 @@ export class AccumulatedDimension extends Disposable implements IAccumulatedDime
           }
 
           return currentValue;
+        };
+      }),
+      shareReplay({ refCount: true, bufferSize: 1 }),
+    );
+  }
+
+  private buildGetItemIndex(count$: Observable<number>): Observable<(offset: number) => number> {
+    return combineLatest([this.get$, count$]).pipe(
+      map(([getPrecedingTotalDimension, count]) => {
+        const list: [beginValue: number, endValue: number][] = [];
+        let maxIndex = -1;
+
+        /**
+         * Get the item index for a specific offset.
+         *
+         * @param offset - The offset.
+         */
+        return function getItemIndex(offset: number) {
+          const index = binarySearch(0, list.length - 1, (mid) => {
+            const [beginValue, endValue] = list[mid];
+            if (beginValue <= offset && offset < endValue) return 0;
+            return beginValue > offset ? 1 : -1;
+          });
+          if (index !== -1) return index;
+
+          let itemIndex = -1;
+          for (let c = maxIndex + 1; c < count; c++) {
+            const beginValue = getPrecedingTotalDimension(c);
+            const endValue = getPrecedingTotalDimension(c + 1);
+
+            maxIndex = c;
+            list.push([beginValue, endValue]);
+
+            if (offset < endValue) {
+              itemIndex = c;
+              break;
+            }
+          }
+          return Math.max(0, Math.min(itemIndex, count - 1));
         };
       }),
       shareReplay({ refCount: true, bufferSize: 1 }),
