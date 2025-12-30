@@ -271,28 +271,28 @@ export interface IScrollOffset extends IDisposable {
   /**
    * Scroll top
    */
-  scrollTop: number;
+  top: number;
   /**
    * Scroll left
    */
-  scrollLeft: number;
+  left: number;
   /**
    * Scroll offset
    */
-  scrollOffset: IOffset;
+  offset: IOffset;
 
   /**
    * Observable scroll top
    */
-  scrollTop$: Observable<number>;
+  top$: Observable<number>;
   /**
    * Observable scroll left
    */
-  scrollLeft$: Observable<number>;
+  left$: Observable<number>;
   /**
    * Observable scroll offset
    */
-  scrollOffset$: Observable<IOffset>;
+  offset$: Observable<IOffset>;
 }
 
 /**

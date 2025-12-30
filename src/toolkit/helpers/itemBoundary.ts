@@ -33,10 +33,10 @@ export class ItemBoundary extends Disposable implements IItemBoundary {
     this.row = row;
     this.sheet = sheet;
 
-    this.getColumnLeft$ = this.buildPrecedingBoundary$(column.get$, offset.scrollLeft$, sheet.frozenColumns$);
+    this.getColumnLeft$ = this.buildPrecedingBoundary$(column.get$, offset.left$, sheet.frozenColumns$);
     this.disposeWithMe(this.getColumnLeft$.subscribe());
 
-    this.getRowTop$ = this.buildPrecedingBoundary$(row.get$, offset.scrollTop$, sheet.frozenRows$);
+    this.getRowTop$ = this.buildPrecedingBoundary$(row.get$, offset.top$, sheet.frozenRows$);
     this.disposeWithMe(this.getRowTop$.subscribe());
   }
 

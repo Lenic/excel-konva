@@ -146,13 +146,13 @@ export class CellDimension extends Disposable implements ICellDimension {
       this.boundary.column.get$,
       sheet.frozenColumns$,
       sheet.columnCount$,
-      scrollOffset.scrollLeft$,
+      scrollOffset.left$,
     );
     const getRowIndex$ = this.buildGetItemIndex(
       this.boundary.row.get$,
       sheet.frozenRows$,
       sheet.rowCount$,
-      scrollOffset.scrollTop$,
+      scrollOffset.top$,
     );
     return combineLatest([getColumnIndex$, getRowIndex$]).pipe(
       map(([getColumnIndex, getRowIndex]) => {

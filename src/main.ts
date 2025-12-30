@@ -37,7 +37,7 @@ sheet.frozenColumns$.subscribe((val) => {
   document.getElementById('frozen-cols-count')!.textContent = val.toLocaleString();
 });
 
-scrollOffset.scrollOffset$.subscribe((val) => {
+scrollOffset.offset$.subscribe((val) => {
   scrollXElement.textContent = val.deltaX.toFixed(0);
   scrollYElement.textContent = val.deltaY.toFixed(0);
 });

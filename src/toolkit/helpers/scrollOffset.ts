@@ -22,13 +22,13 @@ import { scrollContainer } from '../core-elements';
 export class ScrollOffset extends Disposable implements IScrollOffset {
   sheetDimension: ISheetDimension;
 
-  scrollTop: number;
-  scrollLeft: number;
-  scrollOffset: IOffset;
+  top: number;
+  left: number;
+  offset: IOffset;
 
-  scrollTop$: Observable<number>;
-  scrollLeft$: Observable<number>;
-  scrollOffset$: Observable<IOffset>;
+  top$: Observable<number>;
+  left$: Observable<number>;
+  offset$: Observable<IOffset>;
 
   /**
    * Constructor
@@ -40,9 +40,9 @@ export class ScrollOffset extends Disposable implements IScrollOffset {
 
     this.sheetDimension = sheetDimension;
 
-    this.scrollTop = 0;
-    this.scrollLeft = 0;
-    this.scrollOffset = { deltaX: 0, deltaY: 0 } as IOffset;
+    this.top = 0;
+    this.left = 0;
+    this.offset = { deltaX: 0, deltaY: 0 } as IOffset;
 
     const scroll$ = fromEvent(scrollContainer, 'scroll').pipe(
       throttleTime(0, animationFrameScheduler, { leading: true, trailing: true }),
@@ -51,24 +51,24 @@ export class ScrollOffset extends Disposable implements IScrollOffset {
       shareReplay({ bufferSize: 1, refCount: true }),
     );
 
-    this.scrollTop$ = this.buildOffset(
+    this.top$ = this.buildOffset(
       scroll$.pipe(map((el) => el.scrollTop)),
       ([real, visual]) => real.height - visual.height,
     );
-    this.disposeWithMe(this.scrollTop$.subscribe((value) => (this.scrollTop = value)));
+    this.disposeWithMe(this.top$.subscribe((value) => (this.top = value)));
 
-    this.scrollLeft$ = this.buildOffset(
+    this.left$ = this.buildOffset(
       scroll$.pipe(map((el) => el.scrollLeft)),
       ([real, visual]) => real.width - visual.width,
     );
-    this.disposeWithMe(this.scrollLeft$.subscribe((value) => (this.scrollLeft = value)));
+    this.disposeWithMe(this.left$.subscribe((value) => (this.left = value)));
 
-    this.scrollOffset$ = combineLatest([this.scrollLeft$, this.scrollTop$]).pipe(
+    this.offset$ = combineLatest([this.left$, this.top$]).pipe(
       map(([deltaX, deltaY]) => ({ deltaX, deltaY })),
       distinctUntilChanged((a, b) => a.deltaX === b.deltaX && a.deltaY === b.deltaY),
       shareReplay({ bufferSize: 1, refCount: true }),
     );
-    this.disposeWithMe(this.scrollOffset$.subscribe((value) => (this.scrollOffset = value)));
+    this.disposeWithMe(this.offset$.subscribe((value) => (this.offset = value)));
   }
 
   private buildOffset(
