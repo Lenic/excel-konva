@@ -2,9 +2,8 @@ import type { ICellRegionOptions, ISelectedRange } from './types';
 
 import { combineLatest, map, shareReplay, switchMap, take } from 'rxjs';
 
-import { sheetVisualSize$ } from './utils/size';
 import { SELECTION_FILL_COLOR, SELECTION_STROKE_COLOR } from './constants';
-import { cellDimension, dataRegion, sheet } from './helpers';
+import { cellDimension, dataRegion, sheet, sheetDimension } from './helpers';
 import { backgroundLayer, getCellGroup$, selectionLayer } from './konva-items';
 import { activeCellMarkerPool, cellPool, selectionPool } from './pools';
 
@@ -34,7 +33,7 @@ export const renderSelections$ = combineLatest([
       ),
     ),
   ),
-  sheetVisualSize$,
+  sheetDimension.visualSize$,
 ]).pipe(
   map(([[getCellPoint, getColumnWidth, frozenColumns, getRowHeight, frozenRows], sheetVisualSize]) => {
     return function renderSelections() {
