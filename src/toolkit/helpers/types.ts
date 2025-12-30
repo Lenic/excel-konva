@@ -333,6 +333,14 @@ export interface IItemBoundary extends IDisposable {
    */
   getColumnLeft$: Observable<(columnIndex: number) => number>;
   /**
+   * An Observable that emits a function to retrieve the item index for a specific client X coordinate.
+   *
+   * The emitted function signature is: `(clientX: number) => number`
+   * - `clientX`: The X coordinate of the mouse relative to the viewport.
+   * - Returns: The item index.
+   */
+  getColumnIndex$: Observable<(clientX: number) => number>;
+  /**
    * An Observable that emits a function to retrieve the preceding boundary for a specific row index.
    *
    * The emitted function signature is: `(rowIndex: number) => number`
@@ -340,6 +348,14 @@ export interface IItemBoundary extends IDisposable {
    * - Returns: The preceding boundary.
    */
   getRowTop$: Observable<(rowIndex: number) => number>;
+  /**
+   * An Observable that emits a function to retrieve the item index for a specific client Y coordinate.
+   *
+   * The emitted function signature is: `(clientY: number) => number`
+   * - `clientY`: The Y coordinate of the mouse relative to the viewport.
+   * - Returns: The item index.
+   */
+  getRowIndex$: Observable<(clientY: number) => number>;
 }
 
 /**

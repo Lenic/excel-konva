@@ -1,7 +1,7 @@
 import type { IAccumulatedDimension, IItemBoundary, IScrollOffset, ISheetMeta } from './types';
 import type { Observable } from 'rxjs';
 
-import { combineLatest, map, shareReplay } from 'rxjs';
+import { combineLatest, combineLatestWith, map, shareReplay, switchMap, take } from 'rxjs';
 
 import { Disposable } from '../core';
 
@@ -16,6 +16,8 @@ export class ItemBoundary extends Disposable implements IItemBoundary {
 
   getColumnLeft$: Observable<(index: number) => number>;
   getRowTop$: Observable<(index: number) => number>;
+  getColumnIndex$: Observable<(clientX: number) => number>;
+  getRowIndex$: Observable<(clientY: number) => number>;
 
   /**
    * Constructor
@@ -38,6 +40,17 @@ export class ItemBoundary extends Disposable implements IItemBoundary {
 
     this.getRowTop$ = this.buildPrecedingBoundary$(row.get$, offset.top$, sheet.frozenRows$);
     this.disposeWithMe(this.getRowTop$.subscribe());
+
+    this.getColumnIndex$ = this.buildGetItemIndex(
+      column.get$,
+      column.getItemIndex$,
+      sheet.frozenColumns$,
+      offset.left$,
+    );
+    this.disposeWithMe(this.getColumnIndex$.subscribe());
+
+    this.getRowIndex$ = this.buildGetItemIndex(row.get$, row.getItemIndex$, sheet.frozenRows$, offset.top$);
+    this.disposeWithMe(this.getRowIndex$.subscribe());
   }
 
   private buildPrecedingBoundary$(
@@ -60,6 +73,31 @@ export class ItemBoundary extends Disposable implements IItemBoundary {
         };
       }),
       shareReplay({ refCount: true, bufferSize: 1 }),
+    );
+  }
+
+  private buildGetItemIndex(
+    getAccumulatedDimension$: Observable<(index: number) => number>,
+    getItemIndex$: Observable<(offset: number) => number>,
+    frozenCount$: Observable<number>,
+    scrollValue$: Observable<number>,
+  ) {
+    return getItemIndex$.pipe(
+      switchMap((getItemIndex) =>
+        combineLatest([getAccumulatedDimension$.pipe(take(1)), frozenCount$]).pipe(
+          map(
+            ([getAccumulatedDimension, frozenCount]) => [getItemIndex, getAccumulatedDimension(frozenCount)] as const,
+          ),
+        ),
+      ),
+      combineLatestWith(scrollValue$),
+      map(([[getItemIndexByOffset, frozenDimension], scrollValue]) => {
+        return function getItemIndex(position: number) {
+          return position <= frozenDimension
+            ? getItemIndexByOffset(position)
+            : getItemIndexByOffset(position + scrollValue);
+        };
+      }),
     );
   }
 }
