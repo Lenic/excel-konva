@@ -254,13 +254,13 @@ export const renderVisibleCells$ = combineLatest([
     );
   }),
   map(([renderCellRegion, dataRegion, frozenColumns, frozenRows]) => {
-    const { startRow, endRow, startColumn, endColumn } = dataRegion;
+    const { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } = dataRegion;
 
     cellPool.reset();
 
     // 渲染 Scrollable Data
-    for (let r = startRow; r < endRow; r++) {
-      for (let c = startColumn; c < endColumn; c++) {
+    for (let r = startRowIndex; r < endRowIndex; r++) {
+      for (let c = startColumnIndex; c < endColumnIndex; c++) {
         renderCellRegion(r, c, {
           rectAttrs: {
             fill: r % 2 === 0 ? '#ffffff' : '#f9f9f9',
@@ -281,7 +281,7 @@ export const renderVisibleCells$ = combineLatest([
 
     // 渲染 Frozen Header
     for (let r = 0; r < frozenRows; r++) {
-      for (let c = startColumn; c < endColumn; c++) {
+      for (let c = startColumnIndex; c < endColumnIndex; c++) {
         renderCellRegion(r, c, {
           rectAttrs: {
             fill: r === 0 ? '#f0f0f0' : r % 2 === 0 ? '#ffffff' : '#f9f9f9',
@@ -302,7 +302,7 @@ export const renderVisibleCells$ = combineLatest([
 
     // 渲染 Frozen Side
     for (let c = 0; c < frozenColumns; c++) {
-      for (let r = startRow; r < endRow; r++) {
+      for (let r = startRowIndex; r < endRowIndex; r++) {
         renderCellRegion(r, c, {
           rectAttrs: {
             fill: c === 0 ? '#f0f0f0' : r % 2 === 0 ? '#ffffff' : '#f9f9f9',

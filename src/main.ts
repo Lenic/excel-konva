@@ -54,10 +54,10 @@ sheetDimension.realSize$.subscribe((dimension) => {
 //   selectionCount.textContent = count.toLocaleString();
 // });
 renderVisibleCells$.pipe(auditTime(16)).subscribe((dataRegion) => {
-  const { startRow, endRow, startColumn, endColumn } = dataRegion;
+  const { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } = dataRegion;
 
-  renderedRangeRow.textContent = `${startRow.toLocaleString()} - ${endRow.toLocaleString()}`;
-  renderedRangeColumn.textContent = `${startColumn} - ${endColumn}`;
+  renderedRangeRow.textContent = `${startRowIndex.toLocaleString()} - ${endRowIndex.toLocaleString()}`;
+  renderedRangeColumn.textContent = `${startColumnIndex.toLocaleString()} - ${endColumnIndex.toLocaleString()}`;
 });
 
 resizeBoundary$.subscribe();

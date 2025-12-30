@@ -1,24 +1,13 @@
-import type { IBoundaryInfo, TMousedownEvent } from './types';
+import type { TMousedownEvent } from './types';
 import type Konva from 'konva';
 
-import {
-  combineLatest,
-  EMPTY,
-  exhaustMap,
-  fromEventPattern,
-  map,
-  of,
-  shareReplay,
-  switchMap,
-  take,
-  withLatestFrom,
-} from 'rxjs';
+import { EMPTY, exhaustMap, fromEventPattern, map, of, shareReplay, withLatestFrom } from 'rxjs';
 
-import { container } from '../core-elements';
-import { itemBoundary, sheet, sheetDimension } from '../helpers';
+import { cellDimension, sheet } from '../helpers';
 import { stage } from '../konva-items';
 
-import { MousedownTypes, RESIZE_TOLERANCE } from './constants';
+import { EHeaderClickType, EMousedownTypes } from './types';
+import { checkResizeBoundary$ } from './utils';
 
 function getMouseEvent$(key: keyof GlobalEventHandlersEventMap) {
   return fromEventPattern<Konva.KonvaEventObject<MouseEvent>>(
@@ -31,99 +20,107 @@ export const mouseDown$ = getMouseEvent$('mousedown');
 export const mouseMove$ = getMouseEvent$('mousemove');
 export const mouseUp$ = getMouseEvent$('mouseup');
 
-/**
- * 检查当前位置的边界信息，如果不是边界就返回 `null`
- */
-const checkResizeBoundary$ = combineLatest([
-  itemBoundary.getColumnLeft$.pipe(
-    switchMap((getColumnLeft) =>
-      itemBoundary.column.get$.pipe(
-        take(1),
-        map((getColumnWidth) => [getColumnLeft, getColumnWidth] as const),
-      ),
-    ),
-  ),
-  itemBoundary.getRowTop$.pipe(
-    switchMap((getRowTop) =>
-      itemBoundary.row.get$.pipe(
-        take(1),
-        map((getRowHeight) => [getRowTop, getRowHeight] as const),
-      ),
-    ),
-  ),
-  sheet.columnCount$,
-  sheet.rowCount$,
-  sheetDimension.visualSize$,
-]).pipe(
-  map(([[getColumnLeft, getColumnWidth], [getRowTop, getRowHeight], columnCount, rowCount, sheetVisualSize]) => {
-    /**
-     * 检查当前位置的边界信息，如果不是边界就返回 `null`
-     *
-     * @param clientX - The X coordinate of the mouse relative to the viewport.
-     * @param clientY - The Y coordinate of the mouse relative to the viewport.
-     */
-    return function checkResizeBoundary(clientX: number, clientY: number): IBoundaryInfo | null {
-      const containerRect = container.getBoundingClientRect();
-      const relX = clientX - containerRect.left;
-      const relY = clientY - containerRect.top;
-
-      /**
-       * 检查列边界
-       *
-       * - 只有列头区域内才会触发这个事件
-       * - 在正常的单元格区域内不会触发列边界 resize 事件
-       */
-      if (relY < getRowHeight(0) + RESIZE_TOLERANCE) {
-        for (let c = 0; c < columnCount; c++) {
-          // 使用 getColumnLeft 获取列 c 右侧边界的准确坐标值
-          const boundary = getColumnLeft(c + 1);
-
-          // relX 和 计算出来的边界值 boundary 差值在容差允许的范围内即认为匹配成功
-          if (Math.abs(relX - boundary) < RESIZE_TOLERANCE) {
-            return { type: 'column-boundary', index: c, boundary };
-          }
-
-          // 超出视口
-          if (boundary > sheetVisualSize.width) break;
-        }
-      }
-
-      /**
-       * 检查行边界
-       *
-       * - 只有行头区域内才会触发这个事件
-       * - 在正常的单元格区域内不会触发行边界 resize 事件
-       */
-      if (relX < getColumnWidth(0) + RESIZE_TOLERANCE) {
-        for (let r = 0; r < rowCount; r++) {
-          // 使用 getRowTop 获取行 r 底部边界的准确坐标值
-          const boundary = getRowTop(r + 1);
-
-          // relY 和 计算出来的边界值 boundary 差值在容差允许的范围内即认为匹配成功
-          if (Math.abs(relY - boundary) < RESIZE_TOLERANCE) {
-            return { type: 'row-boundary', index: r, boundary: boundary };
-          }
-
-          // 超出视口
-          if (boundary > sheetVisualSize.height) break;
-        }
-      }
-
-      return null;
-    };
-  }),
-);
-
 export const typedLeftMouseDown$ = mouseDown$.pipe(
   exhaustMap((e) => (e.evt.button === 0 ? of(e) : EMPTY)),
-  withLatestFrom(checkResizeBoundary$),
-  map(([e, checkResizeBoundary]) => {
+  withLatestFrom(checkResizeBoundary$, cellDimension.getCellLocation$, sheet.columnCount$, sheet.rowCount$),
+  map(([e, checkResizeBoundary, getCellLocation, columnCount, rowCount]) => {
+    // 1. 检查是否启动尺寸调整
     const boundary = checkResizeBoundary(e.evt.clientX, e.evt.clientY);
     if (boundary) {
-      return { mousedownType: MousedownTypes.ResizeBoundary, data: boundary, event: e } as TMousedownEvent;
+      return { mousedownType: EMousedownTypes.ResizeBoundary, data: boundary, event: e } as TMousedownEvent;
     }
 
-    return { mousedownType: MousedownTypes.Empty, event: e } as TMousedownEvent;
+    // 2. 检查是否点击了 Konva Stage 空白处 (非单元格)
+    if (e.target === stage) {
+      return { mousedownType: EMousedownTypes.Empty, event: e } as TMousedownEvent;
+    }
+
+    // 3. 启动单元格选区
+    const startCell = getCellLocation(e.evt.clientX, e.evt.clientY);
+    const isMultiSelect = e.evt.ctrlKey || e.evt.metaKey;
+
+    const isRowHeaderClick = startCell.columnIndex === 0 && startCell.rowIndex !== 0;
+    const isColHeaderClick = startCell.rowIndex === 0 && startCell.columnIndex !== 0;
+    const isCornerClick = startCell.rowIndex === 0 && startCell.columnIndex === 0;
+
+    if (isCornerClick) {
+      return {
+        mousedownType: EMousedownTypes.HeaderClick,
+        data: {
+          type: EHeaderClickType.Corner,
+          region: {
+            startRowIndex: 1,
+            endRowIndex: rowCount - 1,
+            startColumnIndex: 1,
+            endColumnIndex: columnCount - 1,
+          },
+          activeCell: {
+            rowIndex: 1,
+            columnIndex: 1,
+          },
+          isMultiSelect,
+        },
+        event: e,
+      } as TMousedownEvent;
+    } else if (isRowHeaderClick) {
+      return {
+        mousedownType: EMousedownTypes.HeaderClick,
+        data: {
+          type: EHeaderClickType.RowHeader,
+          region: {
+            startRowIndex: startCell.rowIndex,
+            endRowIndex: startCell.rowIndex,
+            startColumnIndex: 1,
+            endColumnIndex: columnCount - 1,
+          },
+          activeCell: {
+            rowIndex: startCell.rowIndex,
+            columnIndex: 1,
+          },
+          isMultiSelect,
+        },
+        event: e,
+      } as TMousedownEvent;
+    } else if (isColHeaderClick) {
+      return {
+        mousedownType: EMousedownTypes.HeaderClick,
+        data: {
+          type: EHeaderClickType.ColumnHeader,
+          region: {
+            startRowIndex: 1,
+            endRowIndex: rowCount - 1,
+            startColumnIndex: startCell.columnIndex,
+            endColumnIndex: startCell.columnIndex,
+          },
+          activeCell: {
+            rowIndex: 1,
+            columnIndex: startCell.columnIndex,
+          },
+          isMultiSelect,
+        },
+        event: e,
+      } as TMousedownEvent;
+    }
+
+    // 点击了数据单元格
+    return {
+      mousedownType: EMousedownTypes.HeaderClick,
+      data: {
+        type: EHeaderClickType.ColumnHeader,
+        region: {
+          startRowIndex: 1,
+          endRowIndex: rowCount - 1,
+          startColumnIndex: startCell.columnIndex,
+          endColumnIndex: startCell.columnIndex,
+        },
+        activeCell: {
+          rowIndex: 1,
+          columnIndex: startCell.columnIndex,
+        },
+        isMultiSelect,
+      },
+      event: e,
+    } as TMousedownEvent;
   }),
   shareReplay({ refCount: true, bufferSize: 1 }),
 );

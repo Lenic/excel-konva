@@ -97,7 +97,7 @@ export const dataRegionInfo$ = combineLatest([
       rowCount,
       sheetVisualSize,
     ]) => {
-      const [startColumn, endColumn] = findVisibleRange(
+      const [startColumnIndex, endColumnIndex] = findVisibleRange(
         getColumnLeft,
         frozenColumns,
         columnCount,
@@ -105,7 +105,7 @@ export const dataRegionInfo$ = combineLatest([
         sheetVisualSize.width,
       );
 
-      const [startRow, endRow] = findVisibleRange(
+      const [startRowIndex, endRowIndex] = findVisibleRange(
         getRowTop,
         frozenRows,
         rowCount,
@@ -113,7 +113,7 @@ export const dataRegionInfo$ = combineLatest([
         sheetVisualSize.height,
       );
 
-      return { startRow, endRow, startColumn, endColumn } as IRegionInfo;
+      return { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } as IRegionInfo;
     },
   ),
 );

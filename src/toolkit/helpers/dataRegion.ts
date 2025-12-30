@@ -20,7 +20,7 @@ export class DataRegion extends Disposable implements IDataRegion {
     this.boundary = itemBoundary;
     this.sheetDimension = sheetDimension;
 
-    this.region = { startRow: 0, endRow: 0, startColumn: 0, endColumn: 0 };
+    this.region = { startRowIndex: 0, endRowIndex: 0, startColumnIndex: 0, endColumnIndex: 0 };
 
     this.region$ = this.buildDataRegion();
     this.disposeWithMe(
@@ -69,7 +69,7 @@ export class DataRegion extends Disposable implements IDataRegion {
           rowCount,
           sheetVisualSize,
         ]) => {
-          const [startColumn, endColumn] = this.findVisibleRange(
+          const [startColumnIndex, endColumnIndex] = this.findVisibleRange(
             getColumnLeft,
             frozenColumns,
             columnCount,
@@ -77,7 +77,7 @@ export class DataRegion extends Disposable implements IDataRegion {
             sheetVisualSize.width,
           );
 
-          const [startRow, endRow] = this.findVisibleRange(
+          const [startRowIndex, endRowIndex] = this.findVisibleRange(
             getRowTop,
             frozenRows,
             rowCount,
@@ -85,7 +85,7 @@ export class DataRegion extends Disposable implements IDataRegion {
             sheetVisualSize.height,
           );
 
-          return { startRow, endRow, startColumn, endColumn } as IRegionInfo;
+          return { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } as IRegionInfo;
         },
       ),
     );

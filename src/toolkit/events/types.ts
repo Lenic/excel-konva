@@ -1,25 +1,193 @@
-import type { BoundaryTypes, MousedownTypes } from './constants';
+import type { ILocation, IRegionInfo } from '../types';
 import type Konva from 'konva';
 
-export type TMousedownTypes = (typeof MousedownTypes)[keyof typeof MousedownTypes];
+/**
+ * Mouse down event types
+ */
+export const EMousedownTypes = {
+  /**
+   * Empty event
+   */
+  Empty: 'empty',
+  /**
+   * Resize boundary event
+   */
+  ResizeBoundary: 'resize-boundary',
+  /**
+   * Header click event
+   */
+  HeaderClick: 'header-click',
+  /**
+   * Cell click event
+   */
+  CellClick: 'cell-click',
+} as const;
 
+/**
+ * Mouse down event types
+ */
+export type EMousedownTypes = (typeof EMousedownTypes)[keyof typeof EMousedownTypes];
+
+/**
+ * Mouse empty event interface
+ */
 export interface IMouseEmptyEvent {
-  mousedownType: typeof MousedownTypes.Empty;
+  /**
+   * Event type
+   */
+  mousedownType: typeof EMousedownTypes.Empty;
+  /**
+   * Original Konva event object
+   */
   event: Konva.KonvaEventObject<MouseEvent>;
 }
 
-export type TBoundaryTypes = (typeof BoundaryTypes)[keyof typeof BoundaryTypes];
+/**
+ * Boundary types
+ */
+export const EBoundaryTypes = {
+  /**
+   * Column boundary
+   */
+  Column: 'column-boundary',
+  /**
+   * Row boundary
+   */
+  Row: 'row-boundary',
+} as const;
 
+/**
+ * Boundary types
+ */
+export type EBoundaryTypes = (typeof EBoundaryTypes)[keyof typeof EBoundaryTypes];
+
+/**
+ * Boundary information interface
+ */
 export interface IBoundaryInfo {
+  /**
+   * Index of the row or column
+   */
   index: number;
+  /**
+   * Boundary position (coordinate)
+   */
   boundary: number;
-  type: TBoundaryTypes;
+  /**
+   * Type of boundary
+   */
+  type: EBoundaryTypes;
 }
 
+/**
+ * Resize boundary event interface
+ */
 export interface IResizeBoundaryEvent {
-  mousedownType: typeof MousedownTypes.ResizeBoundary;
+  /**
+   * Event type
+   */
+  mousedownType: typeof EMousedownTypes.ResizeBoundary;
+  /**
+   * Original Konva event object
+   */
   event: Konva.KonvaEventObject<MouseEvent>;
+  /**
+   * Boundary information data
+   */
   data: IBoundaryInfo;
 }
 
-export type TMousedownEvent = IMouseEmptyEvent | IResizeBoundaryEvent;
+/**
+ * Header click types
+ */
+export const EHeaderClickType = {
+  RowHeader: 'row-header',
+  ColumnHeader: 'column-header',
+  Corner: 'corner',
+} as const;
+
+/**
+ * Header click types
+ */
+export type EHeaderClickType = (typeof EHeaderClickType)[keyof typeof EHeaderClickType];
+
+/**
+ * Header click data interface
+ */
+export interface IHeaderClickData {
+  /**
+   * Type of header click
+   */
+  type: EHeaderClickType;
+  /**
+   * Selected region information
+   */
+  region: IRegionInfo;
+  /**
+   * Active cell location
+   */
+  activeCell: ILocation;
+  /**
+   * Whether multi-select mode is active (e.g. Ctrl/Cmd key pressed)
+   */
+  isMultiSelect: boolean;
+}
+
+/**
+ * Header click event interface
+ */
+export interface IHeaderClickEvent {
+  /**
+   * Event type
+   */
+  mousedownType: typeof EMousedownTypes.HeaderClick;
+  /**
+   * Original Konva event object
+   */
+  event: Konva.KonvaEventObject<MouseEvent>;
+  /**
+   * Header click data
+   */
+  data: IHeaderClickData;
+}
+
+/**
+ * Cell click data interface
+ */
+export interface ICellClickData {
+  /**
+   * Selected region information
+   */
+  region: IRegionInfo;
+  /**
+   * Active cell location
+   */
+  activeCell: ILocation;
+  /**
+   * Whether multi-select mode is active (e.g. Ctrl/Cmd key pressed)
+   */
+  isMultiSelect: boolean;
+}
+
+/**
+ * Cell click event interface
+ */
+export interface ICellClickEvent {
+  /**
+   * Event type
+   */
+  mousedownType: typeof EMousedownTypes.CellClick;
+  /**
+   * Original Konva event object
+   */
+  event: Konva.KonvaEventObject<MouseEvent>;
+  /**
+   * Cell click data
+   */
+  data: ICellClickData;
+}
+
+/**
+ * Mouse down event type union
+ */
+export type TMousedownEvent = IMouseEmptyEvent | IResizeBoundaryEvent | IHeaderClickEvent | ICellClickEvent;

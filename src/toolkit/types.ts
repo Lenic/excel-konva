@@ -83,19 +83,19 @@ export interface IRegionInfo {
   /**
    * 开始的行索引
    */
-  startRow: number;
+  startRowIndex: number;
   /**
    * 结束的行索引
    */
-  endRow: number;
+  endRowIndex: number;
   /**
    * 开始的列索引
    */
-  startColumn: number;
+  startColumnIndex: number;
   /**
    * 结束的列索引
    */
-  endColumn: number;
+  endColumnIndex: number;
 }
 
 export interface IUserState {
