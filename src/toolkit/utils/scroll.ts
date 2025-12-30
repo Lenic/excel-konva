@@ -2,13 +2,13 @@ import type { IOffset } from '../types';
 
 import {
   animationFrameScheduler,
+  auditTime,
   combineLatest,
   distinctUntilChanged,
   fromEvent,
   map,
   shareReplay,
   startWith,
-  throttleTime,
 } from 'rxjs';
 
 import { scrollContainer } from '../core-elements';
@@ -20,7 +20,7 @@ import { sheetRealSize$, sheetVisualSize$ } from './size';
  */
 export const scrollOffset$ = combineLatest([
   fromEvent(scrollContainer, 'scroll').pipe(
-    throttleTime(0, animationFrameScheduler, { leading: true, trailing: true }),
+    auditTime(16, animationFrameScheduler),
     startWith(null),
     map(() => ({ deltaX: scrollContainer.scrollLeft, deltaY: scrollContainer.scrollTop }) as IOffset),
   ),

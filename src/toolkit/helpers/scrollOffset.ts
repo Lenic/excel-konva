@@ -4,13 +4,13 @@ import type { Observable } from 'rxjs';
 
 import {
   animationFrameScheduler,
+  auditTime,
   combineLatest,
   distinctUntilChanged,
   fromEvent,
   map,
   shareReplay,
   startWith,
-  throttleTime,
 } from 'rxjs';
 
 import { Disposable } from '../core';
@@ -45,7 +45,7 @@ export class ScrollOffset extends Disposable implements IScrollOffset {
     this.offset = { deltaX: 0, deltaY: 0 } as IOffset;
 
     const scroll$ = fromEvent(scrollContainer, 'scroll').pipe(
-      throttleTime(0, animationFrameScheduler, { leading: true, trailing: true }),
+      auditTime(16, animationFrameScheduler),
       startWith(null),
       map(() => scrollContainer),
       shareReplay({ bufferSize: 1, refCount: true }),

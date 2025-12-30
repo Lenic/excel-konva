@@ -2,7 +2,7 @@ import type { IDimension } from '../types';
 import type { IAccumulatedDimension, ISheetDimension, ISheetMeta } from './types';
 import type { Observable } from 'rxjs';
 
-import { animationFrameScheduler, combineLatest, fromEvent, map, shareReplay, startWith, throttleTime } from 'rxjs';
+import { animationFrameScheduler, auditTime, combineLatest, fromEvent, map, shareReplay, startWith } from 'rxjs';
 
 import { Disposable } from '../core';
 import { container } from '../core-elements';
@@ -45,7 +45,7 @@ export class SheetDimension extends Disposable implements ISheetDimension {
     this.realSize = { width: 0, height: 0 };
 
     this.visualSize$ = fromEvent(window, 'resize').pipe(
-      throttleTime(0, animationFrameScheduler, { leading: true, trailing: true }),
+      auditTime(16, animationFrameScheduler),
       startWith(null),
       map(() => ({ width: container.clientWidth, height: container.clientHeight }) as IDimension),
       shareReplay({ refCount: true, bufferSize: 1 }),
