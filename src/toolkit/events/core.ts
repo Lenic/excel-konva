@@ -59,10 +59,14 @@ const checkResizeBoundary$ = combineLatest([
     /**
      * 检查当前位置的边界信息，如果不是边界就返回 `null`
      *
-     * @param relX - 当前鼠标相对于画布左上角的横坐标
-     * @param relY - 当前鼠标相对于画布左上角的纵坐标
+     * @param clientX - The X coordinate of the mouse relative to the viewport.
+     * @param clientY - The Y coordinate of the mouse relative to the viewport.
      */
-    return function checkResizeBoundary(relX: number, relY: number): IBoundaryInfo | null {
+    return function checkResizeBoundary(clientX: number, clientY: number): IBoundaryInfo | null {
+      const containerRect = container.getBoundingClientRect();
+      const relX = clientX - containerRect.left;
+      const relY = clientY - containerRect.top;
+
       /**
        * 检查列边界
        *
@@ -114,11 +118,7 @@ export const typedLeftMouseDown$ = mouseDown$.pipe(
   exhaustMap((e) => (e.evt.button === 0 ? of(e) : EMPTY)),
   withLatestFrom(checkResizeBoundary$),
   map(([e, checkResizeBoundary]) => {
-    const containerRect = container.getBoundingClientRect();
-    const relX = e.evt.clientX - containerRect.left;
-    const relY = e.evt.clientY - containerRect.top;
-
-    const boundary = checkResizeBoundary(relX, relY);
+    const boundary = checkResizeBoundary(e.evt.clientX, e.evt.clientY);
     if (boundary) {
       return { mousedownType: MousedownTypes.ResizeBoundary, data: boundary, event: e } as TMousedownEvent;
     }
