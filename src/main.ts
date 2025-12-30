@@ -5,11 +5,12 @@ import {
   renderedRangeRow,
   scrollXElement,
   scrollYElement,
+  selectionCount,
   virtualContent,
 } from './toolkit/core-elements';
 import { resizeBoundary$ } from './toolkit/events';
 import { scrollOffset, sheet, sheetDimension } from './toolkit/helpers';
-import { renderVisibleCells$ } from './toolkit/render';
+import { renderSelections$, renderVisibleCells$ } from './toolkit/render';
 
 // --- 1. 配置常量与初始化 ---
 
@@ -48,11 +49,12 @@ sheetDimension.realSize$.subscribe((dimension) => {
   virtualContent.style.height = `${dimension.height}px`;
 });
 
-// renderSelections$.pipe(auditTime(16)).subscribe((render) => {
-//   const count = render();
+renderSelections$.pipe(auditTime(16)).subscribe((render) => {
+  const count = render();
 
-//   selectionCount.textContent = count.toLocaleString();
-// });
+  selectionCount.textContent = count.toLocaleString();
+});
+
 renderVisibleCells$.pipe(auditTime(16)).subscribe((dataRegion) => {
   const { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } = dataRegion;
 
