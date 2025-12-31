@@ -155,7 +155,7 @@ export class DataRegion extends Disposable implements IDataRegion {
         // Determine if the boundary of the current row (column) is less than the viewport end value.
         // We need the left (top) boundary, so no +1 is needed, use the element's own boundary directly.
         getBoundaryValue(mid) - viewportMax,
-      1,
+      -1,
     );
 
     // Apply buffer
