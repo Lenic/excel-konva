@@ -104,7 +104,7 @@ export const typedLeftMouseDown$ = mouseDown$.pipe(
 
     // Clicked on a data cell
     return {
-      mousedownType: EMousedownTypes.HeaderClick,
+      mousedownType: EMousedownTypes.CellClick,
       data: {
         type: EHeaderClickType.ColumnHeader,
         region: {
