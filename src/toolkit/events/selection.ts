@@ -2,7 +2,7 @@ import type { ISelectionRegion } from './types';
 
 import { distinctUntilChanged, filter, map, merge, scan } from 'rxjs';
 
-import { typedLeftMouseDown$ } from './core';
+import { typedMouseDownLeft$ } from './core';
 import { EMousedownTypes } from './types';
 import { isSameSelectionRegion } from './utils';
 
@@ -22,23 +22,30 @@ interface IReplaceSelectionAction {
 
 type TSelectionAction = IAddSelectionAction | IClearSelectionAction | IReplaceSelectionAction;
 
-const wholeColumnOrRowSelection$ = typedLeftMouseDown$.pipe(
+const wholeColumnOrRowSelection$ = typedMouseDownLeft$.pipe(
   filter((e) => e.mousedownType === EMousedownTypes.HeaderClick),
   map((e) => {
     let action: TSelectionAction;
     if (e.data.isMultiSelect) {
-      action = { type: 'add', region: e.data } as TSelectionAction;
+      action = { type: 'add', region: e.data };
     } else {
-      action = { type: 'replace', region: e.data } as TSelectionAction;
+      action = { type: 'replace', region: e.data };
     }
     return action;
+  }),
+);
+
+const cellSelection$ = typedMouseDownLeft$.pipe(
+  filter((e) => e.mousedownType === EMousedownTypes.CellClick),
+  map((e) => {
+    return { type: 'replace', region: e.data } as TSelectionAction;
   }),
 );
 
 /**
  * Selection store
  */
-export const selectionStore$ = merge(wholeColumnOrRowSelection$).pipe(
+export const selectionStore$ = merge(wholeColumnOrRowSelection$, cellSelection$).pipe(
   scan((list, action) => {
     switch (action.type) {
       case 'add':

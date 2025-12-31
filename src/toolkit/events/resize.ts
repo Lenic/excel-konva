@@ -3,10 +3,10 @@ import { EMPTY, finalize, of, switchMap, takeUntil, tap, withLatestFrom } from '
 import { columnBoundary, columnDimension, config, rowBoundary, rowDimension, sheetDimension } from '../helpers';
 import { resizeLine, selectionLayer, stage } from '../konva-items';
 
-import { mouseMove$, mouseUp$, typedLeftMouseDown$ } from './core';
+import { mouseMove$, mouseUp$, typedMouseDownLeft$ } from './core';
 import { EBoundaryTypes, EMousedownTypes } from './types';
 
-export const resizeBoundary$ = typedLeftMouseDown$.pipe(
+export const resizeBoundary$ = typedMouseDownLeft$.pipe(
   switchMap((v) => (v.mousedownType === EMousedownTypes.ResizeBoundary ? of([v.data, v.event] as const) : EMPTY)),
   withLatestFrom(
     columnDimension.get$,
