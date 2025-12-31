@@ -1,5 +1,5 @@
 import type { IDimension } from '../types';
-import type { IAccumulatedDimension, ISheetDimension, ISheetMeta } from './types';
+import type { IAccumulatedDimension, ISheetConfig, ISheetDimension } from './types';
 import type { Observable } from 'rxjs';
 
 import { animationFrameScheduler, auditTime, combineLatest, fromEvent, map, shareReplay, startWith } from 'rxjs';
@@ -11,7 +11,7 @@ import { container } from '../core-elements';
  * Sheet dimension
  */
 export class SheetDimension extends Disposable implements ISheetDimension {
-  sheet: ISheetMeta;
+  config: ISheetConfig;
   column: IAccumulatedDimension;
   row: IAccumulatedDimension;
 
@@ -28,14 +28,14 @@ export class SheetDimension extends Disposable implements ISheetDimension {
   /**
    * Constructor
    *
-   * @param sheet - Sheet
+   * @param config - Sheet
    * @param column - Accumulated column dimension
    * @param row - Accumulated row dimension
    */
-  constructor(sheet: ISheetMeta, column: IAccumulatedDimension, row: IAccumulatedDimension) {
+  constructor(config: ISheetConfig, column: IAccumulatedDimension, row: IAccumulatedDimension) {
     super();
 
-    this.sheet = sheet;
+    this.config = config;
     this.column = column;
     this.row = row;
 
@@ -56,14 +56,14 @@ export class SheetDimension extends Disposable implements ISheetDimension {
       }),
     );
 
-    this.realWidth$ = this.buildRealDimension(this.sheet.columnCount$, this.column.get$);
+    this.realWidth$ = this.buildRealDimension(this.config.columnCount$, this.column.get$);
     this.disposeWithMe(
       this.realWidth$.subscribe((width) => {
         this.realWidth = width;
       }),
     );
 
-    this.realHeight$ = this.buildRealDimension(this.sheet.rowCount$, this.row.get$);
+    this.realHeight$ = this.buildRealDimension(this.config.rowCount$, this.row.get$);
     this.disposeWithMe(
       this.realHeight$.subscribe((height) => {
         this.realHeight = height;

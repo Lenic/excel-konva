@@ -1,4 +1,4 @@
-import type { ISheetMeta } from './types';
+import type { ISheetConfig } from './types';
 import type { Observable } from 'rxjs';
 
 import { BehaviorSubject } from 'rxjs';
@@ -6,9 +6,9 @@ import { BehaviorSubject } from 'rxjs';
 import { Disposable } from '../core';
 
 /**
- * Sheet meta
+ * Sheet Config
  */
-export class SheetMeta extends Disposable implements ISheetMeta {
+export class SheetConfig extends Disposable implements ISheetConfig {
   private headerHeightSubject: BehaviorSubject<number>;
   private headerWidthSubject: BehaviorSubject<number>;
   private rowHeightSubject: BehaviorSubject<number>;

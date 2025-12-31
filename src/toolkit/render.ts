@@ -3,7 +3,7 @@ import type { ICellRegionOptions, ISelectedRange } from './types';
 import { combineLatest, map, shareReplay, switchMap, take } from 'rxjs';
 
 import { SELECTION_FILL_COLOR, SELECTION_STROKE_COLOR } from './constants';
-import { cellDimension, dataRegion, sheet, sheetDimension } from './helpers';
+import { cellDimension, config, dataRegion, sheetDimension } from './helpers';
 import { backgroundLayer, getCellGroup$, selectionLayer } from './konva-items';
 import { activeCellMarkerPool, cellPool, selectionPool } from './pools';
 
@@ -24,9 +24,9 @@ export const renderSelections$ = combineLatest([
     switchMap((getCellPoint) =>
       combineLatest([
         cellDimension.boundary.column.dimension.get$,
-        sheet.frozenColumns$,
+        config.frozenColumns$,
         cellDimension.boundary.row.dimension.get$,
-        sheet.frozenRows$,
+        config.frozenRows$,
       ]).pipe(
         take(1),
         map((items) => [getCellPoint, ...items] as const),
@@ -247,7 +247,7 @@ export const renderVisibleCells$ = combineLatest([
       if (text.parent !== group) text.moveTo(group);
     }
 
-    return combineLatest([dataRegion.region$, sheet.frozenColumns$, sheet.frozenRows$]).pipe(
+    return combineLatest([dataRegion.region$, config.frozenColumns$, config.frozenRows$]).pipe(
       take(1),
       map((items) => [renderCellRegion, ...items] as const),
     );

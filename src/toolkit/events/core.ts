@@ -3,7 +3,7 @@ import type Konva from 'konva';
 
 import { EMPTY, exhaustMap, fromEventPattern, map, of, shareReplay, withLatestFrom } from 'rxjs';
 
-import { cellDimension, sheet } from '../helpers';
+import { cellDimension, config } from '../helpers';
 import { stage } from '../konva-items';
 
 import { EHeaderClickType, EMousedownTypes } from './types';
@@ -22,7 +22,7 @@ export const mouseUp$ = getMouseEvent$('mouseup');
 
 export const typedLeftMouseDown$ = mouseDown$.pipe(
   exhaustMap((e) => (e.evt.button === 0 ? of(e) : EMPTY)),
-  withLatestFrom(checkResizeBoundary$, cellDimension.getCellLocation$, sheet.columnCount$, sheet.rowCount$),
+  withLatestFrom(checkResizeBoundary$, cellDimension.getCellLocation$, config.columnCount$, config.rowCount$),
   map(([e, checkResizeBoundary, getCellLocation, columnCount, rowCount]) => {
     // 1. Check if resize is triggered
     const boundary = checkResizeBoundary(e.evt.clientX, e.evt.clientY);

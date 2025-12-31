@@ -2,7 +2,7 @@ import Konva from 'konva';
 import { combineLatest, fromEventPattern, map, shareReplay, tap } from 'rxjs';
 
 import { scrollContainer } from './core-elements';
-import { sheet, sheetDimension } from './helpers';
+import { config, sheetDimension } from './helpers';
 
 export const stage = new Konva.Stage({ container: 'konva-container', width: 0, height: 0 });
 sheetDimension.visualSize$.subscribe((size) => stage.setAttrs(size));
@@ -49,7 +49,7 @@ export const cornerGroup = new Konva.Group(); // R0, C0
 
 backgroundLayer.add(scrollableGroup, sideGroup, headerGroup, cornerGroup);
 
-export const getCellGroup$ = combineLatest([sheet.frozenRows$, sheet.frozenColumns$]).pipe(
+export const getCellGroup$ = combineLatest([config.frozenRows$, config.frozenColumns$]).pipe(
   map(([frozenRows, frozenColumns]) => {
     return function getCellGroup(rowIndex: number, columnIndex: number) {
       const isHeader = rowIndex < frozenRows;

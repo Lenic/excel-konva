@@ -1,5 +1,5 @@
 import type { IRegionInfo } from '../types';
-import type { IDataRegion, IItemBoundary, ISheetDimension, ISheetMeta } from './types';
+import type { IDataRegion, IItemBoundary, ISheetConfig, ISheetDimension } from './types';
 
 import { combineLatest, map, type Observable, switchMap, take } from 'rxjs';
 
@@ -7,17 +7,17 @@ import { BUFFER_CELL_COUNT } from '../constants';
 import { binarySearch, Disposable } from '../core';
 
 export class DataRegion extends Disposable implements IDataRegion {
-  sheet: ISheetMeta;
+  config: ISheetConfig;
   boundary: IItemBoundary;
   sheetDimension: ISheetDimension;
 
   region: IRegionInfo;
   region$: Observable<IRegionInfo>;
 
-  constructor(sheet: ISheetMeta, itemBoundary: IItemBoundary, sheetDimension: ISheetDimension) {
+  constructor(config: ISheetConfig, boundary: IItemBoundary, sheetDimension: ISheetDimension) {
     super();
-    this.sheet = sheet;
-    this.boundary = itemBoundary;
+    this.config = config;
+    this.boundary = boundary;
     this.sheetDimension = sheetDimension;
 
     this.region = { startRowIndex: 0, endRowIndex: 0, startColumnIndex: 0, endColumnIndex: 0 };
@@ -33,7 +33,7 @@ export class DataRegion extends Disposable implements IDataRegion {
   private buildDataRegion() {
     const column$ = this.boundary.getColumnLeft$.pipe(
       switchMap((getColumnLeft) =>
-        combineLatest([this.boundary.column.get$, this.sheet.frozenColumns$]).pipe(
+        combineLatest([this.boundary.column.get$, this.config.frozenColumns$]).pipe(
           take(1),
           map(
             ([getPrecedingTotalColumnWidth, frozenColumns]) =>
@@ -45,7 +45,7 @@ export class DataRegion extends Disposable implements IDataRegion {
 
     const row$ = this.boundary.getRowTop$.pipe(
       switchMap((getRowTop) =>
-        combineLatest([this.boundary.row.get$, this.sheet.frozenRows$]).pipe(
+        combineLatest([this.boundary.row.get$, this.config.frozenRows$]).pipe(
           take(1),
           map(
             ([getPrecedingTotalRowHeight, frozenRows]) => [getRowTop, getPrecedingTotalRowHeight, frozenRows] as const,
@@ -57,8 +57,8 @@ export class DataRegion extends Disposable implements IDataRegion {
     return combineLatest([
       column$,
       row$,
-      this.sheet.columnCount$,
-      this.sheet.rowCount$,
+      this.config.columnCount$,
+      this.config.rowCount$,
       this.sheetDimension.visualSize$,
     ]).pipe(
       map(

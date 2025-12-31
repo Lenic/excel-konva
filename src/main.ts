@@ -9,7 +9,7 @@ import {
   virtualContent,
 } from './toolkit/core-elements';
 import { resizeBoundary$ } from './toolkit/events';
-import { scrollOffset, sheet, sheetDimension } from './toolkit/helpers';
+import { config, scrollOffset, sheetDimension } from './toolkit/helpers';
 import { renderSelections$, renderVisibleCells$ } from './toolkit/render';
 
 // --- 1. 配置常量与初始化 ---
@@ -22,19 +22,19 @@ import { renderSelections$, renderVisibleCells$ } from './toolkit/render';
 // const HEADER_HEIGHT = 30; // 默认表头高度 (R0)
 // const RESIZE_TOLERANCE = 5; // 鼠标检测边界的容差 (像素)
 
-sheet.rowCount$.subscribe((val) => {
+config.rowCount$.subscribe((val) => {
   document.getElementById('total-rows')!.textContent = val.toLocaleString();
 });
 
-sheet.columnCount$.subscribe((val) => {
+config.columnCount$.subscribe((val) => {
   document.getElementById('total-cols')!.textContent = val.toLocaleString();
 });
 
-sheet.frozenRows$.subscribe((val) => {
+config.frozenRows$.subscribe((val) => {
   document.getElementById('frozen-rows-count')!.textContent = val.toLocaleString();
 });
 
-sheet.frozenColumns$.subscribe((val) => {
+config.frozenColumns$.subscribe((val) => {
   document.getElementById('frozen-cols-count')!.textContent = val.toLocaleString();
 });
 

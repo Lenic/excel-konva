@@ -3,7 +3,7 @@ import type { IBoundaryInfo } from './types';
 import { combineLatest, map, switchMap, take } from 'rxjs';
 
 import { container } from '../core-elements';
-import { itemBoundary, sheet, sheetDimension } from '../helpers';
+import { config, itemBoundary, sheetDimension } from '../helpers';
 
 import { RESIZE_TOLERANCE } from './constants';
 
@@ -27,8 +27,8 @@ export const checkResizeBoundary$ = combineLatest([
       ),
     ),
   ),
-  sheet.columnCount$,
-  sheet.rowCount$,
+  config.columnCount$,
+  config.rowCount$,
   sheetDimension.visualSize$,
 ]).pipe(
   map(([[getColumnLeft, getColumnWidth], [getRowTop, getRowHeight], columnCount, rowCount, sheetVisualSize]) => {

@@ -1,4 +1,4 @@
-import type { IAccumulatedDimension, IItemBoundary, IScrollOffset, ISheetMeta } from './types';
+import type { IAccumulatedDimension, IItemBoundary, IScrollOffset, ISheetConfig } from './types';
 import type { Observable } from 'rxjs';
 
 import { combineLatest, combineLatestWith, map, shareReplay, switchMap, take } from 'rxjs';
@@ -12,7 +12,7 @@ export class ItemBoundary extends Disposable implements IItemBoundary {
   offset: IScrollOffset;
   column: IAccumulatedDimension;
   row: IAccumulatedDimension;
-  sheet: ISheetMeta;
+  config: ISheetConfig;
 
   getColumnLeft$: Observable<(index: number) => number>;
   getRowTop$: Observable<(index: number) => number>;
@@ -25,31 +25,31 @@ export class ItemBoundary extends Disposable implements IItemBoundary {
    * @param offset - Scroll offset
    * @param column - Accumulated column dimension
    * @param row - Accumulated row dimension
-   * @param sheet - Sheet
+   * @param config - Sheet config
    */
-  constructor(offset: IScrollOffset, column: IAccumulatedDimension, row: IAccumulatedDimension, sheet: ISheetMeta) {
+  constructor(offset: IScrollOffset, column: IAccumulatedDimension, row: IAccumulatedDimension, config: ISheetConfig) {
     super();
 
     this.offset = offset;
     this.column = column;
     this.row = row;
-    this.sheet = sheet;
+    this.config = config;
 
-    this.getColumnLeft$ = this.buildPrecedingBoundary$(column.get$, offset.left$, sheet.frozenColumns$);
+    this.getColumnLeft$ = this.buildPrecedingBoundary$(column.get$, offset.left$, config.frozenColumns$);
     this.disposeWithMe(this.getColumnLeft$.subscribe());
 
-    this.getRowTop$ = this.buildPrecedingBoundary$(row.get$, offset.top$, sheet.frozenRows$);
+    this.getRowTop$ = this.buildPrecedingBoundary$(row.get$, offset.top$, config.frozenRows$);
     this.disposeWithMe(this.getRowTop$.subscribe());
 
     this.getColumnIndex$ = this.buildGetItemIndex(
       column.get$,
       column.getItemIndex$,
-      sheet.frozenColumns$,
+      config.frozenColumns$,
       offset.left$,
     );
     this.disposeWithMe(this.getColumnIndex$.subscribe());
 
-    this.getRowIndex$ = this.buildGetItemIndex(row.get$, row.getItemIndex$, sheet.frozenRows$, offset.top$);
+    this.getRowIndex$ = this.buildGetItemIndex(row.get$, row.getItemIndex$, config.frozenRows$, offset.top$);
     this.disposeWithMe(this.getRowIndex$.subscribe());
   }
 

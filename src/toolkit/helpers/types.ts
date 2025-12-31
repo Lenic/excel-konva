@@ -3,9 +3,9 @@ import type { IDimension, ILocation, IOffset, IPoint, IRectBox, IRegionInfo } fr
 import type { Observable } from 'rxjs';
 
 /**
- * Sheet meta
+ * Sheet Config
  */
-export interface ISheetMeta extends IDisposable {
+export interface ISheetConfig extends IDisposable {
   /**
    * Header height
    */
@@ -223,7 +223,7 @@ export interface ISheetDimension extends IDisposable {
   /**
    * Sheet
    */
-  sheet: ISheetMeta;
+  config: ISheetConfig;
   /**
    * Accumulated column dimension
    */
@@ -322,7 +322,7 @@ export interface IItemBoundary extends IDisposable {
   /**
    * Sheet
    */
-  sheet: ISheetMeta;
+  config: ISheetConfig;
 
   /**
    * An Observable that emits a function to retrieve the preceding boundary for a specific column index.
@@ -433,7 +433,7 @@ export interface IDataRegion {
   /**
    * Sheet
    */
-  sheet: ISheetMeta;
+  config: ISheetConfig;
   /**
    * Item boundary manager
    */
