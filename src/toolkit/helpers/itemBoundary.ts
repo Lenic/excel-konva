@@ -41,15 +41,10 @@ export class ItemBoundary extends Disposable implements IItemBoundary {
     this.getRowTop$ = this.buildPrecedingBoundary$(row.get$, offset.top$, config.frozenRows$);
     this.disposeWithMe(this.getRowTop$.subscribe());
 
-    this.getColumnIndex$ = this.buildGetItemIndex(
-      column.get$,
-      column.getItemIndex$,
-      config.frozenColumns$,
-      offset.left$,
-    );
+    this.getColumnIndex$ = this.buildGetItemIndex(column.get$, column.findIndex$, config.frozenColumns$, offset.left$);
     this.disposeWithMe(this.getColumnIndex$.subscribe());
 
-    this.getRowIndex$ = this.buildGetItemIndex(row.get$, row.getItemIndex$, config.frozenRows$, offset.top$);
+    this.getRowIndex$ = this.buildGetItemIndex(row.get$, row.findIndex$, config.frozenRows$, offset.top$);
     this.disposeWithMe(this.getRowIndex$.subscribe());
   }
 

@@ -13,7 +13,7 @@ export class AccumulatedDimension extends Disposable implements IAccumulatedDime
   dimension: IItemDimension;
 
   get$: Observable<(index: number) => number>;
-  getItemIndex$: Observable<(offset: number) => number>;
+  findIndex$: Observable<(offset: number) => number>;
 
   /**
    * Constructor
@@ -34,8 +34,8 @@ export class AccumulatedDimension extends Disposable implements IAccumulatedDime
     this.get$ = this.buildGet();
     this.disposeWithMe(this.get$.subscribe());
 
-    this.getItemIndex$ = this.buildGetItemIndex(count$);
-    this.disposeWithMe(this.getItemIndex$.subscribe());
+    this.findIndex$ = this.buildFindIndex(count$);
+    this.disposeWithMe(this.findIndex$.subscribe());
   }
 
   private buildGet(): Observable<(index: number) => number> {
@@ -75,18 +75,18 @@ export class AccumulatedDimension extends Disposable implements IAccumulatedDime
     );
   }
 
-  private buildGetItemIndex(count$: Observable<number>): Observable<(offset: number) => number> {
+  private buildFindIndex(count$: Observable<number>): Observable<(offset: number) => number> {
     return combineLatest([this.get$, count$]).pipe(
       map(([getPrecedingTotalDimension, count]) => {
         const list: [beginValue: number, endValue: number][] = [];
         let maxIndex = -1;
 
         /**
-         * Get the item index for a specific offset.
+         * Find the item index for a specific offset.
          *
          * @param offset - The offset.
          */
-        return function getItemIndex(offset: number) {
+        return function findIndex(offset: number) {
           const index = binarySearch(0, list.length - 1, (mid) => {
             const [beginValue, endValue] = list[mid];
             if (beginValue <= offset && offset < endValue) return 0;
