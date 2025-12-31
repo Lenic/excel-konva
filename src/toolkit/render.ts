@@ -80,16 +80,16 @@ export const renderSelections$ = combineLatest([
       const { region, activeCell } = range;
       const { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } = region;
 
+      // Collect indices for row/column header highlighting
+      for (let r = startRowIndex; r <= endRowIndex; r++) highlightedRows.add(r);
+      for (let c = startColumnIndex; c <= endColumnIndex; c++) highlightedColumns.add(c);
+
       // D. Draw Data Area selection (R_SCROLLABLE, C_SCROLLABLE)
       const dataStartRow = Math.max(startRowIndex, frozenRows);
       const dataStartColumn = Math.max(startColumnIndex, frozenColumns);
 
       if (dataStartRow <= endRowIndex && dataStartColumn <= endColumnIndex) {
         drawSubRange(dataStartRow, endRowIndex, dataStartColumn, endColumnIndex, BORDER_STROKE);
-
-        // Collect indices for row/column header highlighting
-        for (let r = dataStartRow; r <= endRowIndex; r++) highlightedRows.add(r);
-        for (let c = dataStartColumn; c <= endColumnIndex; c++) highlightedColumns.add(c);
       }
 
       // C. Draw Frozen Side Area selection (R_SCROLLABLE, C_FROZEN)
@@ -100,9 +100,6 @@ export const renderSelections$ = combineLatest([
 
       if (sideStartRow <= sideEndRow && sideStartColumn <= sideEndColumn) {
         drawSubRange(sideStartRow, sideEndRow, sideStartColumn, sideEndColumn, BORDER_STROKE);
-
-        // Collect indices for row/column header highlighting
-        for (let r = sideStartRow; r <= sideEndRow; r++) highlightedRows.add(r);
       }
 
       // B. Draw Frozen Header Area selection (R_FROZEN, C_SCROLLABLE)
@@ -113,9 +110,6 @@ export const renderSelections$ = combineLatest([
 
       if (headerStartRow <= headerEndRow && headerStartColumn <= headerEndColumn) {
         drawSubRange(headerStartRow, headerEndRow, headerStartColumn, headerEndColumn, BORDER_STROKE);
-
-        // Collect indices for row/column header highlighting
-        for (let c = headerStartColumn; c <= headerEndColumn; c++) highlightedColumns.add(c);
       }
 
       // A. Draw Frozen Corner Area selection (R_FROZEN, C_FROZEN)
