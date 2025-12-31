@@ -24,6 +24,13 @@ export const accumulatedColumnDimension = new AccumulatedDimension(columnDimensi
 export const accumulatedRowDimension = new AccumulatedDimension(rowDimension, config.rowCount$);
 export const sheetDimension = new SheetDimension(config, accumulatedColumnDimension, accumulatedRowDimension);
 export const scrollOffset = new ScrollOffset(sheetDimension);
-export const itemBoundary = new ItemBoundary(scrollOffset, accumulatedColumnDimension, accumulatedRowDimension, config);
-export const cellDimension = new CellDimension(itemBoundary);
-export const dataRegion = new DataRegion(config, itemBoundary, sheetDimension);
+export const columnBoundary = new ItemBoundary(accumulatedColumnDimension, {
+  scrollValue$: scrollOffset.left$,
+  frozenCount$: config.frozenColumns$,
+});
+export const rowBoundary = new ItemBoundary(accumulatedRowDimension, {
+  scrollValue$: scrollOffset.top$,
+  frozenCount$: config.frozenRows$,
+});
+export const cellDimension = new CellDimension(columnBoundary, rowBoundary);
+export const dataRegion = new DataRegion(config, columnBoundary, rowBoundary, sheetDimension);

@@ -1,6 +1,6 @@
 import { EMPTY, finalize, of, switchMap, takeUntil, tap, withLatestFrom } from 'rxjs';
 
-import { columnDimension, config, itemBoundary, rowDimension, sheetDimension } from '../helpers';
+import { columnBoundary, columnDimension, config, rowBoundary, rowDimension, sheetDimension } from '../helpers';
 import { resizeLine, selectionLayer, stage } from '../konva-items';
 
 import { mouseMove$, mouseUp$, typedLeftMouseDown$ } from './core';
@@ -12,8 +12,8 @@ export const resizeBoundary$ = typedLeftMouseDown$.pipe(
     columnDimension.get$,
     rowDimension.get$,
     sheetDimension.visualSize$,
-    itemBoundary.getColumnLeft$,
-    itemBoundary.getRowTop$,
+    columnBoundary.getBoundary$,
+    rowBoundary.getBoundary$,
     config.minRowHeight$,
     config.minColumnWidth$,
   ),

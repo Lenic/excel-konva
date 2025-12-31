@@ -1,4 +1,4 @@
-import type { IAccumulatedDimension, IItemBoundary, IScrollOffset, ISheetConfig } from './types';
+import type { IAccumulatedDimension, IItemBoundary, IItemBoundaryOptions } from './types';
 import type { Observable } from 'rxjs';
 
 import { combineLatest, combineLatestWith, map, shareReplay, switchMap, take } from 'rxjs';
@@ -9,56 +9,37 @@ import { Disposable } from '../core';
  * Item boundary
  */
 export class ItemBoundary extends Disposable implements IItemBoundary {
-  offset: IScrollOffset;
-  column: IAccumulatedDimension;
-  row: IAccumulatedDimension;
-  config: ISheetConfig;
-
-  getColumnLeft$: Observable<(index: number) => number>;
-  getRowTop$: Observable<(index: number) => number>;
-  getColumnIndex$: Observable<(clientX: number) => number>;
-  getRowIndex$: Observable<(clientY: number) => number>;
+  options: IItemBoundaryOptions;
+  accumulated: IAccumulatedDimension;
+  getBoundary$: Observable<(index: number) => number>;
+  getItemIndex$: Observable<(clientCoordinate: number) => number>;
 
   /**
    * Constructor
    *
-   * @param offset - Scroll offset
-   * @param column - Accumulated column dimension
-   * @param row - Accumulated row dimension
-   * @param config - Sheet config
+   * @param accumulated - Accumulated dimension
+   * @param options - Item boundary options
    */
-  constructor(offset: IScrollOffset, column: IAccumulatedDimension, row: IAccumulatedDimension, config: ISheetConfig) {
+  constructor(accumulated: IAccumulatedDimension, options: IItemBoundaryOptions) {
     super();
 
-    this.offset = offset;
-    this.column = column;
-    this.row = row;
-    this.config = config;
+    this.options = options;
+    this.accumulated = accumulated;
 
-    this.getColumnLeft$ = this.buildPrecedingBoundary$(column.get$, offset.left$, config.frozenColumns$);
-    this.disposeWithMe(this.getColumnLeft$.subscribe());
+    this.getBoundary$ = this.buildGetBoundary$();
+    this.disposeWithMe(this.getBoundary$.subscribe());
 
-    this.getRowTop$ = this.buildPrecedingBoundary$(row.get$, offset.top$, config.frozenRows$);
-    this.disposeWithMe(this.getRowTop$.subscribe());
-
-    this.getColumnIndex$ = this.buildGetItemIndex(column.get$, column.findIndex$, config.frozenColumns$, offset.left$);
-    this.disposeWithMe(this.getColumnIndex$.subscribe());
-
-    this.getRowIndex$ = this.buildGetItemIndex(row.get$, row.findIndex$, config.frozenRows$, offset.top$);
-    this.disposeWithMe(this.getRowIndex$.subscribe());
+    this.getItemIndex$ = this.buildGetItemIndex();
+    this.disposeWithMe(this.getItemIndex$.subscribe());
   }
 
-  private buildPrecedingBoundary$(
-    getPrecedingTotalDimension$: Observable<(index: number) => number>,
-    scrollValue$: Observable<number>,
-    frozenCount$: Observable<number>,
-  ) {
-    return combineLatest([getPrecedingTotalDimension$, scrollValue$, frozenCount$]).pipe(
+  private buildGetBoundary$() {
+    return combineLatest([this.accumulated.get$, this.options.scrollValue$, this.options.frozenCount$]).pipe(
       map(([getPrecedingTotalDimension, scrollOffset, frozenCount]) => {
         /**
-         * Get the coordinate value of the left edge of the specified item (relative to the Canvas)
+         * Get the preceding boundary for a specific index.
          *
-         * @param index - The index of the item, starting from the number 0
+         * @param index - The index of the item
          */
         return (index: number) => {
           if (index === 0) return 0;
@@ -71,26 +52,26 @@ export class ItemBoundary extends Disposable implements IItemBoundary {
     );
   }
 
-  private buildGetItemIndex(
-    getAccumulatedDimension$: Observable<(index: number) => number>,
-    getItemIndex$: Observable<(offset: number) => number>,
-    frozenCount$: Observable<number>,
-    scrollValue$: Observable<number>,
-  ) {
-    return getItemIndex$.pipe(
+  private buildGetItemIndex() {
+    return this.accumulated.findIndex$.pipe(
       switchMap((getItemIndex) =>
-        combineLatest([getAccumulatedDimension$.pipe(take(1)), frozenCount$]).pipe(
+        combineLatest([this.accumulated.get$.pipe(take(1)), this.options.frozenCount$]).pipe(
           map(
             ([getAccumulatedDimension, frozenCount]) => [getItemIndex, getAccumulatedDimension(frozenCount)] as const,
           ),
         ),
       ),
-      combineLatestWith(scrollValue$),
+      combineLatestWith(this.options.scrollValue$),
       map(([[getItemIndexByOffset, frozenDimension], scrollValue]) => {
-        return function getItemIndex(position: number) {
-          return position <= frozenDimension
-            ? getItemIndexByOffset(position)
-            : getItemIndexByOffset(position + scrollValue);
+        /**
+         * Get the index of the item corresponding to the specified relative offset
+         *
+         * @param relOffset - The relative offset
+         */
+        return function getItemIndex(relOffset: number) {
+          return relOffset <= frozenDimension
+            ? getItemIndexByOffset(relOffset)
+            : getItemIndexByOffset(relOffset + scrollValue);
         };
       }),
     );

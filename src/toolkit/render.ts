@@ -23,9 +23,9 @@ export const renderSelections$ = combineLatest([
   cellDimension.getCellPoint$.pipe(
     switchMap((getCellPoint) =>
       combineLatest([
-        cellDimension.boundary.column.dimension.get$,
+        cellDimension.columnBoundary.accumulated.dimension.get$,
         config.frozenColumns$,
-        cellDimension.boundary.row.dimension.get$,
+        cellDimension.rowBoundary.accumulated.dimension.get$,
         config.frozenRows$,
       ]).pipe(
         take(1),

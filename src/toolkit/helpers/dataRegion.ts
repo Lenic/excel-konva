@@ -6,18 +6,36 @@ import { combineLatest, map, type Observable, switchMap, take } from 'rxjs';
 import { BUFFER_CELL_COUNT } from '../constants';
 import { binarySearch, Disposable } from '../core';
 
+/**
+ * Data region manager
+ */
 export class DataRegion extends Disposable implements IDataRegion {
   config: ISheetConfig;
-  boundary: IItemBoundary;
+  columnBoundary: IItemBoundary;
+  rowBoundary: IItemBoundary;
   sheetDimension: ISheetDimension;
 
   region: IRegionInfo;
   region$: Observable<IRegionInfo>;
 
-  constructor(config: ISheetConfig, boundary: IItemBoundary, sheetDimension: ISheetDimension) {
+  /**
+   * Constructor
+   *
+   * @param config - Sheet configuration
+   * @param columnBoundary - Column boundary manager
+   * @param rowBoundary - Row boundary manager
+   * @param sheetDimension - Sheet dimension
+   */
+  constructor(
+    config: ISheetConfig,
+    columnBoundary: IItemBoundary,
+    rowBoundary: IItemBoundary,
+    sheetDimension: ISheetDimension,
+  ) {
     super();
     this.config = config;
-    this.boundary = boundary;
+    this.columnBoundary = columnBoundary;
+    this.rowBoundary = rowBoundary;
     this.sheetDimension = sheetDimension;
 
     this.region = { startRowIndex: 0, endRowIndex: 0, startColumnIndex: 0, endColumnIndex: 0 };
@@ -31,9 +49,9 @@ export class DataRegion extends Disposable implements IDataRegion {
   }
 
   private buildDataRegion() {
-    const column$ = this.boundary.getColumnLeft$.pipe(
+    const column$ = this.columnBoundary.getBoundary$.pipe(
       switchMap((getColumnLeft) =>
-        combineLatest([this.boundary.column.get$, this.config.frozenColumns$]).pipe(
+        combineLatest([this.columnBoundary.accumulated.get$, this.config.frozenColumns$]).pipe(
           take(1),
           map(
             ([getPrecedingTotalColumnWidth, frozenColumns]) =>
@@ -43,9 +61,9 @@ export class DataRegion extends Disposable implements IDataRegion {
       ),
     );
 
-    const row$ = this.boundary.getRowTop$.pipe(
+    const row$ = this.rowBoundary.getBoundary$.pipe(
       switchMap((getRowTop) =>
-        combineLatest([this.boundary.row.get$, this.config.frozenRows$]).pipe(
+        combineLatest([this.rowBoundary.accumulated.get$, this.config.frozenRows$]).pipe(
           take(1),
           map(
             ([getPrecedingTotalRowHeight, frozenRows]) => [getRowTop, getPrecedingTotalRowHeight, frozenRows] as const,

@@ -13,7 +13,8 @@ import { container } from '../core-elements';
 export class CellDimension extends Disposable implements ICellDimension {
   private cellDataSubject: Subject<[string, string | null]>;
 
-  boundary: IItemBoundary;
+  columnBoundary: IItemBoundary;
+  rowBoundary: IItemBoundary;
 
   cellDataStore: Map<string, string>;
 
@@ -25,12 +26,14 @@ export class CellDimension extends Disposable implements ICellDimension {
   /**
    * Constructor
    *
-   * @param itemBoundary - Item boundary manager
+   * @param columnBoundary - Column boundary manager
+   * @param rowBoundary - Row boundary manager
    */
-  constructor(itemBoundary: IItemBoundary) {
+  constructor(columnBoundary: IItemBoundary, rowBoundary: IItemBoundary) {
     super();
 
-    this.boundary = itemBoundary;
+    this.columnBoundary = columnBoundary;
+    this.rowBoundary = rowBoundary;
 
     this.cellDataSubject = new Subject<[string, string | null]>();
     this.disposeWithMe(() => {
@@ -106,17 +109,17 @@ export class CellDimension extends Disposable implements ICellDimension {
 
   private buildGetCellRectBox() {
     return combineLatest([
-      this.boundary.getColumnLeft$.pipe(
+      this.columnBoundary.getBoundary$.pipe(
         switchMap((getColumnLeft) =>
-          this.boundary.column.dimension.get$.pipe(
+          this.columnBoundary.accumulated.dimension.get$.pipe(
             take(1),
             map((getColumnWidth) => [getColumnLeft, getColumnWidth] as const),
           ),
         ),
       ),
-      this.boundary.getRowTop$.pipe(
+      this.rowBoundary.getBoundary$.pipe(
         switchMap((getRowTop) =>
-          this.boundary.row.dimension.get$.pipe(
+          this.rowBoundary.accumulated.dimension.get$.pipe(
             take(1),
             map((getRowHeight) => [getRowTop, getRowHeight] as const),
           ),
@@ -144,7 +147,7 @@ export class CellDimension extends Disposable implements ICellDimension {
   }
 
   private buildGetCellLocation() {
-    return combineLatest([this.boundary.getColumnIndex$, this.boundary.getRowIndex$]).pipe(
+    return combineLatest([this.columnBoundary.getItemIndex$, this.rowBoundary.getItemIndex$]).pipe(
       map(([getColumnIndex, getRowIndex]) => {
         /**
          * Get the location of the specified cell.
@@ -165,7 +168,7 @@ export class CellDimension extends Disposable implements ICellDimension {
   }
 
   private buildGetCellPoint() {
-    return combineLatest([this.boundary.getColumnLeft$, this.boundary.getRowTop$]).pipe(
+    return combineLatest([this.columnBoundary.getBoundary$, this.rowBoundary.getBoundary$]).pipe(
       map(([getColumnLeft, getRowTop]) => {
         /**
          * Get the cell point of the specified cell.

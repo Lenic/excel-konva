@@ -304,58 +304,47 @@ export interface IScrollOffset extends IDisposable {
 }
 
 /**
+ * Item boundary options
+ */
+export interface IItemBoundaryOptions {
+  /**
+   * Observable scroll value
+   */
+  scrollValue$: Observable<number>;
+  /**
+   * Observable frozen count
+   */
+  frozenCount$: Observable<number>;
+}
+
+/**
  * Item boundary
  */
 export interface IItemBoundary extends IDisposable {
   /**
-   * Scroll offset
+   * Options
    */
-  offset: IScrollOffset;
+  options: IItemBoundaryOptions;
   /**
-   * Accumulated column dimension
+   * Accumulated dimension
    */
-  column: IAccumulatedDimension;
+  accumulated: IAccumulatedDimension;
   /**
-   * Accumulated row dimension
-   */
-  row: IAccumulatedDimension;
-  /**
-   * Sheet
-   */
-  config: ISheetConfig;
-
-  /**
-   * An Observable that emits a function to retrieve the preceding boundary for a specific column index.
+   * An Observable that emits a function to retrieve the preceding boundary for a specific index.
    *
-   * The emitted function signature is: `(columnIndex: number) => number`
-   * - `columnIndex`: The index of the column.
+   * The emitted function signature is: `(index: number) => number`
+   * - `index`: The index of the item.
    * - Returns: The preceding boundary.
    */
-  getColumnLeft$: Observable<(columnIndex: number) => number>;
+  getBoundary$: Observable<(index: number) => number>;
   /**
-   * An Observable that emits a function to retrieve the item index for a specific client X coordinate.
+   * An Observable that emits a function to retrieve the item index for a specific relative offset.
    *
-   * The emitted function signature is: `(clientX: number) => number`
-   * - `clientX`: The X coordinate of the mouse relative to the viewport.
+   * The emitted function signature is: `(relOffset: number) => number`
+   * - `relOffset`: The relative offset.
    * - Returns: The item index.
    */
-  getColumnIndex$: Observable<(clientX: number) => number>;
-  /**
-   * An Observable that emits a function to retrieve the preceding boundary for a specific row index.
-   *
-   * The emitted function signature is: `(rowIndex: number) => number`
-   * - `rowIndex`: The index of the row.
-   * - Returns: The preceding boundary.
-   */
-  getRowTop$: Observable<(rowIndex: number) => number>;
-  /**
-   * An Observable that emits a function to retrieve the item index for a specific client Y coordinate.
-   *
-   * The emitted function signature is: `(clientY: number) => number`
-   * - `clientY`: The Y coordinate of the mouse relative to the viewport.
-   * - Returns: The item index.
-   */
-  getRowIndex$: Observable<(clientY: number) => number>;
+  getItemIndex$: Observable<(relOffset: number) => number>;
 }
 
 /**
@@ -365,7 +354,11 @@ export interface ICellDimension extends IDisposable {
   /**
    * Item boundary manager
    */
-  boundary: IItemBoundary;
+  columnBoundary: IItemBoundary;
+  /**
+   * Item boundary manager
+   */
+  rowBoundary: IItemBoundary;
 
   /**
    * Cell data store
@@ -435,9 +428,13 @@ export interface IDataRegion {
    */
   config: ISheetConfig;
   /**
-   * Item boundary manager
+   * Column boundary manager
    */
-  boundary: IItemBoundary;
+  columnBoundary: IItemBoundary;
+  /**
+   * Row boundary manager
+   */
+  rowBoundary: IItemBoundary;
   /**
    * Sheet dimension
    */

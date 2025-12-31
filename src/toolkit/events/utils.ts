@@ -3,7 +3,7 @@ import type { IBoundaryInfo } from './types';
 import { combineLatest, map, switchMap, take } from 'rxjs';
 
 import { container } from '../core-elements';
-import { config, itemBoundary, sheetDimension } from '../helpers';
+import { columnBoundary, config, rowBoundary, sheetDimension } from '../helpers';
 
 import { RESIZE_TOLERANCE } from './constants';
 
@@ -11,17 +11,17 @@ import { RESIZE_TOLERANCE } from './constants';
  * Check boundary information for the current position; return `null` if it's not a boundary.
  */
 export const checkResizeBoundary$ = combineLatest([
-  itemBoundary.getColumnLeft$.pipe(
+  columnBoundary.getBoundary$.pipe(
     switchMap((getColumnLeft) =>
-      itemBoundary.column.dimension.get$.pipe(
+      columnBoundary.accumulated.dimension.get$.pipe(
         take(1),
         map((getColumnWidth) => [getColumnLeft, getColumnWidth] as const),
       ),
     ),
   ),
-  itemBoundary.getRowTop$.pipe(
+  rowBoundary.getBoundary$.pipe(
     switchMap((getRowTop) =>
-      itemBoundary.row.dimension.get$.pipe(
+      rowBoundary.accumulated.dimension.get$.pipe(
         take(1),
         map((getRowHeight) => [getRowTop, getRowHeight] as const),
       ),
