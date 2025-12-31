@@ -158,8 +158,8 @@ export class CellDimension extends Disposable implements ICellDimension {
         return function getCellLocation(clientX: number, clientY: number): ILocation {
           const rect = container.getBoundingClientRect();
           return {
-            rowIndex: getRowIndex(clientX - rect.left),
-            columnIndex: getColumnIndex(clientY - rect.top),
+            rowIndex: getRowIndex(clientY - rect.top),
+            columnIndex: getColumnIndex(clientX - rect.left),
           };
         };
       }),

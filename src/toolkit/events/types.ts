@@ -112,13 +112,9 @@ export const EHeaderClickType = {
 export type EHeaderClickType = (typeof EHeaderClickType)[keyof typeof EHeaderClickType];
 
 /**
- * Header click data interface
+ * Selection region interface
  */
-export interface IHeaderClickData {
-  /**
-   * Type of header click
-   */
-  type: EHeaderClickType;
+export interface ISelectionRegion {
   /**
    * Selected region information
    */
@@ -127,6 +123,16 @@ export interface IHeaderClickData {
    * Active cell location
    */
   activeCell: ILocation;
+}
+
+/**
+ * Header click data interface
+ */
+export interface IHeaderClickData extends ISelectionRegion {
+  /**
+   * Type of header click
+   */
+  type: EHeaderClickType;
   /**
    * Whether multi-select mode is active (e.g. Ctrl/Cmd key pressed)
    */
@@ -154,15 +160,7 @@ export interface IHeaderClickEvent {
 /**
  * Cell click data interface
  */
-export interface ICellClickData {
-  /**
-   * Selected region information
-   */
-  region: IRegionInfo;
-  /**
-   * Active cell location
-   */
-  activeCell: ILocation;
+export interface ICellClickData extends ISelectionRegion {
   /**
    * Whether multi-select mode is active (e.g. Ctrl/Cmd key pressed)
    */

@@ -1,20 +1,12 @@
-import type { ICellRegionOptions, ISelectedRange } from './types';
+import type { ICellRegionOptions } from './types';
 
 import { combineLatest, map, shareReplay, switchMap, take } from 'rxjs';
 
-import { SELECTION_FILL_COLOR, SELECTION_STROKE_COLOR } from './constants';
+import { selectionStore$ } from './events/selection';
+import { BORDER_STROKE, SELECTION_FILL_COLOR, SELECTION_STROKE_COLOR } from './constants';
 import { cellDimension, config, dataRegion, sheetDimension } from './helpers';
 import { backgroundLayer, getCellGroup$, selectionLayer } from './konva-items';
 import { activeCellMarkerPool, cellPool, selectionPool } from './pools';
-
-const state = {
-  selectedRanges: [] as ISelectedRange[],
-  startCell: null,
-  isDragging: false, // Used for dragging cell selection
-  animationFrameId: null,
-};
-
-const BORDER_STROKE = 2; // Selection boundary uses a unified 2px border
 
 /**
  * Render all selections and active cell markers.
@@ -34,173 +26,171 @@ export const renderSelections$ = combineLatest([
     ),
   ),
   sheetDimension.visualSize$,
+  selectionStore$,
 ]).pipe(
-  map(([[getCellPoint, getColumnWidth, frozenColumns, getRowHeight, frozenRows], sheetVisualSize]) => {
-    return function renderSelections() {
-      selectionPool.reset();
-      activeCellMarkerPool.reset();
+  map(([[getCellPoint, getColumnWidth, frozenColumns, getRowHeight, frozenRows], sheetVisualSize, selectedRanges]) => {
+    selectionPool.reset();
+    activeCellMarkerPool.reset();
 
-      const { selectedRanges } = state;
+    // Helper function: Draw a sub-selection rectangle
+    const drawSubRange = (
+      rowStartIndex: number,
+      rowEndIndex: number,
+      columnStartIndex: number,
+      columnEndIndex: number,
+      strokeWidth: number,
+    ) => {
+      if (rowStartIndex > rowEndIndex || columnStartIndex > columnEndIndex) return;
 
-      // Helper function: Draw a sub-selection rectangle
-      const drawSubRange = (
-        rowStartIndex: number,
-        rowEndIndex: number,
-        columnStartIndex: number,
-        columnEndIndex: number,
-        strokeWidth: number,
-      ) => {
-        if (rowStartIndex > rowEndIndex || columnStartIndex > columnEndIndex) return;
+      // 1. Get top-left Konva coordinate (start position)
+      const topLeftPos = getCellPoint(rowStartIndex, columnStartIndex);
 
-        // 1. Get top-left Konva coordinate (start position)
-        const topLeftPos = getCellPoint(rowStartIndex, columnStartIndex);
+      // 2. Get bottom-right Konva coordinate (using Boundary function)
+      const rightBottomPos = getCellPoint(rowEndIndex + 1, columnEndIndex + 1);
 
-        // 2. Get bottom-right Konva coordinate (using Boundary function)
-        const rightBottomPos = getCellPoint(rowEndIndex + 1, columnEndIndex + 1);
+      // Check if the selection is visible in the viewport (simple viewport clipping)
+      if (
+        rightBottomPos.x <= 0 ||
+        rightBottomPos.y <= 0 ||
+        topLeftPos.x >= sheetVisualSize.width ||
+        topLeftPos.y >= sheetVisualSize.height
+      ) {
+        return;
+      }
 
-        // Check if the selection is visible in the viewport (simple viewport clipping)
-        if (
-          rightBottomPos.x <= 0 ||
-          rightBottomPos.y <= 0 ||
-          topLeftPos.x >= sheetVisualSize.width ||
-          topLeftPos.y >= sheetVisualSize.height
-        ) {
-          return;
-        }
-
-        const selectionRect = selectionPool.getRect();
-        selectionRect.setAttrs({
-          x: topLeftPos.x,
-          y: topLeftPos.y,
-          width: rightBottomPos.x - topLeftPos.x,
-          height: rightBottomPos.y - topLeftPos.y,
-          fill: SELECTION_FILL_COLOR,
-          stroke: strokeWidth > 0 ? SELECTION_STROKE_COLOR : 'transparent',
-          strokeWidth: strokeWidth,
-          listening: false,
-        });
-      };
-
-      // Collect row/column header indices that need highlighting
-      const highlightedColumns = new Set<number>();
-      const highlightedRows = new Set<number>();
-
-      // Draw selected areas
-      selectedRanges.forEach((range) => {
-        const { startRow, endRow, startCol, endCol } = range;
-
-        // D. Draw Data Area selection (R_SCROLLABLE, C_SCROLLABLE)
-        const dataStartRow = Math.max(startRow, frozenRows);
-        const dataStartColumn = Math.max(startCol, frozenColumns);
-
-        if (dataStartRow <= endRow && dataStartColumn <= endCol) {
-          drawSubRange(dataStartRow, endRow, dataStartColumn, endCol, BORDER_STROKE);
-
-          // Collect indices for row/column header highlighting
-          for (let r = dataStartRow; r <= endRow; r++) highlightedRows.add(r);
-          for (let c = dataStartColumn; c <= endCol; c++) highlightedColumns.add(c);
-        }
-
-        // C. Draw Frozen Side Area selection (R_SCROLLABLE, C_FROZEN)
-        const sideStartRow = Math.max(startRow, frozenRows);
-        const sideEndRow = endRow;
-        const sideStartColumn = startCol;
-        const sideEndColumn = Math.min(endCol, frozenColumns - 1);
-
-        if (sideStartRow <= sideEndRow && sideStartColumn <= sideEndColumn) {
-          drawSubRange(sideStartRow, sideEndRow, sideStartColumn, sideEndColumn, BORDER_STROKE);
-
-          // Collect indices for row/column header highlighting
-          for (let r = sideStartRow; r <= sideEndRow; r++) highlightedRows.add(r);
-        }
-
-        // B. Draw Frozen Header Area selection (R_FROZEN, C_SCROLLABLE)
-        const headerStartRow = startRow;
-        const headerEndRow = Math.min(endRow, frozenRows - 1);
-        const headerStartColumn = Math.max(startCol, frozenColumns);
-        const headerEndColumn = endCol;
-
-        if (headerStartRow <= headerEndRow && headerStartColumn <= headerEndColumn) {
-          drawSubRange(headerStartRow, headerEndRow, headerStartColumn, headerEndColumn, BORDER_STROKE);
-
-          // Collect indices for row/column header highlighting
-          for (let c = headerStartColumn; c <= headerEndColumn; c++) highlightedColumns.add(c);
-        }
-
-        // A. Draw Frozen Corner Area selection (R_FROZEN, C_FROZEN)
-        const cornerStartRow = startRow;
-        const cornerEndRow = Math.min(endRow, frozenRows - 1);
-        const cornerStartColumn = startCol;
-        const cornerEndColumn = Math.min(endCol, frozenColumns - 1);
-
-        if (cornerStartRow <= cornerEndRow && cornerStartColumn <= cornerEndColumn) {
-          drawSubRange(cornerStartRow, cornerEndRow, cornerStartColumn, cornerEndColumn, BORDER_STROKE);
-        }
-
-        // D. Draw Active Cell Marker
-        const activeRow = range.activeRow;
-        const activeCol = range.activeCol;
-        const activePos = getCellPoint(activeRow, activeCol);
-
-        const markerRect = activeCellMarkerPool.getRect();
-        markerRect.setAttrs({
-          x: activePos.x,
-          y: activePos.y,
-          width: getColumnWidth(activeCol),
-          height: getRowHeight(activeRow),
-        });
+      const selectionRect = selectionPool.getRect();
+      selectionRect.setAttrs({
+        x: topLeftPos.x,
+        y: topLeftPos.y,
+        width: rightBottomPos.x - topLeftPos.x,
+        height: rightBottomPos.y - topLeftPos.y,
+        fill: SELECTION_FILL_COLOR,
+        stroke: strokeWidth > 0 ? SELECTION_STROKE_COLOR : 'transparent',
+        strokeWidth: strokeWidth,
+        listening: false,
       });
-
-      // Draw highlighting for column headers
-      if (highlightedColumns.size > 0) {
-        const sortedColumns = Array.from(highlightedColumns).sort((a, b) => a - b);
-        // Draw column header part
-        let startBatchCol = -1;
-        for (let i = 0; i < sortedColumns.length; i++) {
-          if (startBatchCol === -1) {
-            startBatchCol = sortedColumns[i];
-          }
-          if (i === sortedColumns.length - 1 || sortedColumns[i + 1] !== sortedColumns[i] + 1) {
-            // Draw highlighting for column headers of all frozen rows
-            drawSubRange(
-              0,
-              0,
-              startBatchCol,
-              sortedColumns[i],
-              0, // No border
-            );
-            startBatchCol = -1;
-          }
-        }
-      }
-
-      // Draw highlighting for row headers
-      if (highlightedRows.size > 0) {
-        const sortedRows = Array.from(highlightedRows).sort((a, b) => a - b);
-        // Draw highlighting for row headers of all frozen columns
-        let startBatchRow = -1;
-        for (let i = 0; i < sortedRows.length; i++) {
-          if (startBatchRow === -1) {
-            startBatchRow = sortedRows[i];
-          }
-          if (i === sortedRows.length - 1 || sortedRows[i + 1] !== sortedRows[i] + 1) {
-            // Draw row range involved in selection, covering all frozen columns (C0 to frozenColumns-1)
-            drawSubRange(
-              startBatchRow,
-              sortedRows[i],
-              0,
-              0,
-              0, // No border
-            );
-            startBatchRow = -1;
-          }
-        }
-      }
-
-      selectionLayer.batchDraw();
-
-      return selectedRanges.length;
     };
+
+    // Collect row/column header indices that need highlighting
+    const highlightedColumns = new Set<number>();
+    const highlightedRows = new Set<number>();
+
+    // Draw selected areas
+    selectedRanges.forEach((range) => {
+      const { region, activeCell } = range;
+      const { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } = region;
+
+      // D. Draw Data Area selection (R_SCROLLABLE, C_SCROLLABLE)
+      const dataStartRow = Math.max(startRowIndex, frozenRows);
+      const dataStartColumn = Math.max(startColumnIndex, frozenColumns);
+
+      if (dataStartRow <= endRowIndex && dataStartColumn <= endColumnIndex) {
+        drawSubRange(dataStartRow, endRowIndex, dataStartColumn, endColumnIndex, BORDER_STROKE);
+
+        // Collect indices for row/column header highlighting
+        for (let r = dataStartRow; r <= endRowIndex; r++) highlightedRows.add(r);
+        for (let c = dataStartColumn; c <= endColumnIndex; c++) highlightedColumns.add(c);
+      }
+
+      // C. Draw Frozen Side Area selection (R_SCROLLABLE, C_FROZEN)
+      const sideStartRow = Math.max(startRowIndex, frozenRows);
+      const sideEndRow = endRowIndex;
+      const sideStartColumn = startColumnIndex;
+      const sideEndColumn = Math.min(endColumnIndex, frozenColumns - 1);
+
+      if (sideStartRow <= sideEndRow && sideStartColumn <= sideEndColumn) {
+        drawSubRange(sideStartRow, sideEndRow, sideStartColumn, sideEndColumn, BORDER_STROKE);
+
+        // Collect indices for row/column header highlighting
+        for (let r = sideStartRow; r <= sideEndRow; r++) highlightedRows.add(r);
+      }
+
+      // B. Draw Frozen Header Area selection (R_FROZEN, C_SCROLLABLE)
+      const headerStartRow = startRowIndex;
+      const headerEndRow = Math.min(endRowIndex, frozenRows - 1);
+      const headerStartColumn = Math.max(startColumnIndex, frozenColumns);
+      const headerEndColumn = endColumnIndex;
+
+      if (headerStartRow <= headerEndRow && headerStartColumn <= headerEndColumn) {
+        drawSubRange(headerStartRow, headerEndRow, headerStartColumn, headerEndColumn, BORDER_STROKE);
+
+        // Collect indices for row/column header highlighting
+        for (let c = headerStartColumn; c <= headerEndColumn; c++) highlightedColumns.add(c);
+      }
+
+      // A. Draw Frozen Corner Area selection (R_FROZEN, C_FROZEN)
+      const cornerStartRow = startRowIndex;
+      const cornerEndRow = Math.min(endRowIndex, frozenRows - 1);
+      const cornerStartColumn = startColumnIndex;
+      const cornerEndColumn = Math.min(endColumnIndex, frozenColumns - 1);
+
+      if (cornerStartRow <= cornerEndRow && cornerStartColumn <= cornerEndColumn) {
+        drawSubRange(cornerStartRow, cornerEndRow, cornerStartColumn, cornerEndColumn, BORDER_STROKE);
+      }
+
+      // D. Draw Active Cell Marker
+      const activeRow = activeCell.rowIndex;
+      const activeCol = activeCell.columnIndex;
+      const activePos = getCellPoint(activeRow, activeCol);
+
+      const markerRect = activeCellMarkerPool.getRect();
+      markerRect.setAttrs({
+        x: activePos.x,
+        y: activePos.y,
+        width: getColumnWidth(activeCol),
+        height: getRowHeight(activeRow),
+      });
+    });
+
+    // Draw highlighting for column headers
+    if (highlightedColumns.size > 0) {
+      const sortedColumns = Array.from(highlightedColumns).sort((a, b) => a - b);
+      // Draw column header part
+      let startBatchCol = -1;
+      for (let i = 0; i < sortedColumns.length; i++) {
+        if (startBatchCol === -1) {
+          startBatchCol = sortedColumns[i];
+        }
+        if (i === sortedColumns.length - 1 || sortedColumns[i + 1] !== sortedColumns[i] + 1) {
+          // Draw highlighting for column headers of all frozen rows
+          drawSubRange(
+            0,
+            0,
+            startBatchCol,
+            sortedColumns[i],
+            0, // No border
+          );
+          startBatchCol = -1;
+        }
+      }
+    }
+
+    // Draw highlighting for row headers
+    if (highlightedRows.size > 0) {
+      const sortedRows = Array.from(highlightedRows).sort((a, b) => a - b);
+      // Draw highlighting for row headers of all frozen columns
+      let startBatchRow = -1;
+      for (let i = 0; i < sortedRows.length; i++) {
+        if (startBatchRow === -1) {
+          startBatchRow = sortedRows[i];
+        }
+        if (i === sortedRows.length - 1 || sortedRows[i + 1] !== sortedRows[i] + 1) {
+          // Draw row range involved in selection, covering all frozen columns (C0 to frozenColumns-1)
+          drawSubRange(
+            startBatchRow,
+            sortedRows[i],
+            0,
+            0,
+            0, // No border
+          );
+          startBatchRow = -1;
+        }
+      }
+    }
+
+    selectionLayer.batchDraw();
+
+    return selectedRanges.length;
   }),
   shareReplay({ refCount: true, bufferSize: 1 }),
 );

@@ -40,7 +40,7 @@ export const typedLeftMouseDown$ = mouseDown$.pipe(
     const isMultiSelect = e.evt.ctrlKey || e.evt.metaKey;
 
     const isRowHeaderClick = startCell.columnIndex === 0 && startCell.rowIndex !== 0;
-    const isColHeaderClick = startCell.rowIndex === 0 && startCell.columnIndex !== 0;
+    const isColumnHeaderClick = startCell.rowIndex === 0 && startCell.columnIndex !== 0;
     const isCornerClick = startCell.rowIndex === 0 && startCell.columnIndex === 0;
 
     if (isCornerClick) {
@@ -81,7 +81,7 @@ export const typedLeftMouseDown$ = mouseDown$.pipe(
         },
         event: e,
       } as TMousedownEvent;
-    } else if (isColHeaderClick) {
+    } else if (isColumnHeaderClick) {
       return {
         mousedownType: EMousedownTypes.HeaderClick,
         data: {

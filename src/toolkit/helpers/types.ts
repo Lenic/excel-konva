@@ -400,14 +400,14 @@ export interface ICellDimension extends IDisposable {
    */
   getCellRectBox$: Observable<(rowIndex: number, columnIndex: number) => IRectBox>;
   /**
-   * An Observable that emits a function to retrieve the cell location for a specific row and column.
+   * An Observable that emits a function to retrieve the cell location for a specific client X and Y coordinate.
    *
-   * The emitted function signature is: `(rowIndex: number, columnIndex: number) => ILocation`
-   * - `rowIndex`: The index of the row.
-   * - `columnIndex`: The index of the column.
+   * The emitted function signature is: `(clientX: number, clientY: number) => ILocation`
+   * - `clientX`: The client X coordinate.
+   * - `clientY`: The client Y coordinate.
    * - Returns: The cell location.
    */
-  getCellLocation$: Observable<(rowIndex: number, columnIndex: number) => ILocation>;
+  getCellLocation$: Observable<(clientX: number, clientY: number) => ILocation>;
   /**
    * An Observable that emits a function to retrieve the cell point for a specific row and column.
    *

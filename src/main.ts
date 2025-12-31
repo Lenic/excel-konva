@@ -49,9 +49,7 @@ sheetDimension.realSize$.subscribe((dimension) => {
   virtualContent.style.height = `${dimension.height}px`;
 });
 
-renderSelections$.pipe(auditTime(16)).subscribe((render) => {
-  const count = render();
-
+renderSelections$.pipe(auditTime(16)).subscribe((count) => {
   selectionCount.textContent = count.toLocaleString();
 });
 
