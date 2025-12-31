@@ -42,6 +42,7 @@ export class AccumulatedDimension extends Disposable implements IAccumulatedDime
     return this.dimension.get$.pipe(
       map((getDimension) => {
         this.store.clear();
+        this.store.set(0, 0);
 
         /**
          * The maximum index of the item in the cache

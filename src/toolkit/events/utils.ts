@@ -13,7 +13,7 @@ import { RESIZE_TOLERANCE } from './constants';
 export const checkResizeBoundary$ = combineLatest([
   itemBoundary.getColumnLeft$.pipe(
     switchMap((getColumnLeft) =>
-      itemBoundary.column.get$.pipe(
+      itemBoundary.column.dimension.get$.pipe(
         take(1),
         map((getColumnWidth) => [getColumnLeft, getColumnWidth] as const),
       ),
@@ -21,7 +21,7 @@ export const checkResizeBoundary$ = combineLatest([
   ),
   itemBoundary.getRowTop$.pipe(
     switchMap((getRowTop) =>
-      itemBoundary.row.get$.pipe(
+      itemBoundary.row.dimension.get$.pipe(
         take(1),
         map((getRowHeight) => [getRowTop, getRowHeight] as const),
       ),
