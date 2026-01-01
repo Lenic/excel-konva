@@ -37,6 +37,7 @@ export class StageMouseEvent extends Disposable implements IStageMouseEvent {
   mouseDownLeft$: Observable<Konva.KonvaEventObject<MouseEvent>>;
   mouseUpLeft$: Observable<Konva.KonvaEventObject<MouseEvent>>;
   typedMouseDownLeft$: Observable<TMousedownEvent>;
+  dblclick$: Observable<Konva.KonvaEventObject<MouseEvent>>;
 
   /**
    * Constructor
@@ -60,6 +61,8 @@ export class StageMouseEvent extends Disposable implements IStageMouseEvent {
     );
 
     this.typedMouseDownLeft$ = this.buildTypedMouseDownLeft$();
+
+    this.dblclick$ = this.getMouseEvent$('dblclick');
   }
 
   private getMouseEvent$(key: keyof GlobalEventHandlersEventMap) {

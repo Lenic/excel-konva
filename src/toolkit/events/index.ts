@@ -9,8 +9,8 @@ import type {
 import { cellDimension, columnBoundary, config, rowBoundary, sheetDimension } from '../helpers';
 
 import { StageClickListener } from './click';
-import { StageMouseEvent } from './core';
 import { StageDragListener } from './drag';
+import { StageMouseEvent } from './event';
 import { BoundaryResizeListener } from './resize';
 import { SelectionStore } from './selection';
 

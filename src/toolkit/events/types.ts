@@ -243,6 +243,10 @@ export interface IStageMouseEvent {
    * Typed mouse down left event
    */
   typedMouseDownLeft$: Observable<TMousedownEvent>;
+  /**
+   * Double click event
+   */
+  dblclick$: Observable<Konva.KonvaEventObject<MouseEvent>>;
 }
 
 /**
