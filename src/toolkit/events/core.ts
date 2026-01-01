@@ -77,7 +77,11 @@ export class StageMouseEvent extends Disposable implements IStageMouseEvent {
   private buildTypedMouseDownLeft$() {
     return this.mouseDownLeft$.pipe(
       exhaustMap((e) =>
-        merge(this.mouseUpLeft$.pipe(map(() => true)), timer(300).pipe(map(() => false))).pipe(
+        merge(
+          this.mouseUpLeft$.pipe(map(() => true)),
+          this.mouseMove$.pipe(map(() => false)),
+          timer(300).pipe(map(() => false)),
+        ).pipe(
           take(1),
           map((up) => [e, up] as const),
         ),
