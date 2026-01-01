@@ -1,5 +1,3 @@
-import { auditTime } from 'rxjs';
-
 import {
   renderedRangeColumn,
   renderedRangeRow,
@@ -10,8 +8,7 @@ import {
 } from './toolkit/core-elements';
 import { click, resize } from './toolkit/events';
 import { config, scrollOffset, sheetDimension } from './toolkit/helpers';
-import { renderVisibleCells$ } from './toolkit/render';
-import { selectionListener } from './toolkit/renderers';
+import { cellRenderer, selectionRenderer } from './toolkit/renderers';
 
 // --- 1. 配置常量与初始化 ---
 
@@ -50,17 +47,18 @@ sheetDimension.realSize$.subscribe((dimension) => {
   virtualContent.style.height = `${dimension.height}px`;
 });
 
-selectionListener.start();
-selectionListener.data$.subscribe((count) => {
+selectionRenderer.data$.subscribe((count) => {
   selectionCount.textContent = count.toLocaleString();
 });
+selectionRenderer.start();
 
-renderVisibleCells$.pipe(auditTime(16)).subscribe((dataRegion) => {
+cellRenderer.data$.subscribe((dataRegion) => {
   const { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } = dataRegion;
 
   renderedRangeRow.textContent = `${startRowIndex.toLocaleString()} - ${endRowIndex.toLocaleString()}`;
   renderedRangeColumn.textContent = `${startColumnIndex.toLocaleString()} - ${endColumnIndex.toLocaleString()}`;
 });
+cellRenderer.start();
 
 resize.startListening();
 click.startListening();
