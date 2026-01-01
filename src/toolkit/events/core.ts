@@ -9,7 +9,6 @@ import {
   merge,
   of,
   share,
-  shareReplay,
   switchMap,
   take,
   timer,
@@ -149,5 +148,5 @@ export const typedMouseDownLeft$ = mouseDown$.pipe(
       } as TMousedownEvent);
     }
   }),
-  shareReplay({ refCount: true, bufferSize: 1 }),
+  share(),
 );

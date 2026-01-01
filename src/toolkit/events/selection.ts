@@ -1,6 +1,6 @@
 import type { ISelectionRegion } from './types';
 
-import { distinctUntilChanged, filter, map, merge, scan } from 'rxjs';
+import { distinctUntilChanged, filter, map, merge, scan, shareReplay } from 'rxjs';
 
 import { typedMouseDownLeft$ } from './core';
 import { EMousedownTypes } from './types';
@@ -60,4 +60,6 @@ export const selectionStore$ = merge(wholeColumnOrRowSelection$, cellSelection$)
     }
   }, [] as ISelectionRegion[]),
   distinctUntilChanged(),
+  shareReplay({ refCount: true, bufferSize: 1 }),
 );
+selectionStore$.subscribe();

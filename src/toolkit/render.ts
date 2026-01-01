@@ -1,4 +1,4 @@
-import type { ICellRegionOptions } from './types';
+import type { ICellRegionOptions, ILocation } from './types';
 
 import { combineLatest, map, shareReplay, switchMap, take } from 'rxjs';
 
@@ -16,9 +16,7 @@ export const renderSelections$ = combineLatest([
     switchMap((getCellPoint) =>
       combineLatest([
         cellDimension.columnBoundary.accumulated.dimension.get$,
-        config.frozenColumns$,
         cellDimension.rowBoundary.accumulated.dimension.get$,
-        config.frozenRows$,
       ]).pipe(
         take(1),
         map((items) => [getCellPoint, ...items] as const),
@@ -26,50 +24,62 @@ export const renderSelections$ = combineLatest([
     ),
   ),
   sheetDimension.visualSize$,
-  selectionStore$,
 ]).pipe(
-  map(([[getCellPoint, getColumnWidth, frozenColumns, getRowHeight, frozenRows], sheetVisualSize, selectedRanges]) => {
-    selectionPool.reset();
-    activeCellMarkerPool.reset();
-
-    // Helper function: Draw a sub-selection rectangle
-    const drawSubRange = (
+  map(([[getCellPoint, getColumnWidth, getRowHeight], visual]) => {
+    // Draw a sub-selection rectangle
+    function drawSubRange(
       rowStartIndex: number,
       rowEndIndex: number,
       columnStartIndex: number,
       columnEndIndex: number,
       strokeWidth: number,
-    ) => {
+    ) {
       if (rowStartIndex > rowEndIndex || columnStartIndex > columnEndIndex) return;
 
       // 1. Get top-left Konva coordinate (start position)
-      const topLeftPos = getCellPoint(rowStartIndex, columnStartIndex);
-
-      // 2. Get bottom-right Konva coordinate (using Boundary function)
-      const rightBottomPos = getCellPoint(rowEndIndex + 1, columnEndIndex + 1);
+      const { x: left, y: top } = getCellPoint(rowStartIndex, columnStartIndex);
+      // 2. Get bottom-right Konva coordinate
+      const { x: right, y: bottom } = getCellPoint(rowEndIndex + 1, columnEndIndex + 1);
 
       // Check if the selection is visible in the viewport (simple viewport clipping)
-      if (
-        rightBottomPos.x <= 0 ||
-        rightBottomPos.y <= 0 ||
-        topLeftPos.x >= sheetVisualSize.width ||
-        topLeftPos.y >= sheetVisualSize.height
-      ) {
+      if (right <= 0 || bottom <= 0 || left >= visual.width || top >= visual.height) {
         return;
       }
 
       const selectionRect = selectionPool.getRect();
       selectionRect.setAttrs({
-        x: topLeftPos.x,
-        y: topLeftPos.y,
-        width: rightBottomPos.x - topLeftPos.x,
-        height: rightBottomPos.y - topLeftPos.y,
+        x: left,
+        y: top,
+        width: right - left,
+        height: bottom - top,
         fill: SELECTION_FILL_COLOR,
         stroke: strokeWidth > 0 ? SELECTION_STROKE_COLOR : 'transparent',
         strokeWidth: strokeWidth,
         listening: false,
       });
-    };
+    }
+
+    function drawActiveCell(cell: ILocation) {
+      const { x, y } = getCellPoint(cell.rowIndex, cell.columnIndex);
+      const markerRect = activeCellMarkerPool.getRect();
+      markerRect.setAttrs({
+        x,
+        y,
+        width: getColumnWidth(cell.columnIndex),
+        height: getRowHeight(cell.rowIndex),
+      });
+    }
+
+    return [drawSubRange, drawActiveCell] as const;
+  }),
+  switchMap((methods) =>
+    combineLatest([config.frozenColumns$.pipe(take(1)), config.frozenRows$.pipe(take(1)), selectionStore$]).pipe(
+      map((items) => [...methods, ...items] as const),
+    ),
+  ),
+  map(([drawSubRange, drawActiveCell, frozenColumns, frozenRows, selectedRanges]) => {
+    selectionPool.reset();
+    activeCellMarkerPool.reset();
 
     // Collect row/column header indices that need highlighting
     const highlightedColumns = new Set<number>();
@@ -84,7 +94,7 @@ export const renderSelections$ = combineLatest([
       for (let r = startRowIndex; r <= endRowIndex; r++) highlightedRows.add(r);
       for (let c = startColumnIndex; c <= endColumnIndex; c++) highlightedColumns.add(c);
 
-      // D. Draw Data Area selection (R_SCROLLABLE, C_SCROLLABLE)
+      // A. Draw Data Area selection
       const dataStartRow = Math.max(startRowIndex, frozenRows);
       const dataStartColumn = Math.max(startColumnIndex, frozenColumns);
 
@@ -92,7 +102,7 @@ export const renderSelections$ = combineLatest([
         drawSubRange(dataStartRow, endRowIndex, dataStartColumn, endColumnIndex, BORDER_STROKE);
       }
 
-      // C. Draw Frozen Side Area selection (R_SCROLLABLE, C_FROZEN)
+      // B. Draw Frozen Side Area selection
       const sideStartRow = Math.max(startRowIndex, frozenRows);
       const sideEndRow = endRowIndex;
       const sideStartColumn = startColumnIndex;
@@ -102,7 +112,7 @@ export const renderSelections$ = combineLatest([
         drawSubRange(sideStartRow, sideEndRow, sideStartColumn, sideEndColumn, BORDER_STROKE);
       }
 
-      // B. Draw Frozen Header Area selection (R_FROZEN, C_SCROLLABLE)
+      // C. Draw Frozen Header Area selection
       const headerStartRow = startRowIndex;
       const headerEndRow = Math.min(endRowIndex, frozenRows - 1);
       const headerStartColumn = Math.max(startColumnIndex, frozenColumns);
@@ -112,7 +122,7 @@ export const renderSelections$ = combineLatest([
         drawSubRange(headerStartRow, headerEndRow, headerStartColumn, headerEndColumn, BORDER_STROKE);
       }
 
-      // A. Draw Frozen Corner Area selection (R_FROZEN, C_FROZEN)
+      // D. Draw Frozen Corner Area selection
       const cornerStartRow = startRowIndex;
       const cornerEndRow = Math.min(endRowIndex, frozenRows - 1);
       const cornerStartColumn = startColumnIndex;
@@ -122,18 +132,8 @@ export const renderSelections$ = combineLatest([
         drawSubRange(cornerStartRow, cornerEndRow, cornerStartColumn, cornerEndColumn, BORDER_STROKE);
       }
 
-      // D. Draw Active Cell Marker
-      const activeRow = activeCell.rowIndex;
-      const activeCol = activeCell.columnIndex;
-      const activePos = getCellPoint(activeRow, activeCol);
-
-      const markerRect = activeCellMarkerPool.getRect();
-      markerRect.setAttrs({
-        x: activePos.x,
-        y: activePos.y,
-        width: getColumnWidth(activeCol),
-        height: getRowHeight(activeRow),
-      });
+      // E. Draw Active Cell Marker
+      drawActiveCell(activeCell);
     });
 
     // Draw highlighting for column headers
