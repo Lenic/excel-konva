@@ -11,12 +11,22 @@ import { activeCellMarkerPool, selectionPool } from '../pools';
 
 import { RenderListener } from './renderer';
 
+/**
+ * Selection renderer
+ */
 export class SelectionListener extends RenderListener<number> {
   private config: ISheetConfig;
   private sheetDimension: ISheetDimension;
   private cellDimension: ICellDimension;
   private selectionStore: ISelectionStore;
 
+  /**
+   * Constructor
+   * @param config Sheet config
+   * @param sheetDimension Sheet dimension
+   * @param cellDimension Cell dimension
+   * @param selectionStore Selection store
+   */
   constructor(
     config: ISheetConfig,
     sheetDimension: ISheetDimension,
