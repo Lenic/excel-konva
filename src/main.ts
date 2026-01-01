@@ -10,7 +10,8 @@ import {
 } from './toolkit/core-elements';
 import { click, resize } from './toolkit/events';
 import { config, scrollOffset, sheetDimension } from './toolkit/helpers';
-import { renderSelections$, renderVisibleCells$ } from './toolkit/render';
+import { renderVisibleCells$ } from './toolkit/render';
+import { selectionListener } from './toolkit/renderers';
 
 // --- 1. 配置常量与初始化 ---
 
@@ -49,7 +50,8 @@ sheetDimension.realSize$.subscribe((dimension) => {
   virtualContent.style.height = `${dimension.height}px`;
 });
 
-renderSelections$.pipe(auditTime(16)).subscribe((count) => {
+selectionListener.start();
+selectionListener.data$.subscribe((count) => {
   selectionCount.textContent = count.toLocaleString();
 });
 

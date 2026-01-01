@@ -1,9 +1,9 @@
-import type { IRenderListener } from './types';
+import type { IRenderListener } from '../types';
 import type { Observable, Subscription } from 'rxjs';
 
 import { ReplaySubject } from 'rxjs';
 
-import { Disposable } from './core';
+import { Disposable } from '../core';
 
 /**
  * Event listener

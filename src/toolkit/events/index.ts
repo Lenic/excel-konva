@@ -10,7 +10,7 @@ import { SelectionStore } from './selection';
 export * from './types';
 
 export const events: IStageMouseEvent = new StageMouseEvent();
-export const selection: ISelectionStore = new SelectionStore();
+export const selectionStore: ISelectionStore = new SelectionStore();
 
 export const resize: IBoundaryResizeListener = new BoundaryResizeListener(
   config,
@@ -19,4 +19,4 @@ export const resize: IBoundaryResizeListener = new BoundaryResizeListener(
   rowBoundary,
   events,
 );
-export const click: IStageClickListener = new StageClickListener(selection, events);
+export const click: IStageClickListener = new StageClickListener(selectionStore, events);
