@@ -1,4 +1,4 @@
-import type { IItemBoundary, ISheetConfig, ISheetDimension } from '../helpers/types';
+import type { IItemBoundary, ISheetConfig, ISheetDimension } from '../helpers';
 import type { ILocation, IRegionInfo } from '../types';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';

@@ -20,6 +20,8 @@ import { ScrollOffset } from './scrollOffset';
 import { SheetConfig } from './sheetConfig';
 import { SheetDimension } from './sheetDimension';
 
+export * from './types';
+
 export const config: ISheetConfig = new SheetConfig(50000, 5000, 4, 3);
 export const columnDimension: ItemDimension = new ItemDimension(
   combineLatest([config.minColumnWidth$, config.headerWidth$, config.columnWidth$]).pipe(

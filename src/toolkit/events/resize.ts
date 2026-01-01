@@ -1,4 +1,4 @@
-import type { IItemBoundary, ISheetConfig, ISheetDimension } from '../helpers/types';
+import type { IItemBoundary, ISheetConfig, ISheetDimension } from '../helpers';
 import type { IBoundaryResize, IStageMouseEvent } from './types';
 import type { Subscription } from 'rxjs';
 
