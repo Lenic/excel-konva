@@ -265,9 +265,9 @@ export interface IEventListener {
 }
 
 /**
- * Boundary resize interface
+ * Boundary resize listener interface
  */
-export interface IBoundaryResize extends IEventListener {
+export interface IBoundaryResizeListener extends IEventListener {
   /**
    * Sheet configuration
    */

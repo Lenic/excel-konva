@@ -1,5 +1,5 @@
 import type { IItemBoundary, ISheetConfig, ISheetDimension } from '../helpers';
-import type { IBoundaryResize, IStageMouseEvent } from './types';
+import type { IBoundaryResizeListener, IStageMouseEvent } from './types';
 
 import { EMPTY, finalize, map, of, switchMap, takeUntil, tap, withLatestFrom } from 'rxjs';
 
@@ -9,9 +9,9 @@ import { EventListener } from './listener';
 import { EBoundaryTypes, EMousedownTypes } from './types';
 
 /**
- * Boundary resize
+ * Boundary resize listener
  */
-export class BoundaryResize extends EventListener implements IBoundaryResize {
+export class BoundaryResizeListener extends EventListener implements IBoundaryResizeListener {
   config: ISheetConfig;
   sheetDimension: ISheetDimension;
   columnBoundary: IItemBoundary;
