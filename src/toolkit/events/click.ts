@@ -1,17 +1,14 @@
 import type { ISelectionStore, IStageClickListener, IStageMouseEvent } from './types';
-import type { Subscription } from 'rxjs';
 
 import { filter, map, merge, switchMap } from 'rxjs';
 
-import { Disposable } from '../core';
-
+import { EventListener } from './listener';
 import { EMousedownTypes } from './types';
 
 /**
  * Stage click listener
  */
-export class StageClickListener extends Disposable implements IStageClickListener {
-  private subscription: Subscription | null;
+export class StageClickListener extends EventListener implements IStageClickListener {
   store: ISelectionStore;
   events: IStageMouseEvent;
 
@@ -23,27 +20,11 @@ export class StageClickListener extends Disposable implements IStageClickListene
   constructor(store: ISelectionStore, events: IStageMouseEvent) {
     super();
 
-    this.subscription = null;
-
     this.store = store;
     this.events = events;
   }
 
-  startListening(): () => void {
-    if (this.subscription) return this.destroySubscription;
-
-    this.subscription = this.build().subscribe();
-    return this.destroySubscription;
-  }
-
-  private destroySubscription = () => {
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-      this.subscription = null;
-    }
-  };
-
-  private build() {
+  protected build() {
     const wholeColumnOrRowSelection$ = this.events.typedMouseDownLeft$.pipe(
       filter((e) => e.mousedownType === EMousedownTypes.HeaderClick),
       map((e) => {

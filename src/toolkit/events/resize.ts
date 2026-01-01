@@ -1,20 +1,17 @@
 import type { IItemBoundary, ISheetConfig, ISheetDimension } from '../helpers';
 import type { IBoundaryResize, IStageMouseEvent } from './types';
-import type { Subscription } from 'rxjs';
 
-import { EMPTY, finalize, of, switchMap, takeUntil, tap, withLatestFrom } from 'rxjs';
+import { EMPTY, finalize, map, of, switchMap, takeUntil, tap, withLatestFrom } from 'rxjs';
 
-import { Disposable } from '../core';
 import { resizeLine, selectionLayer, stage } from '../konva-items';
 
+import { EventListener } from './listener';
 import { EBoundaryTypes, EMousedownTypes } from './types';
 
 /**
  * Boundary resize
  */
-export class BoundaryResize extends Disposable implements IBoundaryResize {
-  private subscription: Subscription | null;
-
+export class BoundaryResize extends EventListener implements IBoundaryResize {
   config: ISheetConfig;
   sheetDimension: ISheetDimension;
   columnBoundary: IItemBoundary;
@@ -38,32 +35,14 @@ export class BoundaryResize extends Disposable implements IBoundaryResize {
   ) {
     super();
 
-    this.subscription = null;
-
     this.config = config;
     this.sheetDimension = sheetDimension;
     this.columnBoundary = columnBoundary;
     this.rowBoundary = rowBoundary;
     this.events = events;
-
-    this.disposeWithMe(this.destroySubscription);
   }
 
-  startListening(): () => void {
-    if (this.subscription) return this.destroySubscription;
-
-    this.subscription = this.build().subscribe();
-    return this.destroySubscription;
-  }
-
-  private destroySubscription = () => {
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-      this.subscription = null;
-    }
-  };
-
-  private build() {
+  protected build() {
     return this.dispositionSubject.pipe(
       switchMap(() => this.events.typedMouseDownLeft$),
       switchMap((v) => (v.mousedownType === EMousedownTypes.ResizeBoundary ? of([v.data, v.event] as const) : EMPTY)),
@@ -125,7 +104,7 @@ export class BoundaryResize extends Disposable implements IBoundaryResize {
 
           return this.events.mouseMove$.pipe(
             takeUntil(clear$),
-            tap((me) => {
+            map((me) => {
               if (info.type === EBoundaryTypes.Column) {
                 const dx = me.evt.clientX - e.evt.clientX;
                 const newWidth = Math.max(initialDimension + dx, minColumnWidth);

@@ -223,39 +223,6 @@ export interface IStageMouseEvent {
 }
 
 /**
- * Boundary resize interface
- */
-export interface IBoundaryResize {
-  /**
-   * Sheet configuration
-   */
-  config: ISheetConfig;
-  /**
-   * Sheet dimension
-   */
-  sheetDimension: ISheetDimension;
-  /**
-   * Column boundary
-   */
-  columnBoundary: IItemBoundary;
-  /**
-   * Row boundary
-   */
-  rowBoundary: IItemBoundary;
-  /**
-   * Stage mouse events
-   */
-  events: IStageMouseEvent;
-
-  /**
-   * Start listening to events
-   *
-   * @returns A function to stop listening to events
-   */
-  startListening(): () => void;
-}
-
-/**
  * Selection store interface
  */
 export interface ISelectionStore {
@@ -286,9 +253,47 @@ export interface ISelectionStore {
 }
 
 /**
+ * Event listener interface
+ */
+export interface IEventListener {
+  /**
+   * Start listening to events
+   *
+   * @returns A function to stop listening to events
+   */
+  startListening(): () => void;
+}
+
+/**
+ * Boundary resize interface
+ */
+export interface IBoundaryResize extends IEventListener {
+  /**
+   * Sheet configuration
+   */
+  config: ISheetConfig;
+  /**
+   * Sheet dimension
+   */
+  sheetDimension: ISheetDimension;
+  /**
+   * Column boundary
+   */
+  columnBoundary: IItemBoundary;
+  /**
+   * Row boundary
+   */
+  rowBoundary: IItemBoundary;
+  /**
+   * Stage mouse events
+   */
+  events: IStageMouseEvent;
+}
+
+/**
  * Stage click listener interface
  */
-export interface IStageClickListener {
+export interface IStageClickListener extends IEventListener {
   /**
    * Selection store
    */
@@ -297,10 +302,4 @@ export interface IStageClickListener {
    * Stage mouse events
    */
   events: IStageMouseEvent;
-  /**
-   * Start listening to events
-   *
-   * @returns A function to stop listening to events
-   */
-  startListening(): () => void;
 }
