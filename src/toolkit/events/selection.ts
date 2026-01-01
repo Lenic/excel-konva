@@ -1,11 +1,10 @@
-import type { ISelectionRegion, ISelectionStore, IStageMouseEvent } from './types';
+import type { ISelectionRegion, ISelectionStore } from './types';
 import type { Observable } from 'rxjs';
 
-import { distinctUntilChanged, filter, map, merge, scan, shareReplay, switchMap } from 'rxjs';
+import { distinctUntilChanged, scan, shareReplay, Subject } from 'rxjs';
 
 import { Disposable } from '../core';
 
-import { EMousedownTypes } from './types';
 import { isSameSelectionRegion } from './utils';
 
 interface IAddSelectionAction {
@@ -25,16 +24,21 @@ interface IReplaceSelectionAction {
 type TSelectionAction = IAddSelectionAction | IClearSelectionAction | IReplaceSelectionAction;
 
 export class SelectionStore extends Disposable implements ISelectionStore {
+  private subject: Subject<TSelectionAction>;
+
   list: ISelectionRegion[];
-  events: IStageMouseEvent;
 
   list$: Observable<ISelectionRegion[]>;
 
-  constructor(events: IStageMouseEvent) {
+  constructor() {
     super();
 
+    this.subject = new Subject<TSelectionAction>();
+    this.disposeWithMe(() => {
+      this.subject.complete();
+    });
+
     this.list = [];
-    this.events = events;
 
     this.list$ = this.build();
     this.disposeWithMe(
@@ -44,29 +48,20 @@ export class SelectionStore extends Disposable implements ISelectionStore {
     );
   }
 
+  add(region: ISelectionRegion): void {
+    this.subject.next({ type: 'add', region });
+  }
+
+  clear(): void {
+    this.subject.next({ type: 'clear' });
+  }
+
+  replace(region: ISelectionRegion): void {
+    this.subject.next({ type: 'replace', region });
+  }
+
   private build() {
-    const wholeColumnOrRowSelection$ = this.events.typedMouseDownLeft$.pipe(
-      filter((e) => e.mousedownType === EMousedownTypes.HeaderClick),
-      map((e) => {
-        let action: TSelectionAction;
-        if (e.data.isMultiSelect) {
-          action = { type: 'add', region: e.data };
-        } else {
-          action = { type: 'replace', region: e.data };
-        }
-        return action;
-      }),
-    );
-
-    const cellSelection$ = this.events.typedMouseDownLeft$.pipe(
-      filter((e) => e.mousedownType === EMousedownTypes.CellClick),
-      map((e) => {
-        return { type: 'replace', region: e.data } as TSelectionAction;
-      }),
-    );
-
-    return this.dispositionSubject.pipe(
-      switchMap(() => merge(wholeColumnOrRowSelection$, cellSelection$)),
+    return this.subject.pipe(
       scan((list, action) => {
         switch (action.type) {
           case 'add':
@@ -79,7 +74,7 @@ export class SelectionStore extends Disposable implements ISelectionStore {
           default:
             return list;
         }
-      }, [] as ISelectionRegion[]),
+      }, this.list),
       distinctUntilChanged(),
       shareReplay({ refCount: true, bufferSize: 1 }),
     );

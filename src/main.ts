@@ -8,7 +8,7 @@ import {
   selectionCount,
   virtualContent,
 } from './toolkit/core-elements';
-import { resize } from './toolkit/events';
+import { click, resize } from './toolkit/events';
 import { config, scrollOffset, sheetDimension } from './toolkit/helpers';
 import { renderSelections$, renderVisibleCells$ } from './toolkit/render';
 
@@ -61,6 +61,7 @@ renderVisibleCells$.pipe(auditTime(16)).subscribe((dataRegion) => {
 });
 
 resize.startListening();
+click.startListening();
 
 // doubleClick$.subscribe((render) => {
 //   render();

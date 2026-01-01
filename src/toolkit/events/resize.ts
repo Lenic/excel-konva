@@ -13,7 +13,7 @@ import { EBoundaryTypes, EMousedownTypes } from './types';
  * Boundary resize
  */
 export class BoundaryResize extends Disposable implements IBoundaryResize {
-  private resizeSubscription: Subscription | null;
+  private subscription: Subscription | null;
 
   config: ISheetConfig;
   sheetDimension: ISheetDimension;
@@ -38,7 +38,7 @@ export class BoundaryResize extends Disposable implements IBoundaryResize {
   ) {
     super();
 
-    this.resizeSubscription = null;
+    this.subscription = null;
 
     this.config = config;
     this.sheetDimension = sheetDimension;
@@ -50,20 +50,20 @@ export class BoundaryResize extends Disposable implements IBoundaryResize {
   }
 
   startListening(): () => void {
-    if (this.resizeSubscription) return this.destroySubscription;
+    if (this.subscription) return this.destroySubscription;
 
-    this.resizeSubscription = this.buildResizeEvent().subscribe();
+    this.subscription = this.build().subscribe();
     return this.destroySubscription;
   }
 
   private destroySubscription = () => {
-    if (this.resizeSubscription) {
-      this.resizeSubscription.unsubscribe();
-      this.resizeSubscription = null;
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+      this.subscription = null;
     }
   };
 
-  private buildResizeEvent() {
+  private build() {
     return this.dispositionSubject.pipe(
       switchMap(() => this.events.typedMouseDownLeft$),
       switchMap((v) => (v.mousedownType === EMousedownTypes.ResizeBoundary ? of([v.data, v.event] as const) : EMPTY)),

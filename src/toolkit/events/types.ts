@@ -260,11 +260,6 @@ export interface IBoundaryResize {
  */
 export interface ISelectionStore {
   /**
-   * Stage mouse events
-   */
-  events: IStageMouseEvent;
-
-  /**
    * Selection region list
    */
   list: ISelectionRegion[];
@@ -273,4 +268,39 @@ export interface ISelectionStore {
    * Observable of selection region list
    */
   list$: Observable<ISelectionRegion[]>;
+
+  /**
+   * Add selection action
+   */
+  add(region: ISelectionRegion): void;
+
+  /**
+   * Clear selection action
+   */
+  clear(): void;
+
+  /**
+   * Replace selection action
+   */
+  replace(region: ISelectionRegion): void;
+}
+
+/**
+ * Stage click listener interface
+ */
+export interface IStageClickListener {
+  /**
+   * Selection store
+   */
+  store: ISelectionStore;
+  /**
+   * Stage mouse events
+   */
+  events: IStageMouseEvent;
+  /**
+   * Start listening to events
+   *
+   * @returns A function to stop listening to events
+   */
+  startListening(): () => void;
 }
