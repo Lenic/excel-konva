@@ -99,6 +99,7 @@ export class SelectionListener extends RenderListener<number> {
             width: getColumnWidth(cell.columnIndex),
             height: getRowHeight(cell.rowIndex),
           });
+          markerRect.moveToTop();
         }
 
         return [drawSubRange, drawActiveCell] as const;
