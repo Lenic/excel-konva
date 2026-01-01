@@ -1,4 +1,4 @@
-import type { IItemBoundary, ISheetConfig, ISheetDimension } from '../helpers';
+import type { ICellDimension, IItemBoundary, ISheetConfig, ISheetDimension } from '../helpers';
 import type { ILocation, IRegionInfo } from '../types';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
@@ -23,6 +23,10 @@ export const EMousedownTypes = {
    * Cell click event
    */
   CellClick: 'cell-click',
+  /**
+   * Select region event
+   */
+  SelectRegion: 'select-region',
 } as const;
 
 /**
@@ -100,20 +104,6 @@ export interface IResizeBoundaryEvent {
 }
 
 /**
- * Header click types
- */
-export const EHeaderClickType = {
-  RowHeader: 'row-header',
-  ColumnHeader: 'column-header',
-  Corner: 'corner',
-} as const;
-
-/**
- * Header click types
- */
-export type EHeaderClickType = (typeof EHeaderClickType)[keyof typeof EHeaderClickType];
-
-/**
  * Selection region interface
  */
 export interface ISelectionRegion {
@@ -128,13 +118,9 @@ export interface ISelectionRegion {
 }
 
 /**
- * Header click data interface
+ * Selection region event data interface
  */
-export interface IHeaderClickData extends ISelectionRegion {
-  /**
-   * Type of header click
-   */
-  type: EHeaderClickType;
+export interface ISelectionRegionEventData extends ISelectionRegion {
   /**
    * Whether multi-select mode is active (e.g. Ctrl/Cmd key pressed)
    */
@@ -142,11 +128,35 @@ export interface IHeaderClickData extends ISelectionRegion {
 }
 
 /**
+ * Header click types
+ */
+export const EHeaderClickType = {
+  RowHeader: 'row-header',
+  ColumnHeader: 'column-header',
+  Corner: 'corner',
+} as const;
+
+/**
+ * Header click types
+ */
+export type EHeaderClickType = (typeof EHeaderClickType)[keyof typeof EHeaderClickType];
+
+/**
+ * Header click data interface
+ */
+export interface IHeaderClickData extends ISelectionRegionEventData {
+  /**
+   * Type of header click
+   */
+  type: EHeaderClickType;
+}
+
+/**
  * Header click event interface
  */
 export interface IHeaderClickEvent {
   /**
-   * Event type
+   * Event type: header click
    */
   mousedownType: typeof EMousedownTypes.HeaderClick;
   /**
@@ -160,21 +170,11 @@ export interface IHeaderClickEvent {
 }
 
 /**
- * Cell click data interface
- */
-export interface ICellClickData extends ISelectionRegion {
-  /**
-   * Whether multi-select mode is active (e.g. Ctrl/Cmd key pressed)
-   */
-  isMultiSelect: boolean;
-}
-
-/**
  * Cell click event interface
  */
 export interface ICellClickEvent {
   /**
-   * Event type
+   * Event type: cell click
    */
   mousedownType: typeof EMousedownTypes.CellClick;
   /**
@@ -184,13 +184,36 @@ export interface ICellClickEvent {
   /**
    * Cell click data
    */
-  data: ICellClickData;
+  data: ISelectionRegionEventData;
+}
+
+/**
+ * Selection region event interface
+ */
+export interface ISelectionRegionEvent {
+  /**
+   * Event type: selection region change
+   */
+  mousedownType: typeof EMousedownTypes.SelectRegion;
+  /**
+   * Original Konva event object
+   */
+  event: Konva.KonvaEventObject<MouseEvent>;
+  /**
+   * Selection region event data
+   */
+  data: ISelectionRegionEventData;
 }
 
 /**
  * Mouse down event type union
  */
-export type TMousedownEvent = IMouseEmptyEvent | IResizeBoundaryEvent | IHeaderClickEvent | ICellClickEvent;
+export type TMousedownEvent =
+  | IMouseEmptyEvent
+  | IResizeBoundaryEvent
+  | IHeaderClickEvent
+  | ICellClickEvent
+  | ISelectionRegionEvent;
 
 /**
  * Stage mouse events interface
@@ -302,4 +325,22 @@ export interface IStageClickListener extends IEventListener {
    * Stage mouse events
    */
   events: IStageMouseEvent;
+}
+
+/**
+ * Stage drag listener interface
+ */
+export interface IStageDragListener extends IEventListener {
+  /**
+   * Selection store
+   */
+  store: ISelectionStore;
+  /**
+   * Stage mouse events
+   */
+  events: IStageMouseEvent;
+  /**
+   * Cell dimension
+   */
+  cellDimension: ICellDimension;
 }

@@ -84,6 +84,11 @@ export class StageMouseEvent extends Disposable implements IStageMouseEvent {
       ),
       withLatestFrom(this.checkResizeBoundary$, cellDimension.getCellLocation$, config.columnCount$, config.rowCount$),
       switchMap(([[e, up], checkResizeBoundary, getCellLocation, columnCount, rowCount]) => {
+        /**
+         * Whether multi-select mode is active (e.g. Ctrl/Cmd key pressed)
+         */
+        const isMultiSelect = e.evt.ctrlKey || e.evt.metaKey;
+
         // No mouse up event, means it's a resize event
         if (!up) {
           // 1. Check if resize is triggered
@@ -92,7 +97,22 @@ export class StageMouseEvent extends Disposable implements IStageMouseEvent {
             return of({ mousedownType: EMousedownTypes.ResizeBoundary, data: boundary, event: e } as TMousedownEvent);
           }
 
-          return EMPTY;
+          // 2. Cell selection
+          const cell = getCellLocation(e.evt.clientX, e.evt.clientY);
+          return of({
+            mousedownType: EMousedownTypes.SelectRegion,
+            data: {
+              region: {
+                startRowIndex: cell.rowIndex,
+                endRowIndex: cell.rowIndex,
+                startColumnIndex: cell.columnIndex,
+                endColumnIndex: cell.columnIndex,
+              },
+              activeCell: cell,
+              isMultiSelect,
+            },
+            event: e,
+          } as TMousedownEvent);
         } else {
           // 1. Check if clicked on empty area of Konva Stage (not a cell)
           if (e.target === stage) {
@@ -101,7 +121,6 @@ export class StageMouseEvent extends Disposable implements IStageMouseEvent {
 
           // 2. Start cell selection
           const activeCell = getCellLocation(e.evt.clientX, e.evt.clientY);
-          const isMultiSelect = e.evt.ctrlKey || e.evt.metaKey;
 
           const isRowHeaderClick = activeCell.columnIndex === 0 && activeCell.rowIndex !== 0;
           const isColumnHeaderClick = activeCell.rowIndex === 0 && activeCell.columnIndex !== 0;
@@ -177,7 +196,7 @@ export class StageMouseEvent extends Disposable implements IStageMouseEvent {
                 startColumnIndex: activeCell.columnIndex,
                 endColumnIndex: activeCell.columnIndex,
               },
-              activeCell: activeCell,
+              activeCell,
               isMultiSelect,
             },
             event: e,
