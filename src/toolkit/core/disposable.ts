@@ -1,4 +1,4 @@
-import { Subscription } from 'rxjs';
+import { BehaviorSubject, Subscription } from 'rxjs';
 
 /**
  * Disposable interface
@@ -29,7 +29,16 @@ function isDisposable(disposable: any): disposable is IDisposable {
 export class Disposable implements IDisposable {
   private subscriptionList: (() => void)[] = [];
 
+  protected dispositionSubject: BehaviorSubject<number>;
+
   isDisposed = false;
+
+  constructor() {
+    this.dispositionSubject = new BehaviorSubject(0);
+    this.disposeWithMe(() => {
+      this.dispositionSubject.complete();
+    });
+  }
 
   dispose(): void {
     if (this.isDisposed) return;

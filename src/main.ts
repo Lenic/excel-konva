@@ -8,7 +8,7 @@ import {
   selectionCount,
   virtualContent,
 } from './toolkit/core-elements';
-import { resizeBoundary$ } from './toolkit/events';
+import { resize } from './toolkit/events';
 import { config, scrollOffset, sheetDimension } from './toolkit/helpers';
 import { renderSelections$, renderVisibleCells$ } from './toolkit/render';
 
@@ -60,7 +60,7 @@ renderVisibleCells$.pipe(auditTime(16)).subscribe((dataRegion) => {
   renderedRangeColumn.textContent = `${startColumnIndex.toLocaleString()} - ${endColumnIndex.toLocaleString()}`;
 });
 
-resizeBoundary$.subscribe();
+resize.startListening();
 
 // doubleClick$.subscribe((render) => {
 //   render();

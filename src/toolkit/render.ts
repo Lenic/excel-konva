@@ -2,8 +2,8 @@ import type { ICellRegionOptions, ILocation } from './types';
 
 import { combineLatest, map, shareReplay, switchMap, take } from 'rxjs';
 
-import { selectionStore$ } from './events/selection';
 import { BORDER_STROKE, SELECTION_FILL_COLOR, SELECTION_STROKE_COLOR } from './constants';
+import { selection } from './events';
 import { cellDimension, config, dataRegion, sheetDimension } from './helpers';
 import { backgroundLayer, getCellGroup$, selectionLayer } from './konva-items';
 import { activeCellMarkerPool, cellPool, selectionPool } from './pools';
@@ -73,7 +73,7 @@ export const renderSelections$ = combineLatest([
     return [drawSubRange, drawActiveCell] as const;
   }),
   switchMap((methods) =>
-    combineLatest([config.frozenColumns$.pipe(take(1)), config.frozenRows$.pipe(take(1)), selectionStore$]).pipe(
+    combineLatest([config.frozenColumns$.pipe(take(1)), config.frozenRows$.pipe(take(1)), selection.list$]).pipe(
       map((items) => [...methods, ...items] as const),
     ),
   ),

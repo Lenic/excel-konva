@@ -1,5 +1,7 @@
+import type { IItemBoundary, ISheetConfig, ISheetDimension } from '../helpers/types';
 import type { ILocation, IRegionInfo } from '../types';
 import type Konva from 'konva';
+import type { Observable } from 'rxjs';
 
 /**
  * Mouse down event types
@@ -189,3 +191,86 @@ export interface ICellClickEvent {
  * Mouse down event type union
  */
 export type TMousedownEvent = IMouseEmptyEvent | IResizeBoundaryEvent | IHeaderClickEvent | ICellClickEvent;
+
+/**
+ * Stage mouse events interface
+ */
+export interface IStageMouseEvent {
+  /**
+   * Mouse down event
+   */
+  mousedown$: Observable<Konva.KonvaEventObject<MouseEvent>>;
+  /**
+   * Mouse move event
+   */
+  mouseMove$: Observable<Konva.KonvaEventObject<MouseEvent>>;
+  /**
+   * Mouse up event
+   */
+  mouseUp$: Observable<Konva.KonvaEventObject<MouseEvent>>;
+  /**
+   * Mouse down left event
+   */
+  mouseDownLeft$: Observable<Konva.KonvaEventObject<MouseEvent>>;
+  /**
+   * Mouse up left event
+   */
+  mouseUpLeft$: Observable<Konva.KonvaEventObject<MouseEvent>>;
+  /**
+   * Typed mouse down left event
+   */
+  typedMouseDownLeft$: Observable<TMousedownEvent>;
+}
+
+/**
+ * Boundary resize interface
+ */
+export interface IBoundaryResize {
+  /**
+   * Sheet configuration
+   */
+  config: ISheetConfig;
+  /**
+   * Sheet dimension
+   */
+  sheetDimension: ISheetDimension;
+  /**
+   * Column boundary
+   */
+  columnBoundary: IItemBoundary;
+  /**
+   * Row boundary
+   */
+  rowBoundary: IItemBoundary;
+  /**
+   * Stage mouse events
+   */
+  events: IStageMouseEvent;
+
+  /**
+   * Start listening to events
+   *
+   * @returns A function to stop listening to events
+   */
+  startListening(): () => void;
+}
+
+/**
+ * Selection store interface
+ */
+export interface ISelectionStore {
+  /**
+   * Stage mouse events
+   */
+  events: IStageMouseEvent;
+
+  /**
+   * Selection region list
+   */
+  list: ISelectionRegion[];
+
+  /**
+   * Observable of selection region list
+   */
+  list$: Observable<ISelectionRegion[]>;
+}
