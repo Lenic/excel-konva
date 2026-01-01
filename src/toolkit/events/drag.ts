@@ -81,7 +81,6 @@ export class StageDragListener extends EventListener implements IStageDragListen
         );
 
         const dragRect = selectionPool.getRect();
-
         return this.events.mouseMove$.pipe(
           takeUntil(clear$),
           map((me) => {
