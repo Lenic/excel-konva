@@ -7,7 +7,7 @@ import { config, sheetDimension } from './helpers';
 export const stage = new Konva.Stage({ container: 'konva-container', width: 0, height: 0 });
 sheetDimension.visualSize$.subscribe((size) => stage.setAttrs(size));
 
-// 连接 Canvas 的鼠标滚轮事件和滚动容器的滚动事件
+// Connect Canvas wheel events to scroll container scroll events
 fromEventPattern<Konva.KonvaEventObject<WheelEvent>>(
   (fn) => stage.on('wheel', fn),
   (fn) => stage.off('wheel', fn),
@@ -29,11 +29,11 @@ export const selectionLayer = new Konva.Layer();
 stage.add(selectionLayer);
 
 /**
- * 拖拽调整尺寸时的辅助线
+ * Helper line for resizing by dragging
  */
 export const resizeLine = new Konva.Line({
   points: [0, 0, 0, 0],
-  stroke: '#4e95ff', // 蓝色辅助线
+  stroke: '#4e95ff', // Blue helper line
   strokeWidth: 2,
   dash: [4, 4],
   visible: false,
@@ -41,7 +41,7 @@ export const resizeLine = new Konva.Line({
 });
 selectionLayer.add(resizeLine);
 
-// 为四个区域创建独立的 Konva Group
+// Create independent Konva Groups for four areas
 export const scrollableGroup = new Konva.Group(); // R1+, C1+
 export const sideGroup = new Konva.Group(); // R1+, C0
 export const headerGroup = new Konva.Group(); // R0, C1+

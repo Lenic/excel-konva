@@ -66,9 +66,9 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
           minRowHeight,
           minColumnWidth,
         ]) => {
-          // 阻止默认的 mousedown 行为
+          // Prevent default mousedown behavior
           e.evt.preventDefault();
-          // 设置当前的鼠标样式
+          // Set current cursor style
           stage.container().style.cursor = info.type === EBoundaryTypes.Column ? 'col-resize' : 'row-resize';
 
           let initialDimension = 0;
@@ -109,7 +109,7 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
                 const dx = me.evt.clientX - e.evt.clientX;
                 const newWidth = Math.max(initialDimension + dx, minColumnWidth);
 
-                // 实时更新辅助线位置 (获取该列右边界的当前位置，然后加上尺寸变化)
+                // Real-time update of helper line position (get current position of column right boundary, then add dimension change)
                 const currentBoundaryX = getColumnLeft(info.index + 1);
                 const widthDelta = newWidth - initialDimension;
                 const newX = currentBoundaryX + widthDelta;
@@ -119,7 +119,7 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
                 const dy = me.evt.clientY - e.evt.clientY;
                 const newHeight = Math.max(initialDimension + dy, minRowHeight);
 
-                // 实时更新辅助线位置 (获取该行下边界的当前位置，然后加上尺寸变化)
+                // Real-time update of helper line position (get current position of row bottom boundary, then add dimension change)
                 const currentBoundaryY = getRowTop(info.index + 1);
                 const heightDelta = newHeight - initialDimension;
                 const newY = currentBoundaryY + heightDelta;

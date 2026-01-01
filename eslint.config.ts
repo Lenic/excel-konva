@@ -8,25 +8,25 @@ import { defineConfig } from 'eslint/config';
 import lint from 'typescript-eslint';
 
 export default defineConfig(
-  // 1. 忽略文件配置
+  // 1. Ignore files configuration
   {
     ignores: ['dist', 'node_modules', '*.config.js'],
   },
 
-  // 2. 基础 JavaScript 规则 (相当于 eslint:recommended)
+  // 2. Base JavaScript rules (equivalent to eslint:recommended)
   {
     files: ['**/*.js', '**/*.jsx', '**/*.cjs', '**/*.mjs'],
     ...js.configs.recommended,
   },
 
-  // 3. TypeScript 规则配置
+  // 3. TypeScript rules configuration
   {
-    // 匹配 TypeScript 文件
+    // Match TypeScript files
     files: ['**/*.ts', '**/*.tsx'],
     languageOptions: {
       parser: typescriptParser,
       parserOptions: {
-        // 必须指定 tsconfig 文件路径
+        // Must specify tsconfig file path
         project: './tsconfig.json',
         sourceType: 'module',
       },
@@ -36,13 +36,13 @@ export default defineConfig(
       ...lint.configs.stylisticTypeChecked,
       importPlugin.flatConfigs.recommended,
     ],
-    // 插件和规则配置
+    // Plugins and rules configuration
     plugins: {
       'simple-import-sort': simpleImportSort,
     },
     rules: {
       // ------------------------------------------------------------------
-      // A. 定制 import 排序规则 (核心)
+      // A. Customize import sorting rules (core)
       // ------------------------------------------------------------------
       'simple-import-sort/imports': [
         'error',
@@ -82,9 +82,9 @@ export default defineConfig(
       '@typescript-eslint/restrict-template-expressions': 'off',
 
       // ------------------------------------------------------------------
-      // B. 常见的 TS 规则调整
+      // B. Common TS rule adjustments
       // ------------------------------------------------------------------
-      // 禁用原生 no-unused-vars，使用 TS 版本的规则
+      // Disable native no-unused-vars, use TS version instead
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': [
         'error',
@@ -102,15 +102,15 @@ export default defineConfig(
     },
   },
 
-  // 4. Prettier 集成 (必须放在数组末尾以覆盖所有冲突规则)
+  // 4. Prettier integration (must be at the end of the array to override all conflicting rules)
   prettierConfig,
-  // 启用 eslint-plugin-prettier 插件
+  // Enable eslint-plugin-prettier plugin
   {
     plugins: {
       prettier: prettier,
     },
     rules: {
-      // 将 Prettier 规则作为 ESLint 规则执行
+      // Execute Prettier rules as ESLint rules
       'prettier/prettier': 'error',
     },
   },

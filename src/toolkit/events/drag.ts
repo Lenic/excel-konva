@@ -92,7 +92,7 @@ export class StageDragListener extends EventListener implements IStageDragListen
             const startPos = getCellRectBox(minRow, minCol);
             const endBoundaryPos = getCellPoint(maxRow + 1, maxCol + 1);
 
-            // 绘制临时的拖拽矩形
+            // Draw the temporary drag rectangle
             dragRect.setAttrs({
               x: startPos.x,
               y: startPos.y,

@@ -1,4 +1,4 @@
 /**
- * 鼠标检测边界的容差 (像素)
+ * The tolerance of mouse detection boundary (pixels)
  */
 export const RESIZE_TOLERANCE = 5;
