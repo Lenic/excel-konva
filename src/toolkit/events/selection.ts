@@ -1,123 +1,82 @@
-import Konva from 'konva';
-import { combineLatest, filter, from, fromEventPattern, switchMap } from 'rxjs';
+import type { ISelectionRegion, ISelectionStore } from './types';
+import type { Observable } from 'rxjs';
 
-import { HEADER_COL_INDEX, HEADER_ROW_INDEX } from '../constants';
-import { stage } from '../konva-items';
-import { getCellLocation$ } from '../utils';
+import { distinctUntilChanged, scan, shareReplay, Subject } from 'rxjs';
 
-import { mousedown$ } from './utils';
+import { Disposable } from '../core';
 
-// B. 鼠标拖拽选区逻辑
-combineLatest([mousedown$, getCellLocation$]).pipe(
-  filter((e) => e.evt.button === 0),
-  switchMap(([e, getCellLocation]) => {
-    const startCell = getCellLocation(e.evt.clientX, e.evt.clientY);
-    const isMultiSelect = e.evt.ctrlKey || e.evt.metaKey;
+import { isSameSelectionRegion } from './utils';
 
-    const isRowHeaderClick = startCell.col === HEADER_COL_INDEX && startCell.row !== HEADER_ROW_INDEX;
-    const isColHeaderClick = startCell.row === HEADER_ROW_INDEX && startCell.col !== HEADER_COL_INDEX;
-    const isCornerClick = startCell.row === HEADER_ROW_INDEX && startCell.col === HEADER_COL_INDEX;
+interface IAddSelectionAction {
+  type: 'add';
+  region: ISelectionRegion;
+}
 
-    let finalRange = null;
+interface IClearSelectionAction {
+  type: 'clear';
+}
 
-    if (isCornerClick) {
-      finalRange = {
-        startRow: 1,
-        endRow: ROW_COUNT - 1,
-        startCol: 1,
-        endCol: COL_COUNT - 1,
-        activeRow: 1,
-        activeCol: 1,
-      };
-    } else if (isRowHeaderClick) {
-      finalRange = {
-        startRow: startCell.row,
-        endRow: startCell.row,
-        startCol: 1,
-        endCol: COL_COUNT - 1,
-        activeRow: startCell.row,
-        activeCol: 1,
-      };
-    } else if (isColHeaderClick) {
-      finalRange = {
-        startRow: 1,
-        endRow: ROW_COUNT - 1,
-        startCol: startCell.col,
-        endCol: startCell.col,
-        activeRow: 1,
-        activeCol: startCell.col,
-      };
-    }
-  }),
-);
+interface IReplaceSelectionAction {
+  type: 'replace';
+  region: ISelectionRegion;
+}
 
-const handleMouseMove = (e) => {
-  if (!state.isDragging || !state.startCell) return;
+type TSelectionAction = IAddSelectionAction | IClearSelectionAction | IReplaceSelectionAction;
 
-  const currentCell = getCellLocation(e.evt.clientX, e.evt.clientY);
+export class SelectionStore extends Disposable implements ISelectionStore {
+  private subject: Subject<TSelectionAction>;
 
-  const minRow = Math.min(state.startCell.row, currentCell.row);
-  const maxRow = Math.max(state.startCell.row, currentCell.row);
-  const minCol = Math.min(state.startCell.col, currentCell.col);
-  const maxCol = Math.max(state.startCell.col, currentCell.col);
+  list: ISelectionRegion[];
 
-  const startPos = getCellRect(minRow, minCol);
-  const endBoundaryPos = getCellBoundaryPoint(maxRow + 1, maxCol + 1);
-  const activePos = getCellRect(state.startCell.row, state.startCell.col);
+  list$: Observable<ISelectionRegion[]>;
 
-  // 绘制临时的拖拽矩形
-  dragRect.setAttrs({
-    x: startPos.x,
-    y: startPos.y,
-    width: endBoundaryPos.x - startPos.x,
-    height: endBoundaryPos.y - startPos.y,
-    visible: true,
-  });
-  temporaryActiveCellRect.setAttrs({
-    x: activePos.x,
-    y: activePos.y,
-    width: getColWidth(state.startCell.col),
-    height: getRowHeight(state.startCell.row),
-    visible: true,
-  });
-  selectionLayer.batchDraw();
-};
+  constructor() {
+    super();
 
-const handleMouseUp = (e) => {
-  if (!state.isDragging) return;
-  state.isDragging = false;
+    this.subject = new Subject<TSelectionAction>();
+    this.disposeWithMe(() => {
+      this.subject.complete();
+    });
 
-  stage.off('mousemove', handleMouseMove);
-  stage.off('mouseup', handleMouseUp);
+    this.list = [];
 
-  // 隐藏临时的拖拽矩形
-  dragRect.visible(false);
-  temporaryActiveCellRect.visible(false);
+    this.list$ = this.build();
+    this.disposeWithMe(
+      this.list$.subscribe((list) => {
+        this.list = list;
+      }),
+    );
+  }
 
-  if (!state.startCell) return;
+  add(region: ISelectionRegion): void {
+    this.subject.next({ type: 'add', region });
+  }
 
-  const finalCell = getCellLocation(e.evt.clientX, e.evt.clientY);
+  clear(): void {
+    this.subject.next({ type: 'clear' });
+  }
 
-  const finalRange = {
-    startRow: Math.min(state.startCell.row, finalCell.row),
-    endRow: Math.max(state.startCell.row, finalCell.row),
-    startCol: Math.min(state.startCell.col, finalCell.col),
-    endCol: Math.max(state.startCell.col, finalCell.col),
-    activeRow: state.startCell.row,
-    activeCol: state.startCell.col,
-  };
+  replace(region: ISelectionRegion): void {
+    this.subject.next({ type: 'replace', region });
+  }
 
-  const isMultiSelect = e.evt.ctrlKey || e.evt.metaKey;
-  const newSelectedRanges = isMultiSelect ? state.selectedRanges.slice() : [];
-
-  newSelectedRanges.push(finalRange);
-
-  state.selectedRanges = newSelectedRanges;
-  state.startCell = null;
-
-  // 绘制最终选区
-  renderAll();
-};
-
-// // 启用光标检测
-stage.on('mousemove', handleCursorMove);
+  private build() {
+    return this.subject.pipe(
+      scan((list, action) => {
+        switch (action.type) {
+          case 'add':
+            const index = list.findIndex((region) => isSameSelectionRegion(region, action.region));
+            return index === -1 ? [...list, action.region] : [...list.slice(0, index), ...list.slice(index + 1)];
+          case 'clear':
+            return [];
+          case 'replace':
+            return [action.region] as ISelectionRegion[];
+          default:
+            return list;
+        }
+      }, this.list),
+      distinctUntilChanged(),
+      shareReplay({ refCount: true, bufferSize: 1 }),
+    );
+  }
+}
