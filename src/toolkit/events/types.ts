@@ -1,4 +1,4 @@
-import type { ICellDimension, IItemBoundary, ISheetConfig, ISheetDimension } from '../helpers';
+import type { ICellDimension, IItemBoundary, IScrollOffset, ISheetConfig, ISheetDimension } from '../helpers';
 import type { ILocation, IRegionInfo } from '../types';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
@@ -347,4 +347,22 @@ export interface IStageDragListener extends IEventListener {
    * Cell dimension
    */
   cellDimension: ICellDimension;
+}
+
+/**
+ * Stage edit listener interface
+ */
+export interface IStageEditListener extends IEventListener {
+  /**
+   * Stage mouse events
+   */
+  events: IStageMouseEvent;
+  /**
+   * Cell dimension
+   */
+  cellDimension: ICellDimension;
+  /**
+   * Scroll offset
+   */
+  offset: IScrollOffset;
 }

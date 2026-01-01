@@ -6,7 +6,7 @@ import {
   selectionCount,
   virtualContent,
 } from './toolkit/core-elements';
-import { click, drag, resize } from './toolkit/events';
+import { click, drag, edit, resize } from './toolkit/events';
 import { config, scrollOffset, sheetDimension } from './toolkit/helpers';
 import { cellRenderer, selectionRenderer } from './toolkit/renderers';
 
@@ -63,6 +63,7 @@ cellRenderer.start();
 resize.startListening();
 click.startListening();
 drag.startListening();
+edit.startListening();
 
 // doubleClick$.subscribe((render) => {
 //   render();
