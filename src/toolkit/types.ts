@@ -1,4 +1,5 @@
 import type Konva from 'konva';
+import type { Observable } from 'rxjs';
 
 export interface ISelectedRange {
   startRow: number;
@@ -110,4 +111,25 @@ export interface IUserState {
 export interface ICellRegionOptions {
   rectAttrs: Omit<Konva.RectConfig, 'x' | 'y' | 'width' | 'height'>;
   textAttrs: Omit<Konva.TextConfig, 'x' | 'y' | 'width' | 'height' | 'text'>;
+}
+
+/**
+ * Render listener interface
+ */
+export interface IRenderListener<T> {
+  /**
+   * Rendering data
+   */
+  data: T | null;
+  /**
+   * Observable of rendering data
+   */
+  data$: Observable<T>;
+
+  /**
+   * Start listening to rendering events
+   *
+   * @returns A function to stop listening to events
+   */
+  start(): () => void;
 }
