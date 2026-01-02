@@ -1,4 +1,21 @@
-import type {
+import { container } from '../constants';
+import {
+  columnTag,
+  ICellDimension,
+  IItemBoundary,
+  IScrollOffset,
+  ISheetConfig,
+  ISheetDimension,
+  rowTag,
+} from '../helpers';
+
+import { StageClickListener } from './click';
+import { StageMouseEvent } from './core';
+import { StageDragListener } from './drag';
+import { StageEditListener } from './edit';
+import { BoundaryResizeListener } from './resize';
+import { SelectionStore } from './selection';
+import {
   IBoundaryResizeListener,
   ISelectionStore,
   IStageClickListener,
@@ -7,27 +24,42 @@ import type {
   IStageMouseEvent,
 } from './types';
 
-import { cellDimension, columnBoundary, config, rowBoundary, scrollOffset, sheetDimension } from '../helpers';
-
-import { StageClickListener } from './click';
-import { StageMouseEvent } from './core';
-import { StageDragListener } from './drag';
-import { StageEditListener } from './edit';
-import { BoundaryResizeListener } from './resize';
-import { SelectionStore } from './selection';
-
 export * from './types';
 
-export const events: IStageMouseEvent = new StageMouseEvent();
-export const selectionStore: ISelectionStore = new SelectionStore();
+container.set(ISelectionStore).set(() => new SelectionStore());
 
-export const resize: IBoundaryResizeListener = new BoundaryResizeListener(
-  config,
-  sheetDimension,
-  columnBoundary,
-  rowBoundary,
-  events,
-);
-export const click: IStageClickListener = new StageClickListener(selectionStore, events);
-export const drag: IStageDragListener = new StageDragListener(selectionStore, events, cellDimension);
-export const edit: IStageEditListener = new StageEditListener(events, cellDimension, scrollOffset);
+container
+  .set(IStageMouseEvent)
+  .set(
+    (c) =>
+      new StageMouseEvent(
+        c.get(ICellDimension),
+        c.get(IItemBoundary, columnTag),
+        c.get(ISheetConfig),
+        c.get(IItemBoundary, rowTag),
+        c.get(ISheetDimension),
+      ),
+  );
+
+container
+  .set(IBoundaryResizeListener)
+  .set(
+    (c) =>
+      new BoundaryResizeListener(
+        c.get(ISheetConfig),
+        c.get(ISheetDimension),
+        c.get(IItemBoundary, columnTag),
+        c.get(IItemBoundary, rowTag),
+        c.get(IStageMouseEvent),
+      ),
+  );
+
+container.set(IStageClickListener).set((c) => new StageClickListener(c.get(ISelectionStore), c.get(IStageMouseEvent)));
+
+container
+  .set(IStageDragListener)
+  .set((c) => new StageDragListener(c.get(ISelectionStore), c.get(IStageMouseEvent), c.get(ICellDimension)));
+
+container
+  .set(IStageEditListener)
+  .set((c) => new StageEditListener(c.get(IStageMouseEvent), c.get(ICellDimension), c.get(IScrollOffset)));

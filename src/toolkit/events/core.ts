@@ -1,3 +1,4 @@
+import type { ICellDimension, IItemBoundary, ISheetConfig, ISheetDimension } from '../helpers';
 import type { IBoundaryInfo, IStageMouseEvent, TMousedownEvent } from './types';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
@@ -19,7 +20,6 @@ import {
 
 import { Disposable } from '../core';
 import { container } from '../core-elements';
-import { cellDimension, columnBoundary, config, rowBoundary, sheetDimension } from '../helpers';
 import { stage } from '../konva-items';
 
 import { RESIZE_TOLERANCE } from './constants';
@@ -30,6 +30,12 @@ import { EHeaderClickType, EMousedownTypes } from './types';
  */
 export class StageMouseEvent extends Disposable implements IStageMouseEvent {
   private checkResizeBoundary$: Observable<(clientX: number, clientY: number) => IBoundaryInfo | null>;
+
+  cellDimension: ICellDimension;
+  columnBoundary: IItemBoundary;
+  config: ISheetConfig;
+  rowBoundary: IItemBoundary;
+  sheetDimension: ISheetDimension;
 
   mousedown$: Observable<Konva.KonvaEventObject<MouseEvent>>;
   mouseMove$: Observable<Konva.KonvaEventObject<MouseEvent>>;
@@ -42,8 +48,20 @@ export class StageMouseEvent extends Disposable implements IStageMouseEvent {
   /**
    * Constructor
    */
-  constructor() {
+  constructor(
+    cellDimension: ICellDimension,
+    columnBoundary: IItemBoundary,
+    config: ISheetConfig,
+    rowBoundary: IItemBoundary,
+    sheetDimension: ISheetDimension,
+  ) {
     super();
+
+    this.cellDimension = cellDimension;
+    this.columnBoundary = columnBoundary;
+    this.config = config;
+    this.rowBoundary = rowBoundary;
+    this.sheetDimension = sheetDimension;
 
     this.checkResizeBoundary$ = this.buildCheckResizeBoundary$();
 
@@ -89,7 +107,12 @@ export class StageMouseEvent extends Disposable implements IStageMouseEvent {
           map((up) => [e, up] as const),
         ),
       ),
-      withLatestFrom(this.checkResizeBoundary$, cellDimension.getCellLocation$, config.columnCount$, config.rowCount$),
+      withLatestFrom(
+        this.checkResizeBoundary$,
+        this.cellDimension.getCellLocation$,
+        this.config.columnCount$,
+        this.config.rowCount$,
+      ),
       switchMap(([[e, up], checkResizeBoundary, getCellLocation, columnCount, rowCount]) => {
         /**
          * Whether multi-select mode is active (e.g. Ctrl/Cmd key pressed)
@@ -216,25 +239,25 @@ export class StageMouseEvent extends Disposable implements IStageMouseEvent {
 
   private buildCheckResizeBoundary$() {
     return combineLatest([
-      columnBoundary.getBoundary$.pipe(
+      this.columnBoundary.getBoundary$.pipe(
         switchMap((getColumnLeft) =>
-          columnBoundary.accumulated.dimension.get$.pipe(
+          this.columnBoundary.accumulated.dimension.get$.pipe(
             take(1),
             map((getColumnWidth) => [getColumnLeft, getColumnWidth] as const),
           ),
         ),
       ),
-      rowBoundary.getBoundary$.pipe(
+      this.rowBoundary.getBoundary$.pipe(
         switchMap((getRowTop) =>
-          rowBoundary.accumulated.dimension.get$.pipe(
+          this.rowBoundary.accumulated.dimension.get$.pipe(
             take(1),
             map((getRowHeight) => [getRowTop, getRowHeight] as const),
           ),
         ),
       ),
-      config.columnCount$,
-      config.rowCount$,
-      sheetDimension.visualSize$,
+      this.config.columnCount$,
+      this.config.rowCount$,
+      this.sheetDimension.visualSize$,
     ]).pipe(
       map(([[getColumnLeft, getColumnWidth], [getRowTop, getRowHeight], columnCount, rowCount, sheetVisualSize]) => {
         /**

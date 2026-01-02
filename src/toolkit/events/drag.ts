@@ -10,7 +10,7 @@ import { EventListener } from './listener';
 import { EMousedownTypes } from './types';
 
 /**
- * Stage click listener
+ * Stage drag listener
  */
 export class StageDragListener extends EventListener implements IStageDragListener {
   store: ISelectionStore;
