@@ -1,3 +1,4 @@
+import type { TIdentifier } from '../../container';
 import type { ICellDimension, IItemBoundary, IScrollOffset, ISheetConfig, ISheetDimension } from '../helpers';
 import type { ILocation, IRegionInfo } from '../types';
 import type Konva from 'konva';
@@ -220,6 +221,27 @@ export type TMousedownEvent =
  */
 export interface IStageMouseEvent {
   /**
+   * Cell dimension
+   */
+  cellDimension: ICellDimension;
+  /**
+   * Column boundary
+   */
+  columnBoundary: IItemBoundary;
+  /**
+   * Sheet configuration
+   */
+  config: ISheetConfig;
+  /**
+   * Row boundary
+   */
+  rowBoundary: IItemBoundary;
+  /**
+   * Sheet dimension
+   */
+  sheetDimension: ISheetDimension;
+
+  /**
    * Mouse down event
    */
   mousedown$: Observable<Konva.KonvaEventObject<MouseEvent>>;
@@ -248,6 +270,10 @@ export interface IStageMouseEvent {
    */
   dblclick$: Observable<Konva.KonvaEventObject<MouseEvent>>;
 }
+/**
+ * Stage mouse events interface identifier
+ */
+export const IStageMouseEvent: TIdentifier<IStageMouseEvent> = Symbol('IStageMouseEvent');
 
 /**
  * Selection store interface
@@ -278,6 +304,10 @@ export interface ISelectionStore {
    */
   replace(region: ISelectionRegion): void;
 }
+/**
+ * Selection store interface identifier
+ */
+export const ISelectionStore: TIdentifier<ISelectionStore> = Symbol('ISelectionStore');
 
 /**
  * Event listener interface
@@ -316,6 +346,10 @@ export interface IBoundaryResizeListener extends IEventListener {
    */
   events: IStageMouseEvent;
 }
+/**
+ * Boundary resize listener interface identifier
+ */
+export const IBoundaryResizeListener: TIdentifier<IBoundaryResizeListener> = Symbol('IBoundaryResizeListener');
 
 /**
  * Stage click listener interface
@@ -330,24 +364,10 @@ export interface IStageClickListener extends IEventListener {
    */
   events: IStageMouseEvent;
 }
-
 /**
- * Stage drag listener interface
+ * Stage click listener interface identifier
  */
-export interface IStageDragListener extends IEventListener {
-  /**
-   * Selection store
-   */
-  store: ISelectionStore;
-  /**
-   * Stage mouse events
-   */
-  events: IStageMouseEvent;
-  /**
-   * Cell dimension
-   */
-  cellDimension: ICellDimension;
-}
+export const IStageClickListener: TIdentifier<IStageClickListener> = Symbol('IStageClickListener');
 
 /**
  * Stage edit listener interface
@@ -366,3 +386,29 @@ export interface IStageEditListener extends IEventListener {
    */
   offset: IScrollOffset;
 }
+/**
+ * Stage edit listener interface identifier
+ */
+export const IStageEditListener: TIdentifier<IStageEditListener> = Symbol('IStageEditListener');
+
+/**
+ * Stage drag listener interface
+ */
+export interface IStageDragListener extends IEventListener {
+  /**
+   * Selection store
+   */
+  store: ISelectionStore;
+  /**
+   * Stage mouse events
+   */
+  events: IStageMouseEvent;
+  /**
+   * Cell dimension
+   */
+  cellDimension: ICellDimension;
+}
+/**
+ * Stage drag listener interface identifier
+ */
+export const IStageDragListener: TIdentifier<IStageDragListener> = Symbol('IStageDragListener');

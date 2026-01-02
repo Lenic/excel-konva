@@ -1,3 +1,4 @@
+import type { TIdentifier } from '../../container';
 import type { IDisposable } from '../core';
 import type { IDimension, ILocation, IOffset, IPoint, IRectBox, IRegionInfo } from '../types';
 import type { Observable } from 'rxjs';
@@ -129,6 +130,10 @@ export interface ISheetConfig extends IDisposable {
    */
   setMinColumnWidth(width: number): void;
 }
+/**
+ * Sheet config identifier
+ */
+export const ISheetConfig: TIdentifier<ISheetConfig> = Symbol('ISheetConfig');
 
 /**
  * Item dimension manager options
@@ -184,6 +189,10 @@ export interface IItemDimension extends IDisposable {
    */
   reset(index: number): void;
 }
+/**
+ * Item dimension manager identifier
+ */
+export const IItemDimension: TIdentifier<IItemDimension> = Symbol('IItemDimension');
 
 /**
  * Accumulated dimension
@@ -215,6 +224,10 @@ export interface IAccumulatedDimension extends IDisposable {
    */
   findIndex$: Observable<(offset: number) => number>;
 }
+/**
+ * Accumulated dimension identifier
+ */
+export const IAccumulatedDimension: TIdentifier<IAccumulatedDimension> = Symbol('IAccumulatedDimension');
 
 /**
  * Sheet dimension
@@ -267,6 +280,10 @@ export interface ISheetDimension extends IDisposable {
    */
   realSize$: Observable<IDimension>;
 }
+/**
+ * Sheet dimension identifier
+ */
+export const ISheetDimension: TIdentifier<ISheetDimension> = Symbol('ISheetDimension');
 
 /**
  * Scroll offset
@@ -302,6 +319,10 @@ export interface IScrollOffset extends IDisposable {
    */
   offset$: Observable<IOffset>;
 }
+/**
+ * Scroll offset identifier
+ */
+export const IScrollOffset: TIdentifier<IScrollOffset> = Symbol('IScrollOffset');
 
 /**
  * Item boundary options
@@ -346,6 +367,10 @@ export interface IItemBoundary extends IDisposable {
    */
   getItemIndex$: Observable<(relOffset: number) => number>;
 }
+/**
+ * Item boundary identifier
+ */
+export const IItemBoundary: TIdentifier<IItemBoundary> = Symbol('IItemBoundary');
 
 /**
  * Cell dimension
@@ -418,6 +443,10 @@ export interface ICellDimension extends IDisposable {
    */
   getCellPoint$: Observable<(rowIndex: number, columnIndex: number) => IPoint>;
 }
+/**
+ * Cell dimension identifier
+ */
+export const ICellDimension: TIdentifier<ICellDimension> = Symbol('ICellDimension');
 
 /**
  * Data region info
@@ -450,3 +479,7 @@ export interface IDataRegion {
    */
   region$: Observable<IRegionInfo>;
 }
+/**
+ * Data region identifier
+ */
+export const IDataRegion: TIdentifier<IDataRegion> = Symbol('IDataRegion');

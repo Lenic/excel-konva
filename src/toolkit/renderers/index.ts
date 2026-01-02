@@ -1,18 +1,22 @@
-import type { IRegionInfo } from '../types';
-import type { IRenderListener } from './types';
-
-import { selectionStore } from '../events';
-import { cellDimension, config, dataRegion, sheetDimension } from '../helpers';
+import { container } from '../constants';
+import { ISelectionStore } from '../events';
+import { ICellDimension, IDataRegion, ISheetConfig, ISheetDimension } from '../helpers';
 
 import { CellListener } from './cell';
 import { SelectionListener } from './selection';
+import { ICellListener, ISelectionListener } from './types';
 
 export * from './types';
 
-export const selectionRenderer: IRenderListener<number> = new SelectionListener(
-  config,
-  sheetDimension,
-  cellDimension,
-  selectionStore,
-);
-export const cellRenderer: IRenderListener<IRegionInfo> = new CellListener(config, cellDimension, dataRegion);
+container.set(ISelectionListener).set((c) => {
+  return new SelectionListener(
+    c.get(ISheetConfig),
+    c.get(ISheetDimension),
+    c.get(ICellDimension),
+    c.get(ISelectionStore),
+  );
+});
+
+container.set(ICellListener).set((c) => {
+  return new CellListener(c.get(ISheetConfig), c.get(ICellDimension), c.get(IDataRegion));
+});

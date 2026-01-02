@@ -1,11 +1,12 @@
 import Konva from 'konva';
 import { combineLatest, fromEventPattern, map, shareReplay, tap } from 'rxjs';
 
+import { ServiceLocator } from '../container';
+
 import { scrollContainer } from './core-elements';
-import { config, sheetDimension } from './helpers';
+import { ISheetConfig } from './helpers';
 
 export const stage = new Konva.Stage({ container: 'konva-container', width: 0, height: 0 });
-sheetDimension.visualSize$.subscribe((size) => stage.setAttrs(size));
 
 // Connect Canvas wheel events to scroll container scroll events
 fromEventPattern<Konva.KonvaEventObject<WheelEvent>>(
@@ -49,6 +50,7 @@ export const cornerGroup = new Konva.Group(); // R0, C0
 
 backgroundLayer.add(scrollableGroup, sideGroup, headerGroup, cornerGroup);
 
+const config = ServiceLocator.current.get(ISheetConfig);
 export const getCellGroup$ = combineLatest([config.frozenRows$, config.frozenColumns$]).pipe(
   map(([frozenRows, frozenColumns]) => {
     return function getCellGroup(rowIndex: number, columnIndex: number) {

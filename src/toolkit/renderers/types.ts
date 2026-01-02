@@ -1,3 +1,5 @@
+import type { TIdentifier } from '../../container';
+import type { IRegionInfo } from '../types';
 import type { Observable } from 'rxjs';
 
 /**
@@ -20,3 +22,12 @@ export interface IRenderListener<T> {
    */
   start(): () => void;
 }
+
+/**
+ * Selection listener interface identifier
+ */
+export const ISelectionListener: TIdentifier<IRenderListener<number>> = Symbol('SelectionListener');
+/**
+ * Cell listener interface identifier
+ */
+export const ICellListener: TIdentifier<IRenderListener<IRegionInfo>> = Symbol('CellListener');
