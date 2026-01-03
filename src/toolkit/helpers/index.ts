@@ -48,49 +48,44 @@ container
 
 container
   .set(IAccumulatedDimension)
-  .set((c) => {
-    const columnDimension = c.get(IItemDimension, COLUMN_TAG);
-    const config = c.get(ISheetConfig);
-    return new AccumulatedDimension(columnDimension, config.columnCount$);
-  }, COLUMN_TAG)
-  .set((c) => {
-    const rowDimension = c.get(IItemDimension, ROW_TAG);
-    const config = c.get(ISheetConfig);
-    return new AccumulatedDimension(rowDimension, config.rowCount$);
-  }, ROW_TAG);
+  .set((c) => new AccumulatedDimension(c.get(IItemDimension, COLUMN_TAG), c.get(ISheetConfig).columnCount$), COLUMN_TAG)
+  .set((c) => new AccumulatedDimension(c.get(IItemDimension, ROW_TAG), c.get(ISheetConfig).rowCount$), ROW_TAG);
 
-container.set(ISheetDimension).set((c) => {
-  const config = c.get(ISheetConfig);
-  const accumulatedColumnDimension = c.get(IAccumulatedDimension, COLUMN_TAG);
-  const accumulatedRowDimension = c.get(IAccumulatedDimension, ROW_TAG);
-  return new SheetDimension(config, accumulatedColumnDimension, accumulatedRowDimension);
-});
+container
+  .set(ISheetDimension)
+  .set(
+    (c) =>
+      new SheetDimension(
+        c.get(ISheetConfig),
+        c.get(IAccumulatedDimension, COLUMN_TAG),
+        c.get(IAccumulatedDimension, ROW_TAG),
+      ),
+  );
 
-container.set(IScrollOffset).set((c) => {
-  const sheetDimension = c.get(ISheetDimension);
-  return new ScrollOffset(sheetDimension);
-});
+container.set(IScrollOffset).set((c) => new ScrollOffset(c.get(ISheetDimension)));
 
 container
   .set(IItemBoundary)
-  .set((c) => {
-    const accumulatedColumnDimension = c.get(IAccumulatedDimension, COLUMN_TAG);
-    return new ItemBoundary(accumulatedColumnDimension, {
-      scrollValue$: c.get(IScrollOffset).left$,
-      frozenCount$: c.get(ISheetConfig).frozenColumns$,
-    });
-  }, COLUMN_TAG)
-  .set((c) => {
-    const accumulatedRowDimension = c.get(IAccumulatedDimension, ROW_TAG);
-    return new ItemBoundary(accumulatedRowDimension, {
-      scrollValue$: c.get(IScrollOffset).top$,
-      frozenCount$: c.get(ISheetConfig).frozenRows$,
-    });
-  }, ROW_TAG);
+  .set(
+    (c) =>
+      new ItemBoundary(c.get(IAccumulatedDimension, COLUMN_TAG), {
+        scrollValue$: c.get(IScrollOffset).left$,
+        frozenCount$: c.get(ISheetConfig).frozenColumns$,
+      }),
+    COLUMN_TAG,
+  )
+  .set(
+    (c) =>
+      new ItemBoundary(c.get(IAccumulatedDimension, ROW_TAG), {
+        scrollValue$: c.get(IScrollOffset).top$,
+        frozenCount$: c.get(ISheetConfig).frozenRows$,
+      }),
+    ROW_TAG,
+  );
 
-container.set(ICellDimension).set((c) => {
-  return new CellDimension(c.get(IItemBoundary, COLUMN_TAG), c.get(IItemBoundary, ROW_TAG));
-});
+container
+  .set(ICellDimension)
+  .set((c) => new CellDimension(c.get(IItemBoundary, COLUMN_TAG), c.get(IItemBoundary, ROW_TAG)));
 
 container.set(IDataRegion).set((c) => {
   return new DataRegion(
