@@ -82,7 +82,7 @@ export class StageDragListener extends EventListener implements IStageDragListen
             if (isMultiSelect) {
               this.store.add(selection);
             } else {
-              this.store.replace(selection);
+              this.store.override([selection]);
             }
           }),
           finalize(() => {

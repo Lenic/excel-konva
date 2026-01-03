@@ -31,7 +31,7 @@ export class StageClickListener extends EventListener implements IStageClickList
         if (e.data.isMultiSelect) {
           this.store.add(e.data);
         } else {
-          this.store.replace(e.data);
+          this.store.override([e.data]);
         }
       }),
     );
@@ -39,7 +39,7 @@ export class StageClickListener extends EventListener implements IStageClickList
     const cellSelection$ = this.events.typedMouseDownLeft$.pipe(
       filter((e) => e.mousedownType === EMousedownTypes.CellClick),
       map((e) => {
-        this.store.replace(e.data);
+        this.store.override([e.data]);
       }),
     );
 

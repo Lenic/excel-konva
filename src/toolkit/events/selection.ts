@@ -16,12 +16,12 @@ interface IClearSelectionAction {
   type: 'clear';
 }
 
-interface IReplaceSelectionAction {
-  type: 'replace';
-  region: ISelectionRegion;
+interface IOverrideSelectionAction {
+  type: 'override';
+  regions: ISelectionRegion[];
 }
 
-type TSelectionAction = IAddSelectionAction | IClearSelectionAction | IReplaceSelectionAction;
+type TSelectionAction = IAddSelectionAction | IClearSelectionAction | IOverrideSelectionAction;
 
 export class SelectionStore extends Disposable implements ISelectionStore {
   private subject: Subject<TSelectionAction>;
@@ -56,8 +56,8 @@ export class SelectionStore extends Disposable implements ISelectionStore {
     this.subject.next({ type: 'clear' });
   }
 
-  replace(region: ISelectionRegion): void {
-    this.subject.next({ type: 'replace', region });
+  override(regions: ISelectionRegion[]): void {
+    this.subject.next({ type: 'override', regions });
   }
 
   private build() {
@@ -69,8 +69,8 @@ export class SelectionStore extends Disposable implements ISelectionStore {
             return index === -1 ? [...list, action.region] : [...list.slice(0, index), ...list.slice(index + 1)];
           case 'clear':
             return [];
-          case 'replace':
-            return [action.region] as ISelectionRegion[];
+          case 'override':
+            return action.regions;
           default:
             return list;
         }

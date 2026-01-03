@@ -300,9 +300,9 @@ export interface ISelectionStore {
   clear(): void;
 
   /**
-   * Replace selection action
+   * Override selection action
    */
-  replace(region: ISelectionRegion): void;
+  override(regions: ISelectionRegion[]): void;
 }
 /**
  * Selection store interface identifier
