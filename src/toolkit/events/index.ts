@@ -1,12 +1,12 @@
 import { container } from '../constants';
 import {
-  columnTag,
+  COLUMN_TAG,
   ICellDimension,
   IItemBoundary,
   IScrollOffset,
   ISheetConfig,
   ISheetDimension,
-  rowTag,
+  ROW_TAG,
 } from '../helpers';
 
 import { StageClickListener } from './click';
@@ -34,9 +34,9 @@ container
     (c) =>
       new StageMouseEvent(
         c.get(ICellDimension),
-        c.get(IItemBoundary, columnTag),
+        c.get(IItemBoundary, COLUMN_TAG),
         c.get(ISheetConfig),
-        c.get(IItemBoundary, rowTag),
+        c.get(IItemBoundary, ROW_TAG),
         c.get(ISheetDimension),
       ),
   );
@@ -48,8 +48,8 @@ container
       new BoundaryResizeListener(
         c.get(ISheetConfig),
         c.get(ISheetDimension),
-        c.get(IItemBoundary, columnTag),
-        c.get(IItemBoundary, rowTag),
+        c.get(IItemBoundary, COLUMN_TAG),
+        c.get(IItemBoundary, ROW_TAG),
         c.get(IStageMouseEvent),
       ),
   );
