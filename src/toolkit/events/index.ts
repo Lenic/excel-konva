@@ -60,7 +60,15 @@ container
 
 container
   .register(IStageDragListener)
-  .set((c) => new StageDragListener(c.get(ISelectionStore), c.get(IStageMouseEvent), c.get(ICellDimension)));
+  .set(
+    (c) =>
+      new StageDragListener(
+        c.get(ISheetConfig),
+        c.get(ISelectionStore),
+        c.get(IStageMouseEvent),
+        c.get(ICellDimension),
+      ),
+  );
 
 container
   .register(IStageEditListener)

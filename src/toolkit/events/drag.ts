@@ -1,10 +1,10 @@
-import type { ICellDimension } from '../helpers';
+import type { ICellDimension, ISheetConfig } from '../helpers';
+import type { ILocation } from '../types';
 import type { ISelectionRegion, ISelectionStore, IStageDragListener, IStageMouseEvent } from './types';
 
 import { EMPTY, finalize, map, of, switchMap, takeUntil, tap, withLatestFrom } from 'rxjs';
 
-import { selectionLayer, stage } from '../konva-items';
-import { activeCellMarkerPool, selectionPool } from '../pools';
+import { stage } from '../konva-items';
 
 import { EventListener } from './listener';
 import { EMousedownTypes } from './types';
@@ -13,6 +13,7 @@ import { EMousedownTypes } from './types';
  * Stage drag listener
  */
 export class StageDragListener extends EventListener implements IStageDragListener {
+  config: ISheetConfig;
   store: ISelectionStore;
   events: IStageMouseEvent;
   cellDimension: ICellDimension;
@@ -23,9 +24,10 @@ export class StageDragListener extends EventListener implements IStageDragListen
    * @param events stage mouse events
    * @param cellDimension cell dimension
    */
-  constructor(store: ISelectionStore, events: IStageMouseEvent, cellDimension: ICellDimension) {
+  constructor(config: ISheetConfig, store: ISelectionStore, events: IStageMouseEvent, cellDimension: ICellDimension) {
     super();
 
+    this.config = config;
     this.store = store;
     this.events = events;
     this.cellDimension = cellDimension;
@@ -36,72 +38,63 @@ export class StageDragListener extends EventListener implements IStageDragListen
       switchMap(() =>
         this.events.typedMouseDownLeft$.pipe(
           switchMap((e) => (e.mousedownType === EMousedownTypes.SelectRegion ? of(e) : EMPTY)),
+          switchMap((e) => (e.data.activeCell.rowIndex === 0 && e.data.activeCell.columnIndex === 0 ? EMPTY : of(e))),
         ),
       ),
-      withLatestFrom(
-        this.cellDimension.getCellLocation$,
-        this.cellDimension.getCellRectBox$,
-        this.cellDimension.getCellPoint$,
-      ),
-      switchMap(([{ data }, getCellLocation, getCellRectBox, getCellPoint]) => {
+      withLatestFrom(this.cellDimension.getCellLocation$),
+      switchMap(([{ data }, getCellLocation]) => {
         const { activeCell, isMultiSelect } = data;
         if (!isMultiSelect) {
           this.store.clear();
         }
 
-        const activeCellBox = getCellRectBox(activeCell.rowIndex, activeCell.columnIndex);
+        const activeCellRowIndex = activeCell.rowIndex === 0 ? 1 : activeCell.rowIndex;
+        const activeCellColumnIndex = activeCell.columnIndex === 0 ? 1 : activeCell.columnIndex;
 
-        const dragActiveCell = activeCellMarkerPool.getRect();
-        dragActiveCell.setAttrs({ ...activeCellBox, visible: true });
+        const selectionId = Date.now();
+        const tmpActiveCell: ILocation = { rowIndex: activeCellRowIndex, columnIndex: activeCellColumnIndex };
 
-        const clear$ = this.events.mouseUp$.pipe(
-          tap((ue) => {
-            dragActiveCell.visible(false);
+        return this.events.mouseMove$.pipe(
+          takeUntil(
+            this.events.mouseUp$.pipe(
+              tap(() => {
+                this.store.check(selectionId);
+              }),
+              finalize(() => {
+                stage.container().style.cursor = 'default';
+              }),
+            ),
+          ),
+          map((me) => {
+            const currentCell = getCellLocation(me.evt.clientX, me.evt.clientY);
+            const currentCellRowIndex = currentCell.rowIndex === 0 ? 1 : currentCell.rowIndex;
+            const currentCellColumnIndex = currentCell.columnIndex === 0 ? 1 : currentCell.columnIndex;
 
-            const endCell = getCellLocation(ue.evt.clientX, ue.evt.clientY);
+            const minRowIndex = Math.min(activeCellRowIndex, currentCellRowIndex);
+            const maxRowIndex =
+              currentCell.rowIndex === 0 ? this.config.rowCount - 1 : Math.max(activeCellRowIndex, currentCellRowIndex);
+            const minColumnIndex = Math.min(activeCellColumnIndex, currentCellColumnIndex);
+            const maxColumnIndex =
+              currentCell.columnIndex === 0
+                ? this.config.columnCount - 1
+                : Math.max(activeCellColumnIndex, currentCellColumnIndex);
+
             const selection: ISelectionRegion = {
+              id: selectionId,
               region: {
-                startRowIndex: Math.min(activeCell.rowIndex, endCell.rowIndex),
-                endRowIndex: Math.max(activeCell.rowIndex, endCell.rowIndex),
-                startColumnIndex: Math.min(activeCell.columnIndex, endCell.columnIndex),
-                endColumnIndex: Math.max(activeCell.columnIndex, endCell.columnIndex),
+                startRowIndex: minRowIndex,
+                endRowIndex: maxRowIndex,
+                startColumnIndex: minColumnIndex,
+                endColumnIndex: maxColumnIndex,
               },
-              activeCell,
+              activeCell: tmpActiveCell,
             };
 
             if (isMultiSelect) {
-              this.store.add(selection);
+              this.store.update(selection);
             } else {
-              this.store.replace(selection);
+              this.store.override([selection]);
             }
-          }),
-          finalize(() => {
-            stage.container().style.cursor = 'default';
-          }),
-        );
-
-        const dragRect = selectionPool.getRect();
-        return this.events.mouseMove$.pipe(
-          takeUntil(clear$),
-          map((me) => {
-            const currentCell = getCellLocation(me.evt.clientX, me.evt.clientY);
-            const minRow = Math.min(activeCell.rowIndex, currentCell.rowIndex);
-            const maxRow = Math.max(activeCell.rowIndex, currentCell.rowIndex);
-            const minCol = Math.min(activeCell.columnIndex, currentCell.columnIndex);
-            const maxCol = Math.max(activeCell.columnIndex, currentCell.columnIndex);
-            const startPos = getCellRectBox(minRow, minCol);
-            const endBoundaryPos = getCellPoint(maxRow + 1, maxCol + 1);
-
-            // Draw the temporary drag rectangle
-            dragRect.setAttrs({
-              x: startPos.x,
-              y: startPos.y,
-              width: endBoundaryPos.x - startPos.x,
-              height: endBoundaryPos.y - startPos.y,
-            });
-            dragActiveCell.moveToTop();
-
-            selectionLayer.batchDraw();
           }),
         );
       }),
