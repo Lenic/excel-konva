@@ -5,11 +5,13 @@ import type { Observable } from 'rxjs';
 
 import { combineLatest, distinctUntilChanged, map, switchMap, take } from 'rxjs';
 
+import { ServiceLocator } from '../../container';
 import { BORDER_STROKE, SELECTION_FILL_COLOR, SELECTION_STROKE_COLOR } from '../constants';
 import { selectionLayer } from '../konva-items';
 import { activeCellMarkerPool, selectionPool } from '../pools';
 
 import { RenderListener } from './renderer';
+import { IRangeCollection } from './types';
 
 /**
  * Selection renderer
@@ -116,8 +118,8 @@ export class SelectionListener extends RenderListener<number> {
         activeCellMarkerPool.reset();
 
         // Collect row/column header indices that need highlighting
-        const highlightedColumns = new Set<number>();
-        const highlightedRows = new Set<number>();
+        const highlightedRows = ServiceLocator.current.get(IRangeCollection);
+        const highlightedColumns = ServiceLocator.current.get(IRangeCollection);
 
         // Draw selected areas
         selectedRanges.forEach((range) => {
@@ -125,8 +127,8 @@ export class SelectionListener extends RenderListener<number> {
           const { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } = region;
 
           // Collect indices for row/column header highlighting
-          for (let r = startRowIndex; r <= endRowIndex; r++) highlightedRows.add(r);
-          for (let c = startColumnIndex; c <= endColumnIndex; c++) highlightedColumns.add(c);
+          highlightedRows.push([startRowIndex, endRowIndex]);
+          highlightedColumns.push([startColumnIndex, endColumnIndex]);
 
           // A. Draw Data Area selection
           const dataStartRow = Math.max(startRowIndex, frozenRows);
@@ -171,48 +173,16 @@ export class SelectionListener extends RenderListener<number> {
         });
 
         // Draw highlighting for column headers
-        if (highlightedColumns.size > 0) {
-          const sortedColumns = Array.from(highlightedColumns).sort((a, b) => a - b);
-          // Draw column header part
-          let startBatchCol = -1;
-          for (let i = 0; i < sortedColumns.length; i++) {
-            if (startBatchCol === -1) {
-              startBatchCol = sortedColumns[i];
-            }
-            if (i === sortedColumns.length - 1 || sortedColumns[i + 1] !== sortedColumns[i] + 1) {
-              // Draw highlighting for column headers of all frozen rows
-              drawSubRange(
-                0,
-                0,
-                startBatchCol,
-                sortedColumns[i],
-                0, // No border
-              );
-              startBatchCol = -1;
-            }
+        if (highlightedColumns.values.length > 0) {
+          for (const [start, end] of highlightedColumns.values) {
+            drawSubRange(0, 0, start, end, 0);
           }
         }
 
         // Draw highlighting for row headers
-        if (highlightedRows.size > 0) {
-          const sortedRows = Array.from(highlightedRows).sort((a, b) => a - b);
-          // Draw highlighting for row headers of all frozen columns
-          let startBatchRow = -1;
-          for (let i = 0; i < sortedRows.length; i++) {
-            if (startBatchRow === -1) {
-              startBatchRow = sortedRows[i];
-            }
-            if (i === sortedRows.length - 1 || sortedRows[i + 1] !== sortedRows[i] + 1) {
-              // Draw row range involved in selection, covering all frozen columns (C0 to frozenColumns-1)
-              drawSubRange(
-                startBatchRow,
-                sortedRows[i],
-                0,
-                0,
-                0, // No border
-              );
-              startBatchRow = -1;
-            }
+        if (highlightedRows.values.length > 0) {
+          for (const [start, end] of highlightedRows.values) {
+            drawSubRange(start, end, 0, 0, 0);
           }
         }
 

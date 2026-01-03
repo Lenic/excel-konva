@@ -3,10 +3,13 @@ import { ISelectionStore } from '../events';
 import { ICellDimension, IDataRegion, ISheetConfig, ISheetDimension } from '../helpers';
 
 import { CellListener } from './cell';
+import { RangeCollection } from './range';
 import { SelectionListener } from './selection';
-import { ICellListener, ISelectionListener } from './types';
+import { ICellListener, IRangeCollection, ISelectionListener } from './types';
 
 export * from './types';
+
+container.set(IRangeCollection, 'transaction').set(() => new RangeCollection());
 
 container.set(ISelectionListener).set((c) => {
   return new SelectionListener(

@@ -26,8 +26,37 @@ export interface IRenderListener<T> {
 /**
  * Selection listener interface identifier
  */
-export const ISelectionListener: TIdentifier<IRenderListener<number>> = Symbol('SelectionListener');
+export const ISelectionListener: TIdentifier<IRenderListener<number>> = Symbol('ISelectionListener');
 /**
  * Cell listener interface identifier
  */
-export const ICellListener: TIdentifier<IRenderListener<IRegionInfo>> = Symbol('CellListener');
+export const ICellListener: TIdentifier<IRenderListener<IRegionInfo>> = Symbol('ICellListener');
+
+/**
+ * Range type
+ *
+ * - begin: start index
+ * - end: end index
+ */
+export type TRange = [begin: number, end: number];
+
+/**
+ * Range collection interface
+ */
+export interface IRangeCollection {
+  /**
+   * The merged and ordered ranges
+   */
+  readonly values: TRange[];
+
+  /**
+   * Add a range
+   *
+   * @param range - range to add
+   */
+  push(range: TRange): void;
+}
+/**
+ * Range collection interface identifier
+ */
+export const IRangeCollection: TIdentifier<IRangeCollection> = Symbol('IRangeCollection');
