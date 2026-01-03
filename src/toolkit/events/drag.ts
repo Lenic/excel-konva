@@ -1,11 +1,10 @@
 import type { ICellDimension, ISheetConfig } from '../helpers';
-import type { ILocation, IRegionInfo } from '../types';
+import type { ILocation } from '../types';
 import type { ISelectionRegion, ISelectionStore, IStageDragListener, IStageMouseEvent } from './types';
 
 import { EMPTY, finalize, map, of, switchMap, takeUntil, tap, withLatestFrom } from 'rxjs';
 
-import { selectionLayer, stage } from '../konva-items';
-import { activeCellMarkerPool, selectionPool } from '../pools';
+import { stage } from '../konva-items';
 
 import { EventListener } from './listener';
 import { EMousedownTypes } from './types';
