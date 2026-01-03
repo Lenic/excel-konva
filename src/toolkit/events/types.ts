@@ -396,6 +396,10 @@ export const IStageEditListener: TIdentifier<IStageEditListener> = Symbol('IStag
  */
 export interface IStageDragListener extends IEventListener {
   /**
+   * Sheet configuration
+   */
+  config: ISheetConfig;
+  /**
    * Selection store
    */
   store: ISelectionStore;
