@@ -22,78 +22,79 @@ import { IItemDimension, ISheetConfig } from './types';
 
 export * from './types';
 
-container.set(ISheetConfig).set(() => new SheetConfig(50000, 5000, 4, 3));
+container.register(ISheetConfig).set(() => new SheetConfig(50000, 5000, 4, 3));
 
-export const columnTag = Symbol('column');
-export const rowTag = Symbol('row');
+export const COLUMN_TAG = Symbol('column_tag');
+export const ROW_TAG = Symbol('row_tag');
 
-container.set(IItemDimension).set((c) => {
-  const config = c.get(ISheetConfig);
-  return new ItemDimension(
-    combineLatest([config.minColumnWidth$, config.headerWidth$, config.columnWidth$]).pipe(
-      map((v) => ({ minDimension: v[0], headerDimension: v[1], defaultDimension: v[2] })),
-    ),
+container
+  .register(IItemDimension)
+  .set((c) => {
+    const config = c.get(ISheetConfig);
+    return new ItemDimension(
+      combineLatest([config.minColumnWidth$, config.headerWidth$, config.columnWidth$]).pipe(
+        map((v) => ({ minDimension: v[0], headerDimension: v[1], defaultDimension: v[2] })),
+      ),
+    );
+  }, COLUMN_TAG)
+  .set((c) => {
+    const config = c.get(ISheetConfig);
+    return new ItemDimension(
+      combineLatest([config.minRowHeight$, config.headerHeight$, config.rowHeight$]).pipe(
+        map((v) => ({ minDimension: v[0], headerDimension: v[1], defaultDimension: v[2] })),
+      ),
+    );
+  }, ROW_TAG);
+
+container
+  .register(IAccumulatedDimension)
+  .set((c) => new AccumulatedDimension(c.get(IItemDimension, COLUMN_TAG), c.get(ISheetConfig).columnCount$), COLUMN_TAG)
+  .set((c) => new AccumulatedDimension(c.get(IItemDimension, ROW_TAG), c.get(ISheetConfig).rowCount$), ROW_TAG);
+
+container
+  .register(ISheetDimension)
+  .set(
+    (c) =>
+      new SheetDimension(
+        c.get(ISheetConfig),
+        c.get(IAccumulatedDimension, COLUMN_TAG),
+        c.get(IAccumulatedDimension, ROW_TAG),
+      ),
   );
-}, columnTag);
 
-container.set(IItemDimension).set((c) => {
-  const config = c.get(ISheetConfig);
-  return new ItemDimension(
-    combineLatest([config.minRowHeight$, config.headerHeight$, config.rowHeight$]).pipe(
-      map((v) => ({ minDimension: v[0], headerDimension: v[1], defaultDimension: v[2] })),
-    ),
+container.register(IScrollOffset).set((c) => new ScrollOffset(c.get(ISheetDimension)));
+
+container
+  .register(IItemBoundary)
+  .set(
+    (c) =>
+      new ItemBoundary(c.get(IAccumulatedDimension, COLUMN_TAG), {
+        scrollValue$: c.get(IScrollOffset).left$,
+        frozenCount$: c.get(ISheetConfig).frozenColumns$,
+      }),
+    COLUMN_TAG,
+  )
+  .set(
+    (c) =>
+      new ItemBoundary(c.get(IAccumulatedDimension, ROW_TAG), {
+        scrollValue$: c.get(IScrollOffset).top$,
+        frozenCount$: c.get(ISheetConfig).frozenRows$,
+      }),
+    ROW_TAG,
   );
-}, rowTag);
 
-container.set(IAccumulatedDimension).set((c) => {
-  const columnDimension = c.get(IItemDimension, columnTag);
-  const config = c.get(ISheetConfig);
-  return new AccumulatedDimension(columnDimension, config.columnCount$);
-}, columnTag);
+container
+  .register(ICellDimension)
+  .set((c) => new CellDimension(c.get(IItemBoundary, COLUMN_TAG), c.get(IItemBoundary, ROW_TAG)));
 
-container.set(IAccumulatedDimension).set((c) => {
-  const rowDimension = c.get(IItemDimension, rowTag);
-  const config = c.get(ISheetConfig);
-  return new AccumulatedDimension(rowDimension, config.rowCount$);
-}, rowTag);
-
-container.set(ISheetDimension).set((c) => {
-  const config = c.get(ISheetConfig);
-  const accumulatedColumnDimension = c.get(IAccumulatedDimension, columnTag);
-  const accumulatedRowDimension = c.get(IAccumulatedDimension, rowTag);
-  return new SheetDimension(config, accumulatedColumnDimension, accumulatedRowDimension);
-});
-
-container.set(IScrollOffset).set((c) => {
-  const sheetDimension = c.get(ISheetDimension);
-  return new ScrollOffset(sheetDimension);
-});
-
-container.set(IItemBoundary).set((c) => {
-  const accumulatedColumnDimension = c.get(IAccumulatedDimension, columnTag);
-  return new ItemBoundary(accumulatedColumnDimension, {
-    scrollValue$: c.get(IScrollOffset).left$,
-    frozenCount$: c.get(ISheetConfig).frozenColumns$,
-  });
-}, columnTag);
-
-container.set(IItemBoundary).set((c) => {
-  const accumulatedRowDimension = c.get(IAccumulatedDimension, rowTag);
-  return new ItemBoundary(accumulatedRowDimension, {
-    scrollValue$: c.get(IScrollOffset).top$,
-    frozenCount$: c.get(ISheetConfig).frozenRows$,
-  });
-}, rowTag);
-
-container.set(ICellDimension).set((c) => {
-  return new CellDimension(c.get(IItemBoundary, columnTag), c.get(IItemBoundary, rowTag));
-});
-
-container.set(IDataRegion).set((c) => {
-  return new DataRegion(
-    c.get(ISheetConfig),
-    c.get(IItemBoundary, columnTag),
-    c.get(IItemBoundary, rowTag),
-    c.get(ISheetDimension),
+container
+  .register(IDataRegion)
+  .set(
+    (c) =>
+      new DataRegion(
+        c.get(ISheetConfig),
+        c.get(IItemBoundary, COLUMN_TAG),
+        c.get(IItemBoundary, ROW_TAG),
+        c.get(ISheetDimension),
+      ),
   );
-});

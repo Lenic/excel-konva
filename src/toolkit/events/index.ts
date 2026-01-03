@@ -1,12 +1,12 @@
 import { container } from '../constants';
 import {
-  columnTag,
+  COLUMN_TAG,
   ICellDimension,
   IItemBoundary,
   IScrollOffset,
   ISheetConfig,
   ISheetDimension,
-  rowTag,
+  ROW_TAG,
 } from '../helpers';
 
 import { StageClickListener } from './click';
@@ -26,40 +26,42 @@ import {
 
 export * from './types';
 
-container.set(ISelectionStore).set(() => new SelectionStore());
+container.register(ISelectionStore).set(() => new SelectionStore());
 
 container
-  .set(IStageMouseEvent)
+  .register(IStageMouseEvent)
   .set(
     (c) =>
       new StageMouseEvent(
         c.get(ICellDimension),
-        c.get(IItemBoundary, columnTag),
+        c.get(IItemBoundary, COLUMN_TAG),
         c.get(ISheetConfig),
-        c.get(IItemBoundary, rowTag),
+        c.get(IItemBoundary, ROW_TAG),
         c.get(ISheetDimension),
       ),
   );
 
 container
-  .set(IBoundaryResizeListener)
+  .register(IBoundaryResizeListener)
   .set(
     (c) =>
       new BoundaryResizeListener(
         c.get(ISheetConfig),
         c.get(ISheetDimension),
-        c.get(IItemBoundary, columnTag),
-        c.get(IItemBoundary, rowTag),
+        c.get(IItemBoundary, COLUMN_TAG),
+        c.get(IItemBoundary, ROW_TAG),
         c.get(IStageMouseEvent),
       ),
   );
 
-container.set(IStageClickListener).set((c) => new StageClickListener(c.get(ISelectionStore), c.get(IStageMouseEvent)));
+container
+  .register(IStageClickListener)
+  .set((c) => new StageClickListener(c.get(ISelectionStore), c.get(IStageMouseEvent)));
 
 container
-  .set(IStageDragListener)
+  .register(IStageDragListener)
   .set((c) => new StageDragListener(c.get(ISelectionStore), c.get(IStageMouseEvent), c.get(ICellDimension)));
 
 container
-  .set(IStageEditListener)
+  .register(IStageEditListener)
   .set((c) => new StageEditListener(c.get(IStageMouseEvent), c.get(ICellDimension), c.get(IScrollOffset)));

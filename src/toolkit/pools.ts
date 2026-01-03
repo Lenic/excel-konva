@@ -58,7 +58,10 @@ export const selectionPool = {
   getRect: function () {
     if (this.nextRectIndex < this.rects.length) {
       const rect = this.rects[this.nextRectIndex++];
-      rect.visible(true);
+      rect.setAttrs({
+        strokeWidth: 2,
+        visible: true,
+      });
       return rect;
     }
     const newRect = new Konva.Rect({

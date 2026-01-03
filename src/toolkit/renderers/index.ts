@@ -3,12 +3,15 @@ import { ISelectionStore } from '../events';
 import { ICellDimension, IDataRegion, ISheetConfig, ISheetDimension } from '../helpers';
 
 import { CellListener } from './cell';
+import { RangeCollection } from './range';
 import { SelectionListener } from './selection';
-import { ICellListener, ISelectionListener } from './types';
+import { ICellListener, IRangeCollection, ISelectionListener } from './types';
 
 export * from './types';
 
-container.set(ISelectionListener).set((c) => {
+container.register(IRangeCollection, 'transient').set(() => new RangeCollection());
+
+container.register(ISelectionListener).set((c) => {
   return new SelectionListener(
     c.get(ISheetConfig),
     c.get(ISheetDimension),
@@ -17,6 +20,6 @@ container.set(ISelectionListener).set((c) => {
   );
 });
 
-container.set(ICellListener).set((c) => {
+container.register(ICellListener).set((c) => {
   return new CellListener(c.get(ISheetConfig), c.get(ICellDimension), c.get(IDataRegion));
 });

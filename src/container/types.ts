@@ -38,20 +38,20 @@ export interface ILifecycle<T> {
 /**
  * The lifecycle type of the service.
  */
-export type TLifecycleType = 'singleton' | 'transaction' | (() => object);
+export type TLifecycleType = 'singleton' | 'transaction' | 'transient' | (() => object);
 
 /**
  * The container of the service.
  */
 export interface IContainer {
   /**
-   * Set the lifecycle of the service.
+   * Register the service.
    *
    * @param identifier - The identifier of the service.
    * @param lifecycle - The lifecycle of the service.
    * @returns The container of the service.
    */
-  set<T>(identifier: TIdentifier<T>, lifecycle?: TLifecycleType): ILifecycle<T>;
+  register<T>(identifier: TIdentifier<T>, lifecycle?: TLifecycleType): ILifecycle<T>;
   /**
    * Get the instance of the service.
    *

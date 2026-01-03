@@ -1,11 +1,11 @@
 import type { IContainer, ILifecycle, TIdentifier, TLifecycleType } from './types';
 
-import { ScopedLifecycle, SingletonLifecycle, TransactionLifecycle } from './lifecycles';
+import { ScopedLifecycle, SingletonLifecycle, TransactionLifecycle, TransientLifecycle } from './lifecycles';
 
 export class Container implements IContainer {
   private registry = new Map<TIdentifier<any>, ILifecycle<any>>();
 
-  set<T>(identifier: TIdentifier<T>, lifecycle: TLifecycleType = 'singleton'): ILifecycle<T> {
+  register<T>(identifier: TIdentifier<T>, lifecycle: TLifecycleType = 'singleton'): ILifecycle<T> {
     let lifecycleInstance = this.registry.get(identifier) as ILifecycle<T> | undefined;
     if (lifecycleInstance) return lifecycleInstance;
 
@@ -13,6 +13,8 @@ export class Container implements IContainer {
       lifecycleInstance = new SingletonLifecycle();
     } else if (lifecycle === 'transaction') {
       lifecycleInstance = new TransactionLifecycle();
+    } else if (lifecycle === 'transient') {
+      lifecycleInstance = new TransientLifecycle();
     } else {
       lifecycleInstance = new ScopedLifecycle(lifecycle);
     }
