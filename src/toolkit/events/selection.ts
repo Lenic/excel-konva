@@ -88,9 +88,12 @@ export class SelectionStore extends Disposable implements ISelectionStore {
               : [...list.slice(0, addIndex), ...list.slice(addIndex + 1)];
           case 'update':
             const updateIndex = list.findIndex((region) => region.id === action.region.id);
-            return updateIndex === -1
-              ? [...list, action.region]
-              : [...list.slice(0, updateIndex), action.region, ...list.slice(updateIndex + 1)];
+            if (updateIndex === -1) return [...list, action.region];
+
+            const updateTarget = list[updateIndex];
+            if (isSameSelectionRegion(updateTarget, { ...action.region, id: -1 })) return list;
+
+            return [...list.slice(0, updateIndex), action.region, ...list.slice(updateIndex + 1)];
           case 'check':
             const checkTargetIndex = list.findIndex((region) => region.id === action.id);
             if (checkTargetIndex !== -1) {
@@ -104,6 +107,15 @@ export class SelectionStore extends Disposable implements ISelectionStore {
           case 'clear':
             return [];
           case 'override':
+            if (
+              list.length === action.regions.length &&
+              list.every(
+                (item, i) =>
+                  item.id === action.regions[i].id && isSameSelectionRegion(item, { ...action.regions[i], id: -1 }),
+              )
+            ) {
+              return list;
+            }
             return action.regions;
           default:
             return list;
