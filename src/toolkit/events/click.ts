@@ -29,7 +29,7 @@ export class StageClickListener extends EventListener implements IStageClickList
       filter((e) => e.mousedownType === EMousedownTypes.HeaderClick),
       map((e) => {
         if (e.data.isMultiSelect) {
-          this.store.add(e.data);
+          this.store.addOrRemove(e.data);
         } else {
           this.store.override([e.data]);
         }

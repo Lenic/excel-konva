@@ -109,6 +109,10 @@ export interface IResizeBoundaryEvent {
  */
 export interface ISelectionRegion {
   /**
+   * Selection region ID
+   */
+  id: number;
+  /**
    * Selected region information
    */
   region: IRegionInfo;
@@ -290,17 +294,33 @@ export interface ISelectionStore {
   list$: Observable<ISelectionRegion[]>;
 
   /**
-   * Add selection action
+   * Add or remove the target selection
+   *
+   * @param region - Selection region to add
    */
-  add(region: ISelectionRegion): void;
+  addOrRemove(region: ISelectionRegion): void;
 
   /**
-   * Clear selection action
+   * Update the target selection; if it doesn't exist, add it.
+   *
+   * @param region - Selection region to update
+   */
+  update(region: ISelectionRegion): void;
+
+  /**
+   * Check the target selection; remove any other identical selections simultaneously.
+   *
+   * @param id - Selection region ID
+   */
+  check(id: number): void;
+
+  /**
+   * Clear all the selections
    */
   clear(): void;
 
   /**
-   * Override selection action
+   * Override all the selections with the new selections
    */
   override(regions: ISelectionRegion[]): void;
 }

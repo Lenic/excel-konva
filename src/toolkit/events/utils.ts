@@ -1,7 +1,7 @@
 import type { ISelectionRegion } from './types';
 
 /**
- * Check if two selection regions are the same.
+ * Check if two selection regions are the same; if their ids match, skip them.
  *
  * @param region1 - The first selection region.
  * @param region2 - The second selection region.
@@ -9,6 +9,7 @@ import type { ISelectionRegion } from './types';
  */
 export const isSameSelectionRegion = (region1: ISelectionRegion, region2: ISelectionRegion) => {
   return (
+    region1.id !== region2.id &&
     region1.activeCell.rowIndex === region2.activeCell.rowIndex &&
     region1.activeCell.columnIndex === region2.activeCell.columnIndex &&
     region1.region.startRowIndex === region2.region.startRowIndex &&

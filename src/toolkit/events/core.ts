@@ -160,6 +160,7 @@ export class StageMouseEvent extends Disposable implements IStageMouseEvent {
             return of({
               mousedownType: EMousedownTypes.HeaderClick,
               data: {
+                id: Date.now(),
                 type: EHeaderClickType.Corner,
                 region: {
                   startRowIndex: 1,
@@ -179,6 +180,7 @@ export class StageMouseEvent extends Disposable implements IStageMouseEvent {
             return of({
               mousedownType: EMousedownTypes.HeaderClick,
               data: {
+                id: Date.now(),
                 type: EHeaderClickType.RowHeader,
                 region: {
                   startRowIndex: activeCell.rowIndex,
@@ -198,6 +200,7 @@ export class StageMouseEvent extends Disposable implements IStageMouseEvent {
             return of({
               mousedownType: EMousedownTypes.HeaderClick,
               data: {
+                id: Date.now(),
                 type: EHeaderClickType.ColumnHeader,
                 region: {
                   startRowIndex: 1,
@@ -219,6 +222,7 @@ export class StageMouseEvent extends Disposable implements IStageMouseEvent {
           return of({
             mousedownType: EMousedownTypes.CellClick,
             data: {
+              id: Date.now(),
               type: EHeaderClickType.ColumnHeader,
               region: {
                 startRowIndex: activeCell.rowIndex,
