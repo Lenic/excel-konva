@@ -73,8 +73,8 @@ export class SelectionListener extends RenderListener<number> {
           const { x: left, y: top } = getCellPoint(rowStartIndex, columnStartIndex);
           // 2. Get bottom-right Konva coordinate
           const postion = getCellPoint(rowEndIndex, columnEndIndex);
-          const right = postion.x + getColumnWidth(rowEndIndex);
-          const bottom = postion.y + getRowHeight(columnEndIndex);
+          const right = postion.x + getColumnWidth(columnEndIndex);
+          const bottom = postion.y + getRowHeight(rowEndIndex);
 
           // Check if the selection is visible in the viewport (simple viewport clipping)
           if (right <= 0 || bottom <= 0 || left >= visual.width || top >= visual.height) {
