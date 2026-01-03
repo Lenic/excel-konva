@@ -22,13 +22,13 @@ import { IItemDimension, ISheetConfig } from './types';
 
 export * from './types';
 
-container.set(ISheetConfig).set(() => new SheetConfig(50000, 5000, 4, 3));
+container.register(ISheetConfig).set(() => new SheetConfig(50000, 5000, 4, 3));
 
 export const COLUMN_TAG = Symbol('column_tag');
 export const ROW_TAG = Symbol('row_tag');
 
 container
-  .set(IItemDimension)
+  .register(IItemDimension)
   .set((c) => {
     const config = c.get(ISheetConfig);
     return new ItemDimension(
@@ -47,12 +47,12 @@ container
   }, ROW_TAG);
 
 container
-  .set(IAccumulatedDimension)
+  .register(IAccumulatedDimension)
   .set((c) => new AccumulatedDimension(c.get(IItemDimension, COLUMN_TAG), c.get(ISheetConfig).columnCount$), COLUMN_TAG)
   .set((c) => new AccumulatedDimension(c.get(IItemDimension, ROW_TAG), c.get(ISheetConfig).rowCount$), ROW_TAG);
 
 container
-  .set(ISheetDimension)
+  .register(ISheetDimension)
   .set(
     (c) =>
       new SheetDimension(
@@ -62,10 +62,10 @@ container
       ),
   );
 
-container.set(IScrollOffset).set((c) => new ScrollOffset(c.get(ISheetDimension)));
+container.register(IScrollOffset).set((c) => new ScrollOffset(c.get(ISheetDimension)));
 
 container
-  .set(IItemBoundary)
+  .register(IItemBoundary)
   .set(
     (c) =>
       new ItemBoundary(c.get(IAccumulatedDimension, COLUMN_TAG), {
@@ -84,14 +84,17 @@ container
   );
 
 container
-  .set(ICellDimension)
+  .register(ICellDimension)
   .set((c) => new CellDimension(c.get(IItemBoundary, COLUMN_TAG), c.get(IItemBoundary, ROW_TAG)));
 
-container.set(IDataRegion).set((c) => {
-  return new DataRegion(
-    c.get(ISheetConfig),
-    c.get(IItemBoundary, COLUMN_TAG),
-    c.get(IItemBoundary, ROW_TAG),
-    c.get(ISheetDimension),
+container
+  .register(IDataRegion)
+  .set(
+    (c) =>
+      new DataRegion(
+        c.get(ISheetConfig),
+        c.get(IItemBoundary, COLUMN_TAG),
+        c.get(IItemBoundary, ROW_TAG),
+        c.get(ISheetDimension),
+      ),
   );
-});

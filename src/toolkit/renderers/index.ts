@@ -9,9 +9,9 @@ import { ICellListener, IRangeCollection, ISelectionListener } from './types';
 
 export * from './types';
 
-container.set(IRangeCollection, 'transient').set(() => new RangeCollection());
+container.register(IRangeCollection, 'transient').set(() => new RangeCollection());
 
-container.set(ISelectionListener).set((c) => {
+container.register(ISelectionListener).set((c) => {
   return new SelectionListener(
     c.get(ISheetConfig),
     c.get(ISheetDimension),
@@ -20,6 +20,6 @@ container.set(ISelectionListener).set((c) => {
   );
 });
 
-container.set(ICellListener).set((c) => {
+container.register(ICellListener).set((c) => {
   return new CellListener(c.get(ISheetConfig), c.get(ICellDimension), c.get(IDataRegion));
 });

@@ -5,7 +5,7 @@ import { ScopedLifecycle, SingletonLifecycle, TransactionLifecycle, TransientLif
 export class Container implements IContainer {
   private registry = new Map<TIdentifier<any>, ILifecycle<any>>();
 
-  set<T>(identifier: TIdentifier<T>, lifecycle: TLifecycleType = 'singleton'): ILifecycle<T> {
+  register<T>(identifier: TIdentifier<T>, lifecycle: TLifecycleType = 'singleton'): ILifecycle<T> {
     let lifecycleInstance = this.registry.get(identifier) as ILifecycle<T> | undefined;
     if (lifecycleInstance) return lifecycleInstance;
 

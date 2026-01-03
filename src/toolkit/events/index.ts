@@ -26,10 +26,10 @@ import {
 
 export * from './types';
 
-container.set(ISelectionStore).set(() => new SelectionStore());
+container.register(ISelectionStore).set(() => new SelectionStore());
 
 container
-  .set(IStageMouseEvent)
+  .register(IStageMouseEvent)
   .set(
     (c) =>
       new StageMouseEvent(
@@ -42,7 +42,7 @@ container
   );
 
 container
-  .set(IBoundaryResizeListener)
+  .register(IBoundaryResizeListener)
   .set(
     (c) =>
       new BoundaryResizeListener(
@@ -54,12 +54,14 @@ container
       ),
   );
 
-container.set(IStageClickListener).set((c) => new StageClickListener(c.get(ISelectionStore), c.get(IStageMouseEvent)));
+container
+  .register(IStageClickListener)
+  .set((c) => new StageClickListener(c.get(ISelectionStore), c.get(IStageMouseEvent)));
 
 container
-  .set(IStageDragListener)
+  .register(IStageDragListener)
   .set((c) => new StageDragListener(c.get(ISelectionStore), c.get(IStageMouseEvent), c.get(ICellDimension)));
 
 container
-  .set(IStageEditListener)
+  .register(IStageEditListener)
   .set((c) => new StageEditListener(c.get(IStageMouseEvent), c.get(ICellDimension), c.get(IScrollOffset)));
