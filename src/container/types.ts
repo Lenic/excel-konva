@@ -38,7 +38,7 @@ export interface ILifecycle<T> {
 /**
  * The lifecycle type of the service.
  */
-export type TLifecycleType = 'singleton' | 'transaction' | (() => object);
+export type TLifecycleType = 'singleton' | 'transaction' | 'transient' | (() => object);
 
 /**
  * The container of the service.

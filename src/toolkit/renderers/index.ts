@@ -9,7 +9,7 @@ import { ICellListener, IRangeCollection, ISelectionListener } from './types';
 
 export * from './types';
 
-container.set(IRangeCollection, 'transaction').set(() => new RangeCollection());
+container.set(IRangeCollection, 'transient').set(() => new RangeCollection());
 
 container.set(ISelectionListener).set((c) => {
   return new SelectionListener(
