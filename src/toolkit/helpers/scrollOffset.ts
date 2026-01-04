@@ -13,13 +13,13 @@ import {
   startWith,
 } from 'rxjs';
 
-import { Disposable } from '../core';
+import { ObservableDisposable } from '../core';
 import { scrollContainer } from '../core-elements';
 
 /**
  * Scroll offset
  */
-export class ScrollOffset extends Disposable implements IScrollOffset {
+export class ScrollOffset extends ObservableDisposable implements IScrollOffset {
   sheetDimension: ISheetDimension;
 
   top: number;

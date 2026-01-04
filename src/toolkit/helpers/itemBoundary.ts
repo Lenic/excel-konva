@@ -3,12 +3,12 @@ import type { Observable } from 'rxjs';
 
 import { combineLatest, combineLatestWith, map, shareReplay, switchMap, take } from 'rxjs';
 
-import { Disposable } from '../core';
+import { ObservableDisposable } from '../core';
 
 /**
  * Item boundary
  */
-export class ItemBoundary extends Disposable implements IItemBoundary {
+export class ItemBoundary extends ObservableDisposable implements IItemBoundary {
   options: IItemBoundaryOptions;
   accumulated: IAccumulatedDimension;
   getBoundary$: Observable<(index: number) => number>;

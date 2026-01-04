@@ -4,13 +4,13 @@ import type { Observable } from 'rxjs';
 
 import { animationFrameScheduler, auditTime, combineLatest, fromEvent, map, shareReplay, startWith } from 'rxjs';
 
-import { Disposable } from '../core';
+import { ObservableDisposable } from '../core';
 import { container } from '../core-elements';
 
 /**
  * Sheet dimension
  */
-export class SheetDimension extends Disposable implements ISheetDimension {
+export class SheetDimension extends ObservableDisposable implements ISheetDimension {
   config: ISheetConfig;
   column: IAccumulatedDimension;
   row: IAccumulatedDimension;

@@ -20,13 +20,13 @@ export interface IDisposable {
 }
 
 function isDisposable(disposable: any): disposable is IDisposable {
-  return disposable instanceof Disposable || 'dispose' in disposable;
+  return disposable instanceof ObservableDisposable || 'dispose' in disposable;
 }
 
 /**
- * Disposable
+ * Observable disposable class
  */
-export class Disposable implements IDisposable {
+export class ObservableDisposable implements IDisposable {
   private subscriptionList: (() => void)[] = [];
 
   protected dispositionSubject: BehaviorSubject<number>;

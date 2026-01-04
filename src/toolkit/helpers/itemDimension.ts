@@ -3,12 +3,12 @@ import type { Observable } from 'rxjs';
 
 import { combineLatest, map, scan, shareReplay, startWith, Subject } from 'rxjs';
 
-import { Disposable } from '../core';
+import { ObservableDisposable } from '../core';
 
 /**
  * Item dimension manager
  */
-export class ItemDimension extends Disposable implements IItemDimension {
+export class ItemDimension extends ObservableDisposable implements IItemDimension {
   private minDimension: number;
   private dimensionSubject: Subject<[number, number | null]>;
 

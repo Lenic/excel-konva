@@ -3,12 +3,12 @@ import type { Observable } from 'rxjs';
 
 import { combineLatest, map, shareReplay } from 'rxjs';
 
-import { binarySearch, Disposable } from '../core';
+import { binarySearch, ObservableDisposable } from '../core';
 
 /**
  * Accumulated dimension
  */
-export class AccumulatedDimension extends Disposable implements IAccumulatedDimension {
+export class AccumulatedDimension extends ObservableDisposable implements IAccumulatedDimension {
   store: Map<number, number>;
   dimension: IItemDimension;
 

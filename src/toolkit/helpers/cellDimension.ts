@@ -4,13 +4,13 @@ import type { Observable } from 'rxjs';
 
 import { combineLatest, map, scan, shareReplay, startWith, Subject, switchMap, take } from 'rxjs';
 
-import { Disposable, getCellKey, getColumnLabel } from '../core';
+import { getCellKey, getColumnLabel, ObservableDisposable } from '../core';
 import { container } from '../core-elements';
 
 /**
  * Cell dimension
  */
-export class CellDimension extends Disposable implements ICellDimension {
+export class CellDimension extends ObservableDisposable implements ICellDimension {
   private cellDataSubject: Subject<[string, string | null]>;
 
   columnBoundary: IItemBoundary;
