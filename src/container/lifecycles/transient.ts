@@ -1,12 +1,27 @@
 import type { IContainer, ILifecycle, TFactory } from '../types';
 
-export class TransientLifecycle<T> implements ILifecycle<T> {
+import { Disposable } from '../disposable';
+
+/**
+ * Transient lifecycle
+ */
+export class TransientLifecycle<T> extends Disposable implements ILifecycle<T> {
   private defalutFactory: TFactory<T> | null;
   private factories: Map<symbol, TFactory<T>>;
 
+  /**
+   * Constructor
+   */
   constructor() {
+    super();
+
     this.defalutFactory = null;
     this.factories = new Map();
+
+    this.disposeWithMe(() => {
+      this.defalutFactory = null;
+      this.factories.clear();
+    });
   }
 
   set(factory: TFactory<T>, tag?: string | symbol): ILifecycle<T> {

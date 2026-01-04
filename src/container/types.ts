@@ -1,4 +1,33 @@
 /**
+ * Subscription interface
+ */
+export interface ISubscription {
+  /**
+   * Unsubscribe
+   */
+  unsubscribe(): void;
+}
+
+/**
+ * Disposable interface
+ */
+export interface IDisposable {
+  /**
+   * Whether it has been disposed
+   */
+  isDisposed: boolean;
+
+  /**
+   * Dispose
+   */
+  dispose(): void;
+  /**
+   * Dispose with me
+   */
+  disposeWithMe(disposable: ISubscription | IDisposable | (() => void)): void;
+}
+
+/**
  * The identifier of the service.
  */
 export type TIdentifier<_T> = symbol & { readonly __type?: _T };
@@ -15,7 +44,7 @@ export type TFactory<T> = (container: IContainer, context: Map<symbol, any>) => 
 /**
  * The lifecycle of the service.
  */
-export interface ILifecycle<T> {
+export interface ILifecycle<T> extends IDisposable {
   /**
    * Set the factory of the service.
    *
@@ -43,7 +72,7 @@ export type TLifecycleType = 'singleton' | 'transaction' | 'transient' | (() => 
 /**
  * The container of the service.
  */
-export interface IContainer {
+export interface IContainer extends IDisposable {
   /**
    * Register the service.
    *
@@ -63,6 +92,17 @@ export interface IContainer {
   get<T>(identifier: TIdentifier<T>, tag?: string | symbol, context?: Map<symbol, any>): T;
 }
 
+/**
+ * Service locator interface
+ */
 export interface IServiceLocator {
+  /**
+   * Get the instance of the service.
+   *
+   * @param identifier - The identifier of the service.
+   * @param tag - The tag of the service.
+   * @param context - The context of the service.
+   * @returns The instance of the service.
+   */
   get<T>(identifier: TIdentifier<T>, tag?: string | symbol, context?: Map<symbol, any>): T;
 }

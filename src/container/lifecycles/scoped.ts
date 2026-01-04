@@ -1,5 +1,8 @@
 import type { IContainer, ILifecycle, TFactory } from '../types';
 
+import { Disposable } from '../disposable';
+import { isDisposable } from '../utils';
+
 import { DEFAULT_TAG_VALUE } from './constants';
 
 interface IScopedStorage<T> {
@@ -9,17 +12,46 @@ interface IScopedStorage<T> {
 
 const scopedInstances = new WeakMap<object, IScopedStorage<any>>();
 
-export class ScopedLifecycle<T> implements ILifecycle<T> {
+/**
+ * Scoped lifecycle
+ */
+export class ScopedLifecycle<T> extends Disposable implements ILifecycle<T> {
   private factories: Map<symbol, TFactory<T>>;
   private defalutFactory: TFactory<T> | null;
 
   private getScopeKey: () => object;
 
+  /**
+   * Constructor
+   * @param getScopeKey - Get scope key
+   */
   constructor(getScopeKey: () => object) {
+    super();
+
     this.getScopeKey = getScopeKey;
 
     this.factories = new Map();
     this.defalutFactory = null;
+
+    this.disposeWithMe(() => {
+      this.defalutFactory = null;
+      this.factories.clear();
+
+      const storage = scopedInstances.get(this.getScopeKey());
+      if (!storage) return;
+
+      if (storage.defaultValue && isDisposable(storage.defaultValue)) {
+        storage.defaultValue.dispose();
+      }
+      storage.defaultValue = DEFAULT_TAG_VALUE as unknown as T;
+
+      for (const instance of storage.instances.values()) {
+        if (instance && isDisposable(instance)) {
+          instance.dispose();
+        }
+      }
+      storage.instances.clear();
+    });
   }
 
   set(factory: TFactory<T>, tag?: string | symbol): ILifecycle<T> {

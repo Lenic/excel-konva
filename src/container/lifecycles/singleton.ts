@@ -1,18 +1,45 @@
 import type { IContainer, ILifecycle, TFactory } from '../types';
 
+import { Disposable } from '../disposable';
+import { isDisposable } from '../utils';
+
 import { DEFAULT_TAG_VALUE } from './constants';
 
-export class SingletonLifecycle<T> implements ILifecycle<T> {
+/**
+ * Singleton lifecycle
+ */
+export class SingletonLifecycle<T> extends Disposable implements ILifecycle<T> {
   private defaultValue: T;
   private instances: Map<symbol, T>;
   private defalutFactory: TFactory<T> | null;
   private factories: Map<symbol, TFactory<T>>;
 
+  /**
+   * Constructor
+   */
   constructor() {
+    super();
+
     this.defalutFactory = null;
     this.factories = new Map();
     this.instances = new Map();
     this.defaultValue = DEFAULT_TAG_VALUE as unknown as T;
+
+    this.disposeWithMe(() => {
+      this.defalutFactory = null;
+      if (this.defaultValue && isDisposable(this.defaultValue)) {
+        this.defaultValue.dispose();
+      }
+      this.defaultValue = DEFAULT_TAG_VALUE as unknown as T;
+
+      this.factories.clear();
+      for (const instance of this.instances.values()) {
+        if (instance && isDisposable(instance)) {
+          instance.dispose();
+        }
+      }
+      this.instances.clear();
+    });
   }
 
   set(factory: TFactory<T>, tag?: string | symbol): ILifecycle<T> {
