@@ -1,16 +1,31 @@
 import type { IContainer, ILifecycle, TFactory } from '../types';
 
-export class TransactionLifecycle<T> implements ILifecycle<T> {
+import { Disposable } from '../disposable';
+
+/**
+ * Transaction lifecycle
+ */
+export class TransactionLifecycle<T> extends Disposable implements ILifecycle<T> {
   private instancesKey: symbol;
   private defaultInstanceKey: symbol;
   private defalutFactory: TFactory<T> | null;
   private factories: Map<symbol, TFactory<T>>;
 
+  /**
+   * Constructor
+   */
   constructor() {
+    super();
+
     this.factories = new Map();
     this.defalutFactory = null;
     this.instancesKey = Symbol('transaction_instance_key');
     this.defaultInstanceKey = Symbol('default_instance_key');
+
+    this.disposeWithMe(() => {
+      this.factories.clear();
+      this.defalutFactory = null;
+    });
   }
 
   set(factory: TFactory<T>, tag?: string | symbol): ILifecycle<T> {

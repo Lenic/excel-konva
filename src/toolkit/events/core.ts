@@ -18,7 +18,7 @@ import {
   withLatestFrom,
 } from 'rxjs';
 
-import { Disposable } from '../core';
+import { ObservableDisposable } from '../core';
 import { container } from '../core-elements';
 import { stage } from '../konva-items';
 
@@ -28,7 +28,7 @@ import { EHeaderClickType, EMousedownTypes } from './types';
 /**
  * Stage mouse events
  */
-export class StageMouseEvent extends Disposable implements IStageMouseEvent {
+export class StageMouseEvent extends ObservableDisposable implements IStageMouseEvent {
   private checkResizeBoundary$: Observable<(clientX: number, clientY: number) => IBoundaryInfo | null>;
 
   cellDimension: ICellDimension;

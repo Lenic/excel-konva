@@ -1,9 +1,26 @@
 import type { IContainer, ILifecycle, TIdentifier, TLifecycleType } from './types';
 
+import { Disposable } from './disposable';
 import { ScopedLifecycle, SingletonLifecycle, TransactionLifecycle, TransientLifecycle } from './lifecycles';
 
-export class Container implements IContainer {
-  private registry = new Map<TIdentifier<any>, ILifecycle<any>>();
+/**
+ * Container class
+ */
+export class Container extends Disposable implements IContainer {
+  private registry: Map<TIdentifier<any>, ILifecycle<any>>;
+
+  constructor() {
+    super();
+
+    this.registry = new Map<TIdentifier<any>, ILifecycle<any>>();
+
+    this.disposeWithMe(() => {
+      for (const lifecycle of this.registry.values()) {
+        lifecycle.dispose();
+      }
+      this.registry.clear();
+    });
+  }
 
   register<T>(identifier: TIdentifier<T>, lifecycle: TLifecycleType = 'singleton'): ILifecycle<T> {
     let lifecycleInstance = this.registry.get(identifier) as ILifecycle<T> | undefined;

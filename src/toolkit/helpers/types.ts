@@ -1,5 +1,4 @@
-import type { TIdentifier } from '../../container';
-import type { IDisposable } from '../core';
+import type { IDisposable, TIdentifier } from '../../container';
 import type { IDimension, ILocation, IOffset, IPoint, IRectBox, IRegionInfo } from '../types';
 import type { Observable } from 'rxjs';
 

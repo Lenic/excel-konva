@@ -1,12 +1,12 @@
 import type { IEventListener } from './types';
 import type { Observable, Subscription } from 'rxjs';
 
-import { Disposable } from '../core';
+import { ObservableDisposable } from '../core';
 
 /**
  * Event listener
  */
-export abstract class EventListener extends Disposable implements IEventListener {
+export abstract class EventListener extends ObservableDisposable implements IEventListener {
   private subscription: Subscription | null;
 
   /**

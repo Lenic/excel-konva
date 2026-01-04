@@ -3,7 +3,7 @@ import type { Observable } from 'rxjs';
 
 import { distinctUntilChanged, scan, shareReplay, Subject } from 'rxjs';
 
-import { Disposable } from '../core';
+import { ObservableDisposable } from '../core';
 
 import { isSameSelectionRegion } from './utils';
 
@@ -32,7 +32,7 @@ type TSelectionAction =
   | IOverrideSelectionAction
   | ICheckSelectionAction;
 
-export class SelectionStore extends Disposable implements ISelectionStore {
+export class SelectionStore extends ObservableDisposable implements ISelectionStore {
   private subject: Subject<TSelectionAction>;
 
   list: ISelectionRegion[];

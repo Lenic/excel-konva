@@ -3,12 +3,12 @@ import type { Observable, Subscription } from 'rxjs';
 
 import { ReplaySubject } from 'rxjs';
 
-import { Disposable } from '../core';
+import { ObservableDisposable } from '../core';
 
 /**
  * Event listener
  */
-export abstract class RenderListener<T> extends Disposable implements IRenderListener<T> {
+export abstract class RenderListener<T> extends ObservableDisposable implements IRenderListener<T> {
   private subscription: Subscription | null;
   private subject: ReplaySubject<T>;
 

@@ -3,12 +3,12 @@ import type { Observable } from 'rxjs';
 
 import { BehaviorSubject } from 'rxjs';
 
-import { Disposable } from '../core';
+import { ObservableDisposable } from '../core';
 
 /**
  * Sheet Config
  */
-export class SheetConfig extends Disposable implements ISheetConfig {
+export class SheetConfig extends ObservableDisposable implements ISheetConfig {
   private headerHeightSubject: BehaviorSubject<number>;
   private headerWidthSubject: BehaviorSubject<number>;
   private rowHeightSubject: BehaviorSubject<number>;

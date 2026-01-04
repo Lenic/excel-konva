@@ -4,12 +4,12 @@ import type { IDataRegion, IItemBoundary, ISheetConfig, ISheetDimension } from '
 import { combineLatest, map, type Observable, switchMap, take } from 'rxjs';
 
 import { BUFFER_CELL_COUNT } from '../constants';
-import { binarySearch, Disposable } from '../core';
+import { binarySearch, ObservableDisposable } from '../core';
 
 /**
  * Data region manager
  */
-export class DataRegion extends Disposable implements IDataRegion {
+export class DataRegion extends ObservableDisposable implements IDataRegion {
   config: ISheetConfig;
   columnBoundary: IItemBoundary;
   rowBoundary: IItemBoundary;

@@ -1,11 +1,11 @@
-import type { TIdentifier } from '../../container';
+import type { IDisposable, TIdentifier } from '../../container';
 import type { IRegionInfo } from '../types';
 import type { Observable } from 'rxjs';
 
 /**
  * Render listener interface
  */
-export interface IRenderListener<T> {
+export interface IRenderListener<T> extends IDisposable {
   /**
    * Rendering data
    */
