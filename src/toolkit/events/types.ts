@@ -1,4 +1,4 @@
-import type { TIdentifier } from '../../container';
+import type { IDisposable, TIdentifier } from '../../container';
 import type { ICellDimension, IItemBoundary, IScrollOffset, ISheetConfig, ISheetDimension } from '../helpers';
 import type { ILocation, IRegionInfo } from '../types';
 import type Konva from 'konva';
@@ -223,7 +223,7 @@ export type TMousedownEvent =
 /**
  * Stage mouse events interface
  */
-export interface IStageMouseEvent {
+export interface IStageMouseEvent extends IDisposable {
   /**
    * Cell dimension
    */
@@ -282,7 +282,7 @@ export const IStageMouseEvent: TIdentifier<IStageMouseEvent> = Symbol('IStageMou
 /**
  * Selection store interface
  */
-export interface ISelectionStore {
+export interface ISelectionStore extends IDisposable {
   /**
    * Selection region list
    */
@@ -332,7 +332,7 @@ export const ISelectionStore: TIdentifier<ISelectionStore> = Symbol('ISelectionS
 /**
  * Event listener interface
  */
-export interface IEventListener {
+export interface IEventListener extends IDisposable {
   /**
    * Start listening to events
    *
