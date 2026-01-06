@@ -436,3 +436,68 @@ export interface IStageDragListener extends IEventListener {
  * Stage drag listener interface identifier
  */
 export const IStageDragListener: TIdentifier<IStageDragListener> = Symbol('IStageDragListener');
+
+/**
+ * Cursor types
+ */
+export const ECursorTypes = {
+  /**
+   * Resize boundary
+   */
+  ResizeBoundary: 'Resize-Boundary',
+  /**
+   * Empty
+   */
+  Empty: 'empty',
+} as const;
+/**
+ * Cursor types
+ */
+export type ECursorTypes = (typeof ECursorTypes)[keyof typeof ECursorTypes];
+
+/**
+ * Empty cursor event interface
+ */
+export interface IEmptyCursorEvent {
+  /**
+   * Cursor type: empty
+   */
+  type: typeof ECursorTypes.Empty;
+}
+
+/**
+ * Resize boundary cursor event
+ */
+export interface IResizeBoundaryCursorEvent {
+  /**
+   * Cursor type: resize boundary
+   */
+  type: typeof ECursorTypes.ResizeBoundary;
+  /**
+   * Direction
+   */
+  direction: EBoundaryTypes;
+}
+
+/**
+ * The cursor event
+ */
+export type TCursorEvent = IEmptyCursorEvent | IResizeBoundaryCursorEvent;
+
+/**
+ * Cursor listener interface
+ */
+export interface ICursorListener extends IEventListener {
+  /**
+   * Stage mouse events
+   */
+  events: IStageMouseEvent;
+  /**
+   * Cell dimension
+   */
+  cell: ICellDimension;
+}
+/**
+ * Cursor listener interface identifier
+ */
+export const ICursorListener: TIdentifier<ICursorListener> = Symbol('ICursorListener');

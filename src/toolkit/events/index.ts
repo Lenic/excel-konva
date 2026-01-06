@@ -11,12 +11,14 @@ import {
 
 import { StageClickListener } from './click';
 import { StageMouseEvent } from './core';
+import { CursorListener } from './cursor';
 import { StageDragListener } from './drag';
 import { StageEditListener } from './edit';
 import { BoundaryResizeListener } from './resize';
 import { SelectionStore } from './selection';
 import {
   IBoundaryResizeListener,
+  ICursorListener,
   ISelectionStore,
   IStageClickListener,
   IStageDragListener,
@@ -73,3 +75,5 @@ container
 container
   .register(IStageEditListener)
   .set((c) => new StageEditListener(c.get(IStageMouseEvent), c.get(ICellDimension), c.get(IScrollOffset)));
+
+container.register(ICursorListener).set((c) => new CursorListener(c.get(IStageMouseEvent), c.get(ICellDimension)));

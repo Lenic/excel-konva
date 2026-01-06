@@ -6,7 +6,13 @@ import {
   selectionCount,
   virtualContent,
 } from './toolkit/core-elements';
-import { IBoundaryResizeListener, IStageClickListener, IStageDragListener, IStageEditListener } from './toolkit/events';
+import {
+  IBoundaryResizeListener,
+  ICursorListener,
+  IStageClickListener,
+  IStageDragListener,
+  IStageEditListener,
+} from './toolkit/events';
 import { IScrollOffset, ISheetConfig, ISheetDimension } from './toolkit/helpers';
 import { stage } from './toolkit/konva-items';
 import { ICellListener, ISelectionListener } from './toolkit/renderers';
@@ -57,3 +63,4 @@ ServiceLocator.current.get(IBoundaryResizeListener).startListening();
 ServiceLocator.current.get(IStageClickListener).startListening();
 ServiceLocator.current.get(IStageDragListener).startListening();
 ServiceLocator.current.get(IStageEditListener).startListening();
+ServiceLocator.current.get(ICursorListener).startListening();
