@@ -76,4 +76,6 @@ container
   .register(IStageEditListener)
   .set((c) => new StageEditListener(c.get(IStageMouseEvent), c.get(ICellDimension), c.get(IScrollOffset)));
 
-container.register(ICursorListener).set((c) => new CursorListener(c.get(IStageMouseEvent), c.get(ICellDimension)));
+container
+  .register(ICursorListener)
+  .set((c) => new CursorListener(c.get(IStageMouseEvent), c.get(ICellDimension), c.get(IScrollOffset)));

@@ -1,7 +1,7 @@
-import type { ICellDimension } from '../helpers';
+import type { ICellDimension, IScrollOffset } from '../helpers';
 import type { Observable } from 'rxjs';
 
-import { combineLatest, distinctUntilChanged, EMPTY, map, merge, of, switchMap, take } from 'rxjs';
+import { combineLatest, debounceTime, distinctUntilChanged, EMPTY, map, merge, of, skip, switchMap, take } from 'rxjs';
 
 import { container } from '../core-elements';
 import { stage } from '../konva-items';
@@ -13,20 +13,34 @@ import { EBoundaryTypes, ECursorTypes, type ICursorListener, type IStageMouseEve
 export class CursorListener extends EventListener implements ICursorListener {
   events: IStageMouseEvent;
   cell: ICellDimension;
+  scrollOffset: IScrollOffset;
 
-  constructor(events: IStageMouseEvent, cell: ICellDimension) {
+  constructor(events: IStageMouseEvent, cell: ICellDimension, scrollOffset: IScrollOffset) {
     super();
 
     this.events = events;
     this.cell = cell;
+    this.scrollOffset = scrollOffset;
   }
 
   protected build(): Observable<void> {
     return merge(
       this.events.mouseDownLeft$.pipe(map(() => true)),
       this.events.mouseUpLeft$.pipe(map(() => false)),
-      of(false),
+      // Stop processing while scrolling
+      merge(
+        this.scrollOffset.offset$.pipe(
+          skip(1),
+          map(() => true),
+        ),
+        this.scrollOffset.offset$.pipe(
+          skip(1),
+          debounceTime(100),
+          map(() => false),
+        ),
+      ),
     ).pipe(
+      distinctUntilChanged(),
       switchMap((isDown) => {
         if (isDown) return EMPTY;
 
@@ -43,7 +57,6 @@ export class CursorListener extends EventListener implements ICursorListener {
           ),
         ]).pipe(
           switchMap(([e, [getCellLocation, getCellRectBox, bounding]]): Observable<TCursorEvent> => {
-            debugger;
             const location = getCellLocation(e.evt.clientX, e.evt.clientY);
             if (location.rowIndex === 0) {
               const rect = getCellRectBox(location.rowIndex, location.columnIndex);

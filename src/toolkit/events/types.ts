@@ -496,6 +496,10 @@ export interface ICursorListener extends IEventListener {
    * Cell dimension
    */
   cell: ICellDimension;
+  /**
+   * Scroll offset
+   */
+  scrollOffset: IScrollOffset;
 }
 /**
  * Cursor listener interface identifier
