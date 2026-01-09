@@ -80,6 +80,8 @@ export class AccumulatedDimension extends ObservableDisposable implements IAccum
       map(([getPrecedingTotalDimension, count]) => {
         const list: [beginValue: number, endValue: number][] = [];
         let maxIndex = -1;
+        let previousIndex = -1;
+        let previousOffset = -1;
 
         /**
          * Find the item index for a specific offset.
@@ -87,12 +89,54 @@ export class AccumulatedDimension extends ObservableDisposable implements IAccum
          * @param offset - The offset.
          */
         return function findIndex(offset: number) {
-          const index = binarySearch(0, list.length - 1, (mid) => {
+          function comparer(mid: number) {
             const [beginValue, endValue] = list[mid];
             if (beginValue <= offset && offset < endValue) return 0;
             return beginValue > offset ? 1 : -1;
-          });
-          if (index !== -1) return index;
+          }
+
+          /**
+           * If the previous index is not -1, try to find the index from the previous index.
+           */
+          if (previousIndex !== -1) {
+            const result = comparer(previousIndex);
+            if (result === 0) {
+              previousOffset = offset;
+              return previousIndex;
+            }
+
+            if (previousOffset > offset) {
+              const lessIndex = previousIndex - 1;
+              if (lessIndex >= 0) {
+                const lessResult = comparer(lessIndex);
+                if (lessResult === 0) {
+                  previousIndex = lessIndex;
+                  previousOffset = offset;
+                  return lessIndex;
+                }
+              }
+            }
+
+            if (previousIndex < offset) {
+              const greaterIndex = previousIndex + 1;
+              if (greaterIndex < list.length) {
+                const greaterResult = comparer(greaterIndex);
+                if (greaterResult === 0) {
+                  previousIndex = greaterIndex;
+                  previousOffset = offset;
+                  return greaterIndex;
+                }
+              }
+            }
+          }
+
+          previousOffset = offset;
+
+          let index = binarySearch(0, list.length - 1, comparer);
+          if (index !== -1) {
+            previousIndex = index;
+            return index;
+          }
 
           let itemIndex = -1;
           for (let c = maxIndex + 1; c < count; c++) {
@@ -107,7 +151,10 @@ export class AccumulatedDimension extends ObservableDisposable implements IAccum
               break;
             }
           }
-          return Math.max(0, Math.min(itemIndex, count - 1));
+
+          index = Math.max(0, Math.min(itemIndex, count - 1));
+          previousIndex = index;
+          return index;
         };
       }),
       shareReplay({ refCount: true, bufferSize: 1 }),

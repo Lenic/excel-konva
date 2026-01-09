@@ -34,7 +34,6 @@ export class CursorListener extends EventListener implements ICursorListener {
           map(() => true),
         ),
         this.scrollOffset.offset$.pipe(
-          skip(1),
           debounceTime(100),
           map(() => false),
         ),
