@@ -152,7 +152,7 @@ export class AccumulatedDimension extends ObservableDisposable implements IAccum
             }
           }
 
-          index = Math.max(0, Math.min(itemIndex, count - 1));
+          index = itemIndex === -1 ? -1 : Math.max(0, Math.min(itemIndex, count - 1));
           previousIndex = index;
           return index;
         };
