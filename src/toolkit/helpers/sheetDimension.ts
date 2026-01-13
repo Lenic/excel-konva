@@ -5,7 +5,7 @@ import type { Observable } from 'rxjs';
 import { animationFrameScheduler, auditTime, combineLatest, fromEvent, map, shareReplay, startWith } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
-import { container } from '../core-elements';
+import { rootElement } from '../core-elements';
 
 /**
  * Sheet dimension
@@ -47,7 +47,7 @@ export class SheetDimension extends ObservableDisposable implements ISheetDimens
     this.visualSize$ = fromEvent(window, 'resize').pipe(
       auditTime(16, animationFrameScheduler),
       startWith(null),
-      map(() => ({ width: container.clientWidth, height: container.clientHeight }) as IDimension),
+      map(() => ({ width: rootElement.clientWidth, height: rootElement.clientHeight }) as IDimension),
       shareReplay({ refCount: true, bufferSize: 1 }),
     );
     this.disposeWithMe(

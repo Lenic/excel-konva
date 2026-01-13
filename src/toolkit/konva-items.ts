@@ -3,7 +3,7 @@ import { combineLatest, fromEventPattern, map, shareReplay, tap } from 'rxjs';
 
 import { ServiceLocator } from '../container';
 
-import { scrollContainer } from './core-elements';
+import { scrollWrapper } from './core-elements';
 import { ISheetConfig } from './helpers';
 
 export const stage = new Konva.Stage({ container: 'konva-container', width: 0, height: 0 });
@@ -19,8 +19,8 @@ fromEventPattern<Konva.KonvaEventObject<WheelEvent>>(
     }),
   )
   .subscribe((e) => {
-    scrollContainer.scrollTop = Math.max(0, scrollContainer.scrollTop + e.evt.deltaY);
-    scrollContainer.scrollLeft = Math.max(0, scrollContainer.scrollLeft + e.evt.deltaX);
+    scrollWrapper.scrollTop = Math.max(0, scrollWrapper.scrollTop + e.evt.deltaY);
+    scrollWrapper.scrollLeft = Math.max(0, scrollWrapper.scrollLeft + e.evt.deltaX);
   });
 
 export const backgroundLayer = new Konva.Layer();

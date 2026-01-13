@@ -14,7 +14,7 @@ import {
 } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
-import { scrollContainer } from '../core-elements';
+import { scrollWrapper } from '../core-elements';
 
 /**
  * Scroll offset
@@ -44,10 +44,10 @@ export class ScrollOffset extends ObservableDisposable implements IScrollOffset 
     this.left = 0;
     this.offset = { deltaX: 0, deltaY: 0 } as IOffset;
 
-    const scroll$ = fromEvent(scrollContainer, 'scroll').pipe(
+    const scroll$ = fromEvent(scrollWrapper, 'scroll').pipe(
       auditTime(16, animationFrameScheduler),
       startWith(null),
-      map(() => scrollContainer),
+      map(() => scrollWrapper),
       shareReplay({ bufferSize: 1, refCount: true }),
     );
 

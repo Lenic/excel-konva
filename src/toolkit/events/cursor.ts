@@ -3,7 +3,7 @@ import type { Observable } from 'rxjs';
 
 import { combineLatest, debounceTime, distinctUntilChanged, EMPTY, map, merge, of, skip, switchMap, take } from 'rxjs';
 
-import { container } from '../core-elements';
+import { rootElement } from '../core-elements';
 import { stage } from '../konva-items';
 
 import { RESIZE_TOLERANCE } from './constants';
@@ -47,7 +47,7 @@ export class CursorListener extends EventListener implements ICursorListener {
           this.events.mouseMove$,
           this.cell.getCellLocation$.pipe(
             switchMap((v1) => {
-              const bounding = container.getBoundingClientRect();
+              const bounding = rootElement.getBoundingClientRect();
               return this.cell.getCellRectBox$.pipe(
                 take(1),
                 map((v2) => [v1, v2, bounding] as const),

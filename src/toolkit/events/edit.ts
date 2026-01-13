@@ -3,7 +3,7 @@ import type { IStageEditListener, IStageMouseEvent } from './types';
 
 import { EMPTY, filter, fromEvent, map, merge, of, skip, switchMap, take, withLatestFrom } from 'rxjs';
 
-import { container, editor } from '../core-elements';
+import { rootElement, editor } from '../core-elements';
 
 import { EventListener } from './listener';
 
@@ -45,7 +45,7 @@ export class StageEditListener extends EventListener implements IStageEditListen
 
         const { x, y, width, height } = getCellRectBox(cell.rowIndex, cell.columnIndex);
 
-        const containerRect = container.getBoundingClientRect();
+        const containerRect = rootElement.getBoundingClientRect();
         const screenX = containerRect.left + x;
         const screenY = containerRect.top + y;
 

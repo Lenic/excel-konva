@@ -19,7 +19,7 @@ import {
 } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
-import { container } from '../core-elements';
+import { rootElement } from '../core-elements';
 import { stage } from '../konva-items';
 
 import { RESIZE_TOLERANCE } from './constants';
@@ -272,7 +272,7 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
          * @param clientY - The Y coordinate of the mouse relative to the viewport.
          */
         return function checkResizeBoundary(clientX: number, clientY: number): IBoundaryInfo | null {
-          const containerRect = container.getBoundingClientRect();
+          const containerRect = rootElement.getBoundingClientRect();
           const relX = clientX - containerRect.left;
           const relY = clientY - containerRect.top;
 
