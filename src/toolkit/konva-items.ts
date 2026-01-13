@@ -50,18 +50,25 @@ export const cornerGroup = new Konva.Group(); // R0, C0
 
 backgroundLayer.add(scrollableGroup, sideGroup, headerGroup, cornerGroup);
 
-const config = ServiceLocator.current.get(ISheetConfig);
-export const getCellGroup$ = combineLatest([config.frozenRows$, config.frozenColumns$]).pipe(
-  map(([frozenRows, frozenColumns]) => {
-    return function getCellGroup(rowIndex: number, columnIndex: number) {
-      const isHeader = rowIndex < frozenRows;
-      const isFrozenCol = columnIndex < frozenColumns;
+/**
+ * Build get cell group function
+ *
+ * @returns Get cell group function
+ */
+export function buildGetCellGroup$() {
+  const config = ServiceLocator.current.get(ISheetConfig);
+  return combineLatest([config.frozenRows$, config.frozenColumns$]).pipe(
+    map(([frozenRows, frozenColumns]) => {
+      return function getCellGroup(rowIndex: number, columnIndex: number) {
+        const isHeader = rowIndex < frozenRows;
+        const isFrozenCol = columnIndex < frozenColumns;
 
-      if (isHeader && isFrozenCol) return cornerGroup; // R0, C0
-      if (isHeader) return headerGroup; // R0, C1+
-      if (isFrozenCol) return sideGroup; // R1+, C0
-      return scrollableGroup; // R1+, C1+
-    };
-  }),
-  shareReplay({ refCount: true, bufferSize: 1 }),
-);
+        if (isHeader && isFrozenCol) return cornerGroup; // R0, C0
+        if (isHeader) return headerGroup; // R0, C1+
+        if (isFrozenCol) return sideGroup; // R1+, C0
+        return scrollableGroup; // R1+, C1+
+      };
+    }),
+    shareReplay({ refCount: true, bufferSize: 1 }),
+  );
+}

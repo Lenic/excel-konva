@@ -4,7 +4,7 @@ import type { Observable } from 'rxjs';
 
 import { combineLatest, map, switchMap, take } from 'rxjs';
 
-import { backgroundLayer, getCellGroup$ } from '../konva-items';
+import { backgroundLayer, buildGetCellGroup$ } from '../konva-items';
 import { cellPool } from '../pools';
 
 import { RenderListener } from './renderer';
@@ -23,7 +23,11 @@ export class CellListener extends RenderListener<IRegionInfo> {
   }
 
   protected build(): Observable<IRegionInfo> {
-    return combineLatest([getCellGroup$, this.cellDimension.getCellRectBox$, this.cellDimension.getCellData$]).pipe(
+    return combineLatest([
+      buildGetCellGroup$(),
+      this.cellDimension.getCellRectBox$,
+      this.cellDimension.getCellData$,
+    ]).pipe(
       switchMap(([getCellGroup, getCellRectBox, getCellData]) => {
         /**
          * Draw target cell

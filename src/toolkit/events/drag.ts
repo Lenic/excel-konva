@@ -43,7 +43,7 @@ export class StageDragListener extends EventListener implements IStageDragListen
       ),
       withLatestFrom(this.cellDimension.getCellLocation$),
       switchMap(([{ data }, getCellLocation]) => {
-        const { activeCell, isMultiSelect } = data;
+        const { activeCell, isMultiSelect, id } = data;
         if (!isMultiSelect) {
           this.store.clear();
         }
@@ -51,14 +51,13 @@ export class StageDragListener extends EventListener implements IStageDragListen
         const activeCellRowIndex = activeCell.rowIndex === 0 ? 1 : activeCell.rowIndex;
         const activeCellColumnIndex = activeCell.columnIndex === 0 ? 1 : activeCell.columnIndex;
 
-        const selectionId = Date.now();
         const tmpActiveCell: ILocation = { rowIndex: activeCellRowIndex, columnIndex: activeCellColumnIndex };
 
         return this.events.mouseMove$.pipe(
           takeUntil(
             this.events.mouseUp$.pipe(
               tap(() => {
-                this.store.check(selectionId);
+                this.store.confirm(id);
               }),
               finalize(() => {
                 stage.container().style.cursor = 'default';
@@ -80,7 +79,7 @@ export class StageDragListener extends EventListener implements IStageDragListen
                 : Math.max(activeCellColumnIndex, currentCellColumnIndex);
 
             const selection: ISelectionRegion = {
-              id: selectionId,
+              id,
               region: {
                 startRowIndex: minRowIndex,
                 endRowIndex: maxRowIndex,

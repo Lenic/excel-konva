@@ -132,6 +132,7 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
           return of({
             mousedownType: EMousedownTypes.SelectRegion,
             data: {
+              id: Date.now(),
               region: {
                 startRowIndex: cell.rowIndex,
                 endRowIndex: cell.rowIndex,
