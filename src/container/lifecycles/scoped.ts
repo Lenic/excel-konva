@@ -55,6 +55,8 @@ export class ScopedLifecycle<T> extends Disposable implements ILifecycle<T> {
   }
 
   set(factory: TFactory<T>, tag?: string | symbol): ILifecycle<T> {
+    this.checkDisposed();
+
     const storage = this.getStorage();
     if (tag) {
       this.factories.set(tag, factory);
@@ -68,8 +70,9 @@ export class ScopedLifecycle<T> extends Disposable implements ILifecycle<T> {
   }
 
   get(container: IContainer, context: Map<symbol, any>, tag?: string | symbol): T {
-    const storage = this.getStorage();
+    this.checkDisposed();
 
+    const storage = this.getStorage();
     if (tag) {
       let value = storage.instances.get(tag);
       if (value) return value;

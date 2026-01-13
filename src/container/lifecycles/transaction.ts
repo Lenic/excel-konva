@@ -27,6 +27,8 @@ export class TransactionLifecycle<T> extends Disposable implements ILifecycle<T>
   }
 
   set(factory: TFactory<T>, tag?: string | symbol): ILifecycle<T> {
+    this.checkDisposed();
+
     if (tag) {
       this.factories.set(tag, factory);
     } else {
@@ -37,6 +39,8 @@ export class TransactionLifecycle<T> extends Disposable implements ILifecycle<T>
   }
 
   get(container: IContainer, context: Map<symbol, any>, tag?: string | symbol): T {
+    this.checkDisposed();
+
     let instances = context.get(TRANSACTION_INSTANCES_KEY) as Map<string | symbol, T> | undefined;
     if (!instances) {
       instances = new Map<string | symbol, T>();

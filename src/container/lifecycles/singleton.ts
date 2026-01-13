@@ -43,6 +43,8 @@ export class SingletonLifecycle<T> extends Disposable implements ILifecycle<T> {
   }
 
   set(factory: TFactory<T>, tag?: string | symbol): ILifecycle<T> {
+    this.checkDisposed();
+
     if (tag) {
       this.factories.set(tag, factory);
       this.instances.delete(tag);
@@ -55,6 +57,8 @@ export class SingletonLifecycle<T> extends Disposable implements ILifecycle<T> {
   }
 
   get(container: IContainer, context: Map<symbol, any>, tag?: string | symbol): T {
+    this.checkDisposed();
+
     if (tag) {
       let value = this.instances.get(tag);
       if (value) return value;

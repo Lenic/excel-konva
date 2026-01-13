@@ -12,11 +12,18 @@ import {
   IStageClickListener,
   IStageDragListener,
   IStageEditListener,
+  registerEvents,
 } from './toolkit/events';
-import { IScrollOffset, ISheetConfig, ISheetDimension } from './toolkit/helpers';
+import { IScrollOffset, ISheetConfig, ISheetDimension, registerHelpers, SheetConfig } from './toolkit/helpers';
 import { stage } from './toolkit/konva-items';
-import { ICellListener, ISelectionListener } from './toolkit/renderers';
-import { ServiceLocator } from './container';
+import { ICellListener, ISelectionListener, registerRenderers } from './toolkit/renderers';
+import { Container, ServiceLocator } from './container';
+
+const container = new Container();
+registerHelpers(container, () => new SheetConfig(50000, 5000, 4, 3));
+registerEvents(container);
+registerRenderers(container);
+ServiceLocator.setProvider(container);
 
 const config = ServiceLocator.current.get(ISheetConfig);
 config.rowCount$.subscribe((val) => {

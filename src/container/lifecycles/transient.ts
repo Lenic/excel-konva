@@ -25,6 +25,8 @@ export class TransientLifecycle<T> extends Disposable implements ILifecycle<T> {
   }
 
   set(factory: TFactory<T>, tag?: string | symbol): ILifecycle<T> {
+    this.checkDisposed();
+
     if (tag) {
       this.factories.set(tag, factory);
     } else {
@@ -35,6 +37,8 @@ export class TransientLifecycle<T> extends Disposable implements ILifecycle<T> {
   }
 
   get(container: IContainer, context: Map<symbol, any>, tag?: string | symbol): T {
+    this.checkDisposed();
+
     if (tag) {
       const fn = this.factories.get(tag);
       if (!fn) {
