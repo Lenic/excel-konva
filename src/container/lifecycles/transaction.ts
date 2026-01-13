@@ -2,14 +2,14 @@ import type { IContainer, ILifecycle, TFactory } from '../types';
 
 import { Disposable } from '../disposable';
 
+import { TRANSACTION_DEFAULT_INSTANCE_KEY, TRANSACTION_INSTANCES_KEY } from './constants';
+
 /**
  * Transaction lifecycle
  */
 export class TransactionLifecycle<T> extends Disposable implements ILifecycle<T> {
-  private instancesKey: symbol;
-  private defaultInstanceKey: symbol;
   private defalutFactory: TFactory<T> | null;
-  private factories: Map<symbol, TFactory<T>>;
+  private factories: Map<string | symbol, TFactory<T>>;
 
   /**
    * Constructor
@@ -17,10 +17,8 @@ export class TransactionLifecycle<T> extends Disposable implements ILifecycle<T>
   constructor() {
     super();
 
-    this.factories = new Map();
+    this.factories = new Map<string | symbol, TFactory<T>>();
     this.defalutFactory = null;
-    this.instancesKey = Symbol('transaction_instance_key');
-    this.defaultInstanceKey = Symbol('default_instance_key');
 
     this.disposeWithMe(() => {
       this.factories.clear();
@@ -30,8 +28,7 @@ export class TransactionLifecycle<T> extends Disposable implements ILifecycle<T>
 
   set(factory: TFactory<T>, tag?: string | symbol): ILifecycle<T> {
     if (tag) {
-      const symbolTag = typeof tag === 'string' ? Symbol.for(tag) : tag;
-      this.factories.set(symbolTag, factory);
+      this.factories.set(tag, factory);
     } else {
       this.defalutFactory = factory;
     }
@@ -40,27 +37,26 @@ export class TransactionLifecycle<T> extends Disposable implements ILifecycle<T>
   }
 
   get(container: IContainer, context: Map<symbol, any>, tag?: string | symbol): T {
-    let instances = context.get(this.instancesKey) as Map<symbol, T> | undefined;
+    let instances = context.get(TRANSACTION_INSTANCES_KEY) as Map<string | symbol, T> | undefined;
     if (!instances) {
-      instances = new Map();
-      context.set(this.instancesKey, instances);
+      instances = new Map<string | symbol, T>();
+      context.set(TRANSACTION_INSTANCES_KEY, instances);
     }
 
     if (tag) {
-      const symbolTag = typeof tag === 'string' ? Symbol.for(tag) : tag;
-      let value = instances.get(symbolTag);
+      let value = instances.get(tag);
       if (value) return value;
 
-      const fn = this.factories.get(symbolTag);
+      const fn = this.factories.get(tag);
       if (!fn) {
         throw new Error(`[TransactionLifecycle]: Tag ${String(tag)} not found.`);
       }
       value = fn(container, context);
 
-      instances.set(symbolTag, value);
+      instances.set(tag, value);
       return value;
     } else {
-      let defaultValue = context.get(this.defaultInstanceKey) as T | undefined;
+      let defaultValue = context.get(TRANSACTION_DEFAULT_INSTANCE_KEY) as T | undefined;
       if (defaultValue) return defaultValue;
 
       if (!this.defalutFactory) {
@@ -68,7 +64,7 @@ export class TransactionLifecycle<T> extends Disposable implements ILifecycle<T>
       }
       defaultValue = this.defalutFactory(container, context);
 
-      context.set(this.defaultInstanceKey, defaultValue);
+      context.set(TRANSACTION_DEFAULT_INSTANCE_KEY, defaultValue);
       return defaultValue;
     }
   }

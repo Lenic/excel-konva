@@ -10,9 +10,9 @@ import { DEFAULT_TAG_VALUE } from './constants';
  */
 export class SingletonLifecycle<T> extends Disposable implements ILifecycle<T> {
   private defaultValue: T;
-  private instances: Map<symbol, T>;
+  private instances: Map<string | symbol, T>;
   private defalutFactory: TFactory<T> | null;
-  private factories: Map<symbol, TFactory<T>>;
+  private factories: Map<string | symbol, TFactory<T>>;
 
   /**
    * Constructor
@@ -21,8 +21,8 @@ export class SingletonLifecycle<T> extends Disposable implements ILifecycle<T> {
     super();
 
     this.defalutFactory = null;
-    this.factories = new Map();
-    this.instances = new Map();
+    this.factories = new Map<string | symbol, TFactory<T>>();
+    this.instances = new Map<string | symbol, T>();
     this.defaultValue = DEFAULT_TAG_VALUE as unknown as T;
 
     this.disposeWithMe(() => {
@@ -44,9 +44,8 @@ export class SingletonLifecycle<T> extends Disposable implements ILifecycle<T> {
 
   set(factory: TFactory<T>, tag?: string | symbol): ILifecycle<T> {
     if (tag) {
-      const symbolTag = typeof tag === 'string' ? Symbol.for(tag) : tag;
-      this.factories.set(symbolTag, factory);
-      this.instances.delete(symbolTag);
+      this.factories.set(tag, factory);
+      this.instances.delete(tag);
     } else {
       this.defalutFactory = factory;
       this.defaultValue = DEFAULT_TAG_VALUE as unknown as T;
@@ -57,17 +56,16 @@ export class SingletonLifecycle<T> extends Disposable implements ILifecycle<T> {
 
   get(container: IContainer, context: Map<symbol, any>, tag?: string | symbol): T {
     if (tag) {
-      const symbolTag = typeof tag === 'string' ? Symbol.for(tag) : tag;
-      let value = this.instances.get(symbolTag);
+      let value = this.instances.get(tag);
       if (value) return value;
 
-      const fn = this.factories.get(symbolTag);
+      const fn = this.factories.get(tag);
       if (!fn) {
         throw new Error(`[SingletonLifecycle]: Tag ${String(tag)} not found.`);
       }
       value = fn(container, context);
 
-      this.instances.set(symbolTag, value);
+      this.instances.set(tag, value);
       return value;
     } else {
       if (this.defaultValue !== DEFAULT_TAG_VALUE) return this.defaultValue;
