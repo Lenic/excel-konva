@@ -1,7 +1,7 @@
 import type { IRegionInfo } from '../types';
 import type { IDataRegion, IItemBoundary, ISheetConfig, ISheetDimension } from './types';
 
-import { combineLatest, map, type Observable, switchMap, take } from 'rxjs';
+import { combineLatest, map, type Observable, shareReplay, switchMap, take } from 'rxjs';
 
 import { BUFFER_CELL_COUNT } from '../constants';
 import { binarySearch, ObservableDisposable } from '../core';
@@ -106,6 +106,7 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
           return { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } as IRegionInfo;
         },
       ),
+      shareReplay({ refCount: true, bufferSize: 1 }),
     );
   }
 

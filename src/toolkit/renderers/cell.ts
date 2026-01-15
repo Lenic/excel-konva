@@ -62,10 +62,11 @@ export class CellListener extends RenderListener<IRegionInfo> {
           if (text.parent !== group) text.moveTo(group);
         }
 
-        return combineLatest([this.dataRegion.region$, this.config.frozenColumns$, this.config.frozenRows$]).pipe(
-          take(1),
-          map((items) => [renderCellRegion, ...items] as const),
-        );
+        return combineLatest([
+          this.dataRegion.region$,
+          this.config.frozenColumns$.pipe(take(1)),
+          this.config.frozenRows$.pipe(take(1)),
+        ]).pipe(map((items) => [renderCellRegion, ...items] as const));
       }),
       map(([renderCellRegion, dataRegion, frozenColumns, frozenRows]) => {
         const { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } = dataRegion;
