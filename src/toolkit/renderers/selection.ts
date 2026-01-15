@@ -128,6 +128,9 @@ export class SelectionListener extends RenderListener<number> {
             highlightedColumns.push([startColumnIndex, endColumnIndex]);
           });
 
+          highlightedRows.merge();
+          highlightedColumns.merge();
+
           return [selectedRanges, highlightedRows, highlightedColumns] as const;
         }),
       ),
