@@ -1,17 +1,17 @@
 /**
- * The root html element.
+ * The root container html element: #container
  */
 export const rootElement = document.getElementById('container') as HTMLDivElement;
 /**
- * The scroll wrapper html element.
+ * The scroll wrapper html element: #scroll-container
  */
 export const scrollWrapper = document.getElementById('scroll-container') as HTMLDivElement;
 /**
- * The virtual content html element.
+ * The virtual content html element: #virtual-content
  */
 export const virtualContent = document.getElementById('virtual-content') as HTMLDivElement;
 /**
- * The cell content editor.
+ * The cell content editor: #cell-editor
  */
 export const editor = document.getElementById('cell-editor') as HTMLTextAreaElement;
 

@@ -1,7 +1,7 @@
 import type { ISelectionRegion, ISelectionStore } from './types';
 import type { Observable } from 'rxjs';
 
-import { distinctUntilChanged, scan, shareReplay, Subject } from 'rxjs';
+import { distinctUntilChanged, scan, shareReplay, startWith, Subject } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
 
@@ -12,6 +12,11 @@ type TSelectionAction =
   | { type: 'clear' }
   | { type: 'override'; regions: ISelectionRegion[] }
   | { type: 'confirm'; id: number };
+
+/**
+ * Clear action
+ */
+const CLEAR_ACTION: TSelectionAction = { type: 'clear' };
 
 /**
  * Selection store
@@ -54,7 +59,7 @@ export class SelectionStore extends ObservableDisposable implements ISelectionSt
   }
 
   clear(): void {
-    this.subject.next({ type: 'clear' });
+    this.subject.next(CLEAR_ACTION);
   }
 
   override(regions: ISelectionRegion[]): void {
@@ -63,6 +68,7 @@ export class SelectionStore extends ObservableDisposable implements ISelectionSt
 
   private build() {
     return this.subject.pipe(
+      startWith(CLEAR_ACTION),
       scan((list, action) => {
         switch (action.type) {
           case 'toggle':

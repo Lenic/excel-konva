@@ -1,8 +1,7 @@
 import type { IDimension } from '../types';
 import type { IAccumulatedDimension, ISheetConfig, ISheetDimension } from './types';
-import type { Observable } from 'rxjs';
 
-import { animationFrameScheduler, auditTime, combineLatest, fromEvent, map, shareReplay, startWith } from 'rxjs';
+import { animationFrameScheduler, auditTime, combineLatest, map, Observable, shareReplay, startWith } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
 import { rootElement } from '../core-elements';
@@ -44,7 +43,15 @@ export class SheetDimension extends ObservableDisposable implements ISheetDimens
     this.realHeight = 0;
     this.realSize = { width: 0, height: 0 };
 
-    this.visualSize$ = fromEvent(window, 'resize').pipe(
+    this.visualSize$ = new Observable<void>((subscriber) => {
+      const resizeObserver = new ResizeObserver(() => {
+        subscriber.next();
+      });
+      resizeObserver.observe(rootElement);
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }).pipe(
       auditTime(16, animationFrameScheduler),
       startWith(null),
       map(() => ({ width: rootElement.clientWidth, height: rootElement.clientHeight }) as IDimension),
