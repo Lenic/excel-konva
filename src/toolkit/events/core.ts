@@ -29,7 +29,7 @@ import { EHeaderClickType, EMousedownTypes } from './types';
  * Stage mouse events
  */
 export class StageMouseEvent extends ObservableDisposable implements IStageMouseEvent {
-  private checkResizeBoundary$: Observable<(clientX: number, clientY: number) => IBoundaryInfo | null>;
+  private checkResizeBoundary$: Observable<(relX: number, relY: number) => IBoundaryInfo | null>;
 
   cellDimension: ICellDimension;
   columnBoundary: IItemBoundary;
@@ -119,16 +119,20 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
          */
         const isMultiSelect = e.evt.ctrlKey || e.evt.metaKey;
 
+        const rect = rootElement.getBoundingClientRect();
+        const relX = e.evt.clientX - rect.left;
+        const relY = e.evt.clientY - rect.top;
+
         // No mouse up event, means it's a resize event
         if (!up) {
           // 1. Check if resize is triggered
-          const boundary = checkResizeBoundary(e.evt.clientX, e.evt.clientY);
+          const boundary = checkResizeBoundary(relX, relY);
           if (boundary) {
             return of({ mousedownType: EMousedownTypes.ResizeBoundary, data: boundary, event: e } as TMousedownEvent);
           }
 
           // 2. Cell selection
-          const cell = getCellLocation(e.evt.clientX, e.evt.clientY);
+          const cell = getCellLocation(relX, relY);
           return of({
             mousedownType: EMousedownTypes.SelectRegion,
             data: {
@@ -151,7 +155,7 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
           }
 
           // 2. Start cell selection
-          const activeCell = getCellLocation(e.evt.clientX, e.evt.clientY);
+          const activeCell = getCellLocation(relX, relY);
 
           const isRowHeaderClick = activeCell.columnIndex === 0 && activeCell.rowIndex !== 0;
           const isColumnHeaderClick = activeCell.rowIndex === 0 && activeCell.columnIndex !== 0;
@@ -268,14 +272,10 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
         /**
          * Check boundary information for the current position; return `null` if it's not a boundary.
          *
-         * @param clientX - The X coordinate of the mouse relative to the viewport.
-         * @param clientY - The Y coordinate of the mouse relative to the viewport.
+         * @param relX - The X coordinate of the mouse relative to the canvas.
+         * @param relY - The Y coordinate of the mouse relative to the canvas.
          */
-        return function checkResizeBoundary(clientX: number, clientY: number): IBoundaryInfo | null {
-          const containerRect = rootElement.getBoundingClientRect();
-          const relX = clientX - containerRect.left;
-          const relY = clientY - containerRect.top;
-
+        return function checkResizeBoundary(relX: number, relY: number): IBoundaryInfo | null {
           /**
            * Check column boundary
            *

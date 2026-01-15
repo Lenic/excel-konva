@@ -4,6 +4,7 @@ import type { ISelectionRegion, ISelectionStore, IStageDragListener, IStageMouse
 
 import { EMPTY, finalize, map, of, switchMap, takeUntil, tap, withLatestFrom } from 'rxjs';
 
+import { rootElement } from '../core-elements';
 import { stage } from '../konva-items';
 
 import { EventListener } from './listener';
@@ -48,6 +49,8 @@ export class StageDragListener extends EventListener implements IStageDragListen
           this.store.clear();
         }
 
+        const rootRect = rootElement.getBoundingClientRect();
+
         const activeCellRowIndex = activeCell.rowIndex === 0 ? 1 : activeCell.rowIndex;
         const activeCellColumnIndex = activeCell.columnIndex === 0 ? 1 : activeCell.columnIndex;
 
@@ -65,7 +68,7 @@ export class StageDragListener extends EventListener implements IStageDragListen
             ),
           ),
           map((me) => {
-            const currentCell = getCellLocation(me.evt.clientX, me.evt.clientY);
+            const currentCell = getCellLocation(me.evt.clientX - rootRect.left, me.evt.clientY - rootRect.top);
             const currentCellRowIndex = currentCell.rowIndex === 0 ? 1 : currentCell.rowIndex;
             const currentCellColumnIndex = currentCell.columnIndex === 0 ? 1 : currentCell.columnIndex;
 

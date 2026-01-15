@@ -43,44 +43,39 @@ export class CursorListener extends EventListener implements ICursorListener {
       switchMap((isDown) => {
         if (isDown) return EMPTY;
 
+        const bounding = rootElement.getBoundingClientRect();
         return combineLatest([
           this.events.mouseMove$,
           this.cell.getCellLocation$.pipe(
-            switchMap((v1) => {
-              const bounding = rootElement.getBoundingClientRect();
-              return this.cell.getCellRectBox$.pipe(
+            switchMap((v1) =>
+              this.cell.getCellRectBox$.pipe(
                 take(1),
-                map((v2) => [v1, v2, bounding] as const),
-              );
-            }),
+                map((v2) => [v1, v2] as const),
+              ),
+            ),
           ),
         ]).pipe(
-          switchMap(([e, [getCellLocation, getCellRectBox, bounding]]): Observable<TCursorEvent> => {
-            const location = getCellLocation(e.evt.clientX, e.evt.clientY);
+          switchMap(([e, [getCellLocation, getCellRectBox]]): Observable<TCursorEvent> => {
+            const relX = e.evt.clientX - bounding.left;
+            const relY = e.evt.clientY - bounding.top;
+
+            const location = getCellLocation(relX, relY);
             if (location.rowIndex === 0) {
               const rect = getCellRectBox(location.rowIndex, location.columnIndex);
-              const leftX = bounding.left + rect.x;
-              const leftLeftX = leftX - RESIZE_TOLERANCE;
-              const leftRightX = leftX + RESIZE_TOLERANCE;
+              const leftLeftX = rect.x - RESIZE_TOLERANCE;
+              const leftRightX = rect.x + RESIZE_TOLERANCE;
               const rightLeftX = leftLeftX + rect.width;
               const rightRightX = leftRightX + rect.width;
-              if (
-                (leftLeftX <= e.evt.clientX && e.evt.clientX <= leftRightX) ||
-                (rightLeftX <= e.evt.clientX && e.evt.clientX <= rightRightX)
-              ) {
+              if ((leftLeftX <= relX && relX <= leftRightX) || (rightLeftX <= relX && relX <= rightRightX)) {
                 return of({ type: ECursorTypes.ResizeBoundary, direction: EBoundaryTypes.Column });
               }
             } else if (location.columnIndex === 0) {
               const rect = getCellRectBox(location.rowIndex, location.columnIndex);
-              const topY = bounding.top + rect.y;
-              const topTopY = topY - RESIZE_TOLERANCE;
-              const topBottomY = topY + RESIZE_TOLERANCE;
+              const topTopY = rect.y - RESIZE_TOLERANCE;
+              const topBottomY = rect.y + RESIZE_TOLERANCE;
               const bottomTopY = topTopY + rect.height;
               const bottomBottomY = topBottomY + rect.height;
-              if (
-                (topTopY <= e.evt.clientY && e.evt.clientY <= topBottomY) ||
-                (bottomTopY <= e.evt.clientY && e.evt.clientY <= bottomBottomY)
-              ) {
+              if ((topTopY <= relY && relY <= topBottomY) || (bottomTopY <= relY && relY <= bottomBottomY)) {
                 return of({ type: ECursorTypes.ResizeBoundary, direction: EBoundaryTypes.Row });
               }
             }
