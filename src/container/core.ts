@@ -23,6 +23,8 @@ export class Container extends Disposable implements IContainer {
   }
 
   register<T>(identifier: TIdentifier<T>, lifecycle: TLifecycleType = 'singleton'): ILifecycle<T> {
+    this.checkDisposed();
+
     let lifecycleInstance = this.registry.get(identifier) as ILifecycle<T> | undefined;
     if (lifecycleInstance) return lifecycleInstance;
 
@@ -41,6 +43,8 @@ export class Container extends Disposable implements IContainer {
   }
 
   get<T>(identifier: TIdentifier<T>, tag?: string | symbol, context?: Map<symbol, any>): T {
+    this.checkDisposed();
+
     const lifecycle = this.registry.get(identifier) as ILifecycle<T> | undefined;
     if (!lifecycle) {
       throw new Error(`[Container]: Identifier ${String(identifier)} is not registered`);

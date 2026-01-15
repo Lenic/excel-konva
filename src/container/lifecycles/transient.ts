@@ -7,7 +7,7 @@ import { Disposable } from '../disposable';
  */
 export class TransientLifecycle<T> extends Disposable implements ILifecycle<T> {
   private defalutFactory: TFactory<T> | null;
-  private factories: Map<symbol, TFactory<T>>;
+  private factories: Map<string | symbol, TFactory<T>>;
 
   /**
    * Constructor
@@ -16,7 +16,7 @@ export class TransientLifecycle<T> extends Disposable implements ILifecycle<T> {
     super();
 
     this.defalutFactory = null;
-    this.factories = new Map();
+    this.factories = new Map<string | symbol, TFactory<T>>();
 
     this.disposeWithMe(() => {
       this.defalutFactory = null;
@@ -25,9 +25,10 @@ export class TransientLifecycle<T> extends Disposable implements ILifecycle<T> {
   }
 
   set(factory: TFactory<T>, tag?: string | symbol): ILifecycle<T> {
+    this.checkDisposed();
+
     if (tag) {
-      const symbolTag = typeof tag === 'string' ? Symbol.for(tag) : tag;
-      this.factories.set(symbolTag, factory);
+      this.factories.set(tag, factory);
     } else {
       this.defalutFactory = factory;
     }
@@ -36,10 +37,10 @@ export class TransientLifecycle<T> extends Disposable implements ILifecycle<T> {
   }
 
   get(container: IContainer, context: Map<symbol, any>, tag?: string | symbol): T {
-    if (tag) {
-      const symbolTag = typeof tag === 'string' ? Symbol.for(tag) : tag;
+    this.checkDisposed();
 
-      const fn = this.factories.get(symbolTag);
+    if (tag) {
+      const fn = this.factories.get(tag);
       if (!fn) {
         throw new Error(`[TransientLifecycle]: Tag ${String(tag)} not found.`);
       }

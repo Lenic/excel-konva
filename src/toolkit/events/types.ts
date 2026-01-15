@@ -294,25 +294,31 @@ export interface ISelectionStore extends IDisposable {
   list$: Observable<ISelectionRegion[]>;
 
   /**
-   * Add or remove the target selection
+   * Toggle the target selection
    *
-   * @param region - Selection region to add
+   * - If the selection exists, remove it.
+   * - If the selection doesn't exist, add it.
+   * - If all properties except `id` are equal, they are considered the same selection.
+   *
+   * @param region - Selection region to toggle
    */
-  addOrRemove(region: ISelectionRegion): void;
+  toggle(region: ISelectionRegion): void;
 
   /**
    * Update the target selection; if it doesn't exist, add it.
+   *
+   * - If all properties of the existing items are equal to those of the `region`, skip it.
    *
    * @param region - Selection region to update
    */
   update(region: ISelectionRegion): void;
 
   /**
-   * Check the target selection; remove any other identical selections simultaneously.
+   * Confirm the target selection; remove any other identical selections simultaneously.
    *
    * @param id - Selection region ID
    */
-  check(id: number): void;
+  confirm(id: number): void;
 
   /**
    * Clear all the selections
@@ -436,3 +442,72 @@ export interface IStageDragListener extends IEventListener {
  * Stage drag listener interface identifier
  */
 export const IStageDragListener: TIdentifier<IStageDragListener> = Symbol('IStageDragListener');
+
+/**
+ * Cursor types
+ */
+export const ECursorTypes = {
+  /**
+   * Resize boundary
+   */
+  ResizeBoundary: 'Resize-Boundary',
+  /**
+   * Empty
+   */
+  Empty: 'empty',
+} as const;
+/**
+ * Cursor types
+ */
+export type ECursorTypes = (typeof ECursorTypes)[keyof typeof ECursorTypes];
+
+/**
+ * Empty cursor event interface
+ */
+export interface IEmptyCursorEvent {
+  /**
+   * Cursor type: empty
+   */
+  type: typeof ECursorTypes.Empty;
+}
+
+/**
+ * Resize boundary cursor event
+ */
+export interface IResizeBoundaryCursorEvent {
+  /**
+   * Cursor type: resize boundary
+   */
+  type: typeof ECursorTypes.ResizeBoundary;
+  /**
+   * Direction
+   */
+  direction: EBoundaryTypes;
+}
+
+/**
+ * The cursor event
+ */
+export type TCursorEvent = IEmptyCursorEvent | IResizeBoundaryCursorEvent;
+
+/**
+ * Cursor listener interface
+ */
+export interface ICursorListener extends IEventListener {
+  /**
+   * Stage mouse events
+   */
+  events: IStageMouseEvent;
+  /**
+   * Cell dimension
+   */
+  cell: ICellDimension;
+  /**
+   * Scroll offset
+   */
+  scrollOffset: IScrollOffset;
+}
+/**
+ * Cursor listener interface identifier
+ */
+export const ICursorListener: TIdentifier<ICursorListener> = Symbol('ICursorListener');

@@ -4,6 +4,7 @@ import type { ISelectionRegion, ISelectionStore, IStageDragListener, IStageMouse
 
 import { EMPTY, finalize, map, of, switchMap, takeUntil, tap, withLatestFrom } from 'rxjs';
 
+import { rootElement } from '../core-elements';
 import { stage } from '../konva-items';
 
 import { EventListener } from './listener';
@@ -43,22 +44,23 @@ export class StageDragListener extends EventListener implements IStageDragListen
       ),
       withLatestFrom(this.cellDimension.getCellLocation$),
       switchMap(([{ data }, getCellLocation]) => {
-        const { activeCell, isMultiSelect } = data;
+        const { activeCell, isMultiSelect, id } = data;
         if (!isMultiSelect) {
           this.store.clear();
         }
 
+        const rootRect = rootElement.getBoundingClientRect();
+
         const activeCellRowIndex = activeCell.rowIndex === 0 ? 1 : activeCell.rowIndex;
         const activeCellColumnIndex = activeCell.columnIndex === 0 ? 1 : activeCell.columnIndex;
 
-        const selectionId = Date.now();
         const tmpActiveCell: ILocation = { rowIndex: activeCellRowIndex, columnIndex: activeCellColumnIndex };
 
         return this.events.mouseMove$.pipe(
           takeUntil(
             this.events.mouseUp$.pipe(
               tap(() => {
-                this.store.check(selectionId);
+                this.store.confirm(id);
               }),
               finalize(() => {
                 stage.container().style.cursor = 'default';
@@ -66,7 +68,7 @@ export class StageDragListener extends EventListener implements IStageDragListen
             ),
           ),
           map((me) => {
-            const currentCell = getCellLocation(me.evt.clientX, me.evt.clientY);
+            const currentCell = getCellLocation(me.evt.clientX - rootRect.left, me.evt.clientY - rootRect.top);
             const currentCellRowIndex = currentCell.rowIndex === 0 ? 1 : currentCell.rowIndex;
             const currentCellColumnIndex = currentCell.columnIndex === 0 ? 1 : currentCell.columnIndex;
 
@@ -80,7 +82,7 @@ export class StageDragListener extends EventListener implements IStageDragListen
                 : Math.max(activeCellColumnIndex, currentCellColumnIndex);
 
             const selection: ISelectionRegion = {
-              id: selectionId,
+              id,
               region: {
                 startRowIndex: minRowIndex,
                 endRowIndex: maxRowIndex,

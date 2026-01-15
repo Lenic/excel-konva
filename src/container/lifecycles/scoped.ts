@@ -7,7 +7,7 @@ import { DEFAULT_TAG_VALUE } from './constants';
 
 interface IScopedStorage<T> {
   defaultValue: T;
-  instances: Map<symbol, T>;
+  instances: Map<string | symbol, T>;
 }
 
 const scopedInstances = new WeakMap<object, IScopedStorage<any>>();
@@ -16,7 +16,7 @@ const scopedInstances = new WeakMap<object, IScopedStorage<any>>();
  * Scoped lifecycle
  */
 export class ScopedLifecycle<T> extends Disposable implements ILifecycle<T> {
-  private factories: Map<symbol, TFactory<T>>;
+  private factories: Map<string | symbol, TFactory<T>>;
   private defalutFactory: TFactory<T> | null;
 
   private getScopeKey: () => object;
@@ -30,7 +30,7 @@ export class ScopedLifecycle<T> extends Disposable implements ILifecycle<T> {
 
     this.getScopeKey = getScopeKey;
 
-    this.factories = new Map();
+    this.factories = new Map<string | symbol, TFactory<T>>();
     this.defalutFactory = null;
 
     this.disposeWithMe(() => {
@@ -55,11 +55,12 @@ export class ScopedLifecycle<T> extends Disposable implements ILifecycle<T> {
   }
 
   set(factory: TFactory<T>, tag?: string | symbol): ILifecycle<T> {
+    this.checkDisposed();
+
     const storage = this.getStorage();
     if (tag) {
-      const symbolTag = typeof tag === 'string' ? Symbol.for(tag) : tag;
-      this.factories.set(symbolTag, factory);
-      storage.instances.delete(symbolTag);
+      this.factories.set(tag, factory);
+      storage.instances.delete(tag);
     } else {
       this.defalutFactory = factory;
       storage.defaultValue = DEFAULT_TAG_VALUE as unknown as T;
@@ -69,20 +70,20 @@ export class ScopedLifecycle<T> extends Disposable implements ILifecycle<T> {
   }
 
   get(container: IContainer, context: Map<symbol, any>, tag?: string | symbol): T {
-    const storage = this.getStorage();
+    this.checkDisposed();
 
+    const storage = this.getStorage();
     if (tag) {
-      const symbolTag = typeof tag === 'string' ? Symbol.for(tag) : tag;
-      let value = storage.instances.get(symbolTag);
+      let value = storage.instances.get(tag);
       if (value) return value;
 
-      const fn = this.factories.get(symbolTag);
+      const fn = this.factories.get(tag);
       if (!fn) {
         throw new Error(`[ScopedLifecycle]: Tag ${String(tag)} not found.`);
       }
       value = fn(container, context);
 
-      storage.instances.set(symbolTag, value);
+      storage.instances.set(tag, value);
       return value;
     } else {
       if (storage.defaultValue !== DEFAULT_TAG_VALUE) return storage.defaultValue;
@@ -102,7 +103,7 @@ export class ScopedLifecycle<T> extends Disposable implements ILifecycle<T> {
     if (!storage) {
       storage = {
         defaultValue: DEFAULT_TAG_VALUE as unknown as T,
-        instances: new Map(),
+        instances: new Map<string | symbol, T>(),
       };
       scopedInstances.set(scopeKey, storage);
     }

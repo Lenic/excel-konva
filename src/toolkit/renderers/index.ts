@@ -1,4 +1,5 @@
-import { container } from '../constants';
+import type { IContainer } from '../../container';
+
 import { ISelectionStore } from '../events';
 import { ICellDimension, IDataRegion, ISheetConfig, ISheetDimension } from '../helpers';
 
@@ -9,17 +10,24 @@ import { ICellListener, IRangeCollection, ISelectionListener } from './types';
 
 export * from './types';
 
-container.register(IRangeCollection, 'transient').set(() => new RangeCollection());
+/**
+ * Add renderer registrations to the container
+ *
+ * @param container - the target IOC container
+ */
+export function registerRenderers(container: IContainer) {
+  container.register(IRangeCollection, 'transient').set(() => new RangeCollection());
 
-container.register(ISelectionListener).set((c) => {
-  return new SelectionListener(
-    c.get(ISheetConfig),
-    c.get(ISheetDimension),
-    c.get(ICellDimension),
-    c.get(ISelectionStore),
-  );
-});
+  container.register(ISelectionListener).set((c) => {
+    return new SelectionListener(
+      c.get(ISheetConfig),
+      c.get(ISheetDimension),
+      c.get(ICellDimension),
+      c.get(ISelectionStore),
+    );
+  });
 
-container.register(ICellListener).set((c) => {
-  return new CellListener(c.get(ISheetConfig), c.get(ICellDimension), c.get(IDataRegion));
-});
+  container.register(ICellListener).set((c) => {
+    return new CellListener(c.get(ISheetConfig), c.get(ICellDimension), c.get(IDataRegion));
+  });
+}

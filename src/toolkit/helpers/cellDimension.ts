@@ -5,7 +5,6 @@ import type { Observable } from 'rxjs';
 import { combineLatest, map, scan, shareReplay, startWith, Subject, switchMap, take } from 'rxjs';
 
 import { getCellKey, getColumnLabel, ObservableDisposable } from '../core';
-import { container } from '../core-elements';
 
 /**
  * Cell dimension
@@ -20,7 +19,7 @@ export class CellDimension extends ObservableDisposable implements ICellDimensio
 
   getCellData$: Observable<(rowIndex: number, columnIndex: number) => string>;
   getCellRectBox$: Observable<(rowIndex: number, columnIndex: number) => IRectBox>;
-  getCellLocation$: Observable<(clientX: number, clientY: number) => ILocation>;
+  getCellLocation$: Observable<(relX: number, relY: number) => ILocation>;
   getCellPoint$: Observable<(rowIndex: number, columnIndex: number) => IPoint>;
 
   /**
@@ -152,14 +151,13 @@ export class CellDimension extends ObservableDisposable implements ICellDimensio
         /**
          * Get the location of the specified cell.
          *
-         * @param clientX - The X coordinate of the mouse relative to the viewport.
-         * @param clientY - The Y coordinate of the mouse relative to the viewport.
+         * @param relX - The X coordinate of the mouse relative to the canvas.
+         * @param relY - The Y coordinate of the mouse relative to the canvas.
          */
-        return function getCellLocation(clientX: number, clientY: number): ILocation {
-          const rect = container.getBoundingClientRect();
+        return function getCellLocation(relX: number, relY: number): ILocation {
           return {
-            rowIndex: getRowIndex(clientY - rect.top),
-            columnIndex: getColumnIndex(clientX - rect.left),
+            rowIndex: getRowIndex(relY),
+            columnIndex: getColumnIndex(relX),
           };
         };
       }),

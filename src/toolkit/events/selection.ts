@@ -1,37 +1,26 @@
 import type { ISelectionRegion, ISelectionStore } from './types';
 import type { Observable } from 'rxjs';
 
-import { distinctUntilChanged, scan, shareReplay, Subject } from 'rxjs';
+import { distinctUntilChanged, scan, shareReplay, startWith, Subject } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
 
 import { isSameSelectionRegion } from './utils';
 
-interface IUpdateSelectionAction {
-  type: 'add' | 'update';
-  region: ISelectionRegion;
-}
-
-interface IClearSelectionAction {
-  type: 'clear';
-}
-
-interface IOverrideSelectionAction {
-  type: 'override';
-  regions: ISelectionRegion[];
-}
-
-interface ICheckSelectionAction {
-  type: 'check';
-  id: number;
-}
-
 type TSelectionAction =
-  | IUpdateSelectionAction
-  | IClearSelectionAction
-  | IOverrideSelectionAction
-  | ICheckSelectionAction;
+  | { type: 'toggle' | 'update'; region: ISelectionRegion }
+  | { type: 'clear' }
+  | { type: 'override'; regions: ISelectionRegion[] }
+  | { type: 'confirm'; id: number };
 
+/**
+ * Clear action
+ */
+const CLEAR_ACTION: TSelectionAction = { type: 'clear' };
+
+/**
+ * Selection store
+ */
 export class SelectionStore extends ObservableDisposable implements ISelectionStore {
   private subject: Subject<TSelectionAction>;
 
@@ -57,20 +46,20 @@ export class SelectionStore extends ObservableDisposable implements ISelectionSt
     );
   }
 
-  addOrRemove(region: ISelectionRegion): void {
-    this.subject.next({ type: 'add', region });
+  toggle(region: ISelectionRegion): void {
+    this.subject.next({ type: 'toggle', region });
   }
 
   update(region: ISelectionRegion): void {
     this.subject.next({ type: 'update', region });
   }
 
-  check(id: number): void {
-    this.subject.next({ type: 'check', id });
+  confirm(id: number): void {
+    this.subject.next({ type: 'confirm', id });
   }
 
   clear(): void {
-    this.subject.next({ type: 'clear' });
+    this.subject.next(CLEAR_ACTION);
   }
 
   override(regions: ISelectionRegion[]): void {
@@ -79,10 +68,12 @@ export class SelectionStore extends ObservableDisposable implements ISelectionSt
 
   private build() {
     return this.subject.pipe(
+      startWith(CLEAR_ACTION),
       scan((list, action) => {
         switch (action.type) {
-          case 'add':
-            const addIndex = list.findIndex((region) => isSameSelectionRegion(region, action.region));
+          case 'toggle':
+            const candidateRegion = { ...action.region, id: -1 };
+            const addIndex = list.findIndex((region) => isSameSelectionRegion(region, candidateRegion));
             return addIndex === -1
               ? [...list, action.region]
               : [...list.slice(0, addIndex), ...list.slice(addIndex + 1)];
@@ -94,7 +85,7 @@ export class SelectionStore extends ObservableDisposable implements ISelectionSt
             if (isSameSelectionRegion(updateTarget, { ...action.region, id: -1 })) return list;
 
             return [...list.slice(0, updateIndex), action.region, ...list.slice(updateIndex + 1)];
-          case 'check':
+          case 'confirm':
             const checkTargetIndex = list.findIndex((region) => region.id === action.id);
             if (checkTargetIndex !== -1) {
               const checkIndex = list.findIndex((region) => isSameSelectionRegion(region, list[checkTargetIndex]));

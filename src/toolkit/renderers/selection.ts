@@ -128,6 +128,9 @@ export class SelectionListener extends RenderListener<number> {
             highlightedColumns.push([startColumnIndex, endColumnIndex]);
           });
 
+          highlightedRows.merge();
+          highlightedColumns.merge();
+
           return [selectedRanges, highlightedRows, highlightedColumns] as const;
         }),
       ),
@@ -191,7 +194,6 @@ export class SelectionListener extends RenderListener<number> {
           if (highlightedColumns.values.length > 0) {
             const frozenColumnMaxIndex = frozenColumns - 1;
             for (const [start, end] of highlightedColumns.values) {
-              console.log(frozenColumnMaxIndex, start, end);
               if (frozenColumnMaxIndex < start || frozenColumnMaxIndex > end) {
                 drawSubRange(0, 0, start, end, 0);
               } else {

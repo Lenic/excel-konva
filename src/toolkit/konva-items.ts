@@ -3,7 +3,7 @@ import { combineLatest, fromEventPattern, map, shareReplay, tap } from 'rxjs';
 
 import { ServiceLocator } from '../container';
 
-import { scrollContainer } from './core-elements';
+import { scrollWrapper } from './core-elements';
 import { ISheetConfig } from './helpers';
 
 export const stage = new Konva.Stage({ container: 'konva-container', width: 0, height: 0 });
@@ -19,8 +19,8 @@ fromEventPattern<Konva.KonvaEventObject<WheelEvent>>(
     }),
   )
   .subscribe((e) => {
-    scrollContainer.scrollTop = Math.max(0, scrollContainer.scrollTop + e.evt.deltaY);
-    scrollContainer.scrollLeft = Math.max(0, scrollContainer.scrollLeft + e.evt.deltaX);
+    scrollWrapper.scrollTop = Math.max(0, scrollWrapper.scrollTop + e.evt.deltaY);
+    scrollWrapper.scrollLeft = Math.max(0, scrollWrapper.scrollLeft + e.evt.deltaX);
   });
 
 export const backgroundLayer = new Konva.Layer();
@@ -50,18 +50,25 @@ export const cornerGroup = new Konva.Group(); // R0, C0
 
 backgroundLayer.add(scrollableGroup, sideGroup, headerGroup, cornerGroup);
 
-const config = ServiceLocator.current.get(ISheetConfig);
-export const getCellGroup$ = combineLatest([config.frozenRows$, config.frozenColumns$]).pipe(
-  map(([frozenRows, frozenColumns]) => {
-    return function getCellGroup(rowIndex: number, columnIndex: number) {
-      const isHeader = rowIndex < frozenRows;
-      const isFrozenCol = columnIndex < frozenColumns;
+/**
+ * Build get cell group function
+ *
+ * @returns Get cell group function
+ */
+export function buildGetCellGroup$() {
+  const config = ServiceLocator.current.get(ISheetConfig);
+  return combineLatest([config.frozenRows$, config.frozenColumns$]).pipe(
+    map(([frozenRows, frozenColumns]) => {
+      return function getCellGroup(rowIndex: number, columnIndex: number) {
+        const isHeader = rowIndex < frozenRows;
+        const isFrozenCol = columnIndex < frozenColumns;
 
-      if (isHeader && isFrozenCol) return cornerGroup; // R0, C0
-      if (isHeader) return headerGroup; // R0, C1+
-      if (isFrozenCol) return sideGroup; // R1+, C0
-      return scrollableGroup; // R1+, C1+
-    };
-  }),
-  shareReplay({ refCount: true, bufferSize: 1 }),
-);
+        if (isHeader && isFrozenCol) return cornerGroup; // R0, C0
+        if (isHeader) return headerGroup; // R0, C1+
+        if (isFrozenCol) return sideGroup; // R1+, C0
+        return scrollableGroup; // R1+, C1+
+      };
+    }),
+    shareReplay({ refCount: true, bufferSize: 1 }),
+  );
+}

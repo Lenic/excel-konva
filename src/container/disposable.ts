@@ -33,4 +33,13 @@ export class Disposable implements IDisposable {
       this.subscriptionList.push(disposable);
     }
   }
+
+  /**
+   * Check if the object is disposed
+   */
+  protected checkDisposed() {
+    if (this.isDisposed) {
+      throw new Error('[Disposable]: Object is disposed.');
+    }
+  }
 }

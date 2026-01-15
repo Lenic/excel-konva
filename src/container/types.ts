@@ -28,9 +28,13 @@ export interface IDisposable {
 }
 
 /**
+ * The symbol of the identifier.
+ */
+export const IdentifierSymbol = Symbol('IdentifierSymbol');
+/**
  * The identifier of the service.
  */
-export type TIdentifier<_T> = symbol & { readonly __type?: _T };
+export type TIdentifier<T> = symbol & { readonly [IdentifierSymbol]?: T };
 
 /**
  * The factory of the service.
@@ -77,7 +81,7 @@ export interface IContainer extends IDisposable {
    * Register the service.
    *
    * @param identifier - The identifier of the service.
-   * @param lifecycle - The lifecycle of the service.
+   * @param lifecycle - The lifecycle of the service, default is 'singleton'.
    * @returns The container of the service.
    */
   register<T>(identifier: TIdentifier<T>, lifecycle?: TLifecycleType): ILifecycle<T>;

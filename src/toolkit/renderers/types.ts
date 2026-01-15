@@ -47,7 +47,7 @@ export interface IRangeCollection {
   /**
    * The merged and ordered ranges
    */
-  readonly values: TRange[];
+  values: TRange[];
 
   /**
    * Add a range
@@ -55,6 +55,11 @@ export interface IRangeCollection {
    * @param range - range to add
    */
   push(range: TRange): void;
+
+  /**
+   * Merge ranges
+   */
+  merge(): void;
 }
 /**
  * Range collection interface identifier

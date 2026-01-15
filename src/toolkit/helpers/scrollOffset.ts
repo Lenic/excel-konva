@@ -14,7 +14,7 @@ import {
 } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
-import { scrollContainer } from '../core-elements';
+import { scrollWrapper } from '../core-elements';
 
 /**
  * Scroll offset
@@ -44,46 +44,47 @@ export class ScrollOffset extends ObservableDisposable implements IScrollOffset 
     this.left = 0;
     this.offset = { deltaX: 0, deltaY: 0 } as IOffset;
 
-    const scroll$ = fromEvent(scrollContainer, 'scroll').pipe(
-      auditTime(16, animationFrameScheduler),
-      startWith(null),
-      map(() => scrollContainer),
-      shareReplay({ bufferSize: 1, refCount: true }),
-    );
+    this.offset$ = this.buildOffset();
+    this.disposeWithMe(this.offset$.subscribe((value) => (this.offset = value)));
 
-    this.top$ = this.buildOffset(
-      scroll$.pipe(map((el) => el.scrollTop)),
-      ([real, visual]) => real.height - visual.height,
+    this.top$ = this.offset$.pipe(
+      map((offset) => offset.deltaY),
+      distinctUntilChanged(),
+      shareReplay({ bufferSize: 1, refCount: true }),
     );
     this.disposeWithMe(this.top$.subscribe((value) => (this.top = value)));
 
-    this.left$ = this.buildOffset(
-      scroll$.pipe(map((el) => el.scrollLeft)),
-      ([real, visual]) => real.width - visual.width,
-    );
-    this.disposeWithMe(this.left$.subscribe((value) => (this.left = value)));
-
-    this.offset$ = combineLatest([this.left$, this.top$]).pipe(
-      map(([deltaX, deltaY]) => ({ deltaX, deltaY })),
-      distinctUntilChanged((a, b) => a.deltaX === b.deltaX && a.deltaY === b.deltaY),
+    this.left$ = this.offset$.pipe(
+      map((offset) => offset.deltaX),
+      distinctUntilChanged(),
       shareReplay({ bufferSize: 1, refCount: true }),
     );
-    this.disposeWithMe(this.offset$.subscribe((value) => (this.offset = value)));
+    this.disposeWithMe(this.left$.subscribe((value) => (this.left = value)));
   }
 
-  private buildOffset(
-    scrollValue$: Observable<number>,
-    getOffsetValue: (value: [real: IDimension, visual: IDimension]) => number,
-  ) {
+  private buildOffset() {
     return combineLatest([
-      scrollValue$.pipe(distinctUntilChanged()),
+      fromEvent(scrollWrapper, 'scroll').pipe(
+        auditTime(16, animationFrameScheduler),
+        startWith(null),
+        map(() => ({ deltaX: scrollWrapper.scrollLeft, deltaY: scrollWrapper.scrollTop }) as IOffset),
+        distinctUntilChanged((x, y) => x.deltaX === y.deltaX && x.deltaY === y.deltaY),
+      ),
       combineLatest([this.sheetDimension.realSize$, this.sheetDimension.visualSize$]).pipe(
-        map(getOffsetValue),
-        distinctUntilChanged(),
+        map(
+          ([real, visual]) => ({ width: real.width - visual.width, height: real.height - visual.height }) as IDimension,
+        ),
+        distinctUntilChanged((x, y) => x.width === y.width && x.height === y.height),
       ),
     ]).pipe(
-      map(([scrollValue, max]) => Math.max(0, Math.min(max, scrollValue))),
-      distinctUntilChanged(),
+      map(
+        ([offset, max]) =>
+          ({
+            deltaX: Math.max(0, Math.min(max.width, offset.deltaX)),
+            deltaY: Math.max(0, Math.min(max.height, offset.deltaY)),
+          }) as IOffset,
+      ),
+      distinctUntilChanged((x, y) => x.deltaX === y.deltaX && x.deltaY === y.deltaY),
       shareReplay({ bufferSize: 1, refCount: true }),
     );
   }

@@ -4,7 +4,7 @@ import type { Observable } from 'rxjs';
 
 import { combineLatest, map, switchMap, take } from 'rxjs';
 
-import { backgroundLayer, getCellGroup$ } from '../konva-items';
+import { backgroundLayer, buildGetCellGroup$ } from '../konva-items';
 import { cellPool } from '../pools';
 
 import { RenderListener } from './renderer';
@@ -23,7 +23,11 @@ export class CellListener extends RenderListener<IRegionInfo> {
   }
 
   protected build(): Observable<IRegionInfo> {
-    return combineLatest([getCellGroup$, this.cellDimension.getCellRectBox$, this.cellDimension.getCellData$]).pipe(
+    return combineLatest([
+      buildGetCellGroup$(),
+      this.cellDimension.getCellRectBox$,
+      this.cellDimension.getCellData$,
+    ]).pipe(
       switchMap(([getCellGroup, getCellRectBox, getCellData]) => {
         /**
          * Draw target cell
@@ -58,10 +62,11 @@ export class CellListener extends RenderListener<IRegionInfo> {
           if (text.parent !== group) text.moveTo(group);
         }
 
-        return combineLatest([this.dataRegion.region$, this.config.frozenColumns$, this.config.frozenRows$]).pipe(
-          take(1),
-          map((items) => [renderCellRegion, ...items] as const),
-        );
+        return combineLatest([
+          this.dataRegion.region$,
+          this.config.frozenColumns$.pipe(take(1)),
+          this.config.frozenRows$.pipe(take(1)),
+        ]).pipe(map((items) => [renderCellRegion, ...items] as const));
       }),
       map(([renderCellRegion, dataRegion, frozenColumns, frozenRows]) => {
         const { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } = dataRegion;
