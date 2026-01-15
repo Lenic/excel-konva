@@ -24,7 +24,7 @@ export class AccumulatedDimension extends ObservableDisposable implements IAccum
   constructor(dimension: IItemDimension, count$: Observable<number>) {
     super();
 
-    this.store = new Map();
+    this.store = new Map<number, number>();
     this.disposeWithMe(() => {
       this.store.clear();
     });

@@ -1,7 +1,7 @@
 import type { IAccumulatedDimension, IItemBoundary, IItemBoundaryOptions } from './types';
 import type { Observable } from 'rxjs';
 
-import { combineLatest, combineLatestWith, map, shareReplay, switchMap, take } from 'rxjs';
+import { combineLatest, map, shareReplay, switchMap, take } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
 
@@ -53,15 +53,18 @@ export class ItemBoundary extends ObservableDisposable implements IItemBoundary 
   }
 
   private buildGetItemIndex() {
-    return this.accumulated.findIndex$.pipe(
-      switchMap((getItemIndex) =>
-        combineLatest([this.accumulated.get$.pipe(take(1)), this.options.frozenCount$]).pipe(
-          map(
-            ([getAccumulatedDimension, frozenCount]) => [getItemIndex, getAccumulatedDimension(frozenCount)] as const,
+    return combineLatest([
+      this.accumulated.findIndex$.pipe(
+        switchMap((getItemIndex) =>
+          combineLatest([this.accumulated.get$.pipe(take(1)), this.options.frozenCount$]).pipe(
+            map(
+              ([getAccumulatedDimension, frozenCount]) => [getItemIndex, getAccumulatedDimension(frozenCount)] as const,
+            ),
           ),
         ),
       ),
-      combineLatestWith(this.options.scrollValue$),
+      this.options.scrollValue$,
+    ]).pipe(
       map(([[getItemIndexByOffset, frozenDimension], scrollValue]) => {
         /**
          * Get the index of the item corresponding to the specified relative offset
