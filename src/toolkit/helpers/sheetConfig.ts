@@ -1,9 +1,23 @@
-import type { ISheetConfig } from './types';
+import type { ISheetConfig, ISheetOptions } from './types';
 import type { Observable } from 'rxjs';
 
 import { BehaviorSubject } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
+
+export const defaultSheetConfig: Required<ISheetOptions> = {
+  headerHeight: 30,
+  headerWidth: 40,
+  rowHeight: 28,
+  minRowHeight: 15,
+  columnWidth: 100,
+  minColumnWidth: 20,
+  rowCount: 20,
+  columnCount: 8,
+  frozenColumns: 1,
+  frozenRows: 1,
+  resizeLineColor: '#4e95ff',
+};
 
 /**
  * Sheet Config
@@ -60,85 +74,74 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
    * @param columnWidth - Column width
    * @param resizeLineColor - Resize line color
    */
-  constructor(
-    rowCount: number,
-    columnCount: number,
-    frozenColumns: number,
-    frozenRows: number,
-
-    minRowHeight = 15,
-    minColumnWidth = 20,
-    headerHeight = 30,
-    headerWidth = 40,
-    rowHeight = 28,
-    columnWidth = 100,
-    resizeLineColor = '#4e95ff',
-  ) {
+  constructor(options?: ISheetOptions) {
     super();
 
-    this.headerHeight = 0;
-    this.headerWidth = 0;
-    this.frozenColumns = 0;
-    this.frozenRows = 0;
-    this.rowHeight = 0;
-    this.columnWidth = 0;
-    this.rowCount = 0;
-    this.columnCount = 0;
-    this.minRowHeight = 0;
-    this.minColumnWidth = 0;
-    this.resizeLineColor = '';
+    const config: Required<ISheetOptions> = { ...defaultSheetConfig, ...options };
 
-    this.headerHeightSubject = new BehaviorSubject(headerHeight);
+    this.headerHeight = config.headerHeight;
+    this.headerWidth = config.headerWidth;
+    this.frozenColumns = config.frozenColumns;
+    this.frozenRows = config.frozenRows;
+    this.rowHeight = config.rowHeight;
+    this.columnWidth = config.columnWidth;
+    this.rowCount = config.rowCount;
+    this.columnCount = config.columnCount;
+    this.minRowHeight = config.minRowHeight;
+    this.minColumnWidth = config.minColumnWidth;
+    this.resizeLineColor = config.resizeLineColor;
+
+    this.headerHeightSubject = new BehaviorSubject(config.headerHeight);
     this.disposeWithMe(() => {
       this.headerHeightSubject.complete();
     });
 
-    this.headerWidthSubject = new BehaviorSubject(headerWidth);
+    this.headerWidthSubject = new BehaviorSubject(config.headerWidth);
     this.disposeWithMe(() => {
       this.headerWidthSubject.complete();
     });
 
-    this.rowHeightSubject = new BehaviorSubject(rowHeight);
+    this.rowHeightSubject = new BehaviorSubject(config.rowHeight);
     this.disposeWithMe(() => {
       this.rowHeightSubject.complete();
     });
 
-    this.minRowHeightSubject = new BehaviorSubject(minRowHeight);
+    this.minRowHeightSubject = new BehaviorSubject(config.minRowHeight);
     this.disposeWithMe(() => {
       this.minRowHeightSubject.complete();
     });
 
-    this.columnWidthSubject = new BehaviorSubject(columnWidth);
+    this.columnWidthSubject = new BehaviorSubject(config.columnWidth);
     this.disposeWithMe(() => {
       this.columnWidthSubject.complete();
     });
 
-    this.minColumnWidthSubject = new BehaviorSubject(minColumnWidth);
+    this.minColumnWidthSubject = new BehaviorSubject(config.minColumnWidth);
     this.disposeWithMe(() => {
       this.minColumnWidthSubject.complete();
     });
 
-    this.rowCountSubject = new BehaviorSubject(rowCount);
+    this.rowCountSubject = new BehaviorSubject(config.rowCount);
     this.disposeWithMe(() => {
       this.rowCountSubject.complete();
     });
 
-    this.columnCountSubject = new BehaviorSubject(columnCount);
+    this.columnCountSubject = new BehaviorSubject(config.columnCount);
     this.disposeWithMe(() => {
       this.columnCountSubject.complete();
     });
 
-    this.frozenColumnsSubject = new BehaviorSubject(frozenColumns);
+    this.frozenColumnsSubject = new BehaviorSubject(config.frozenColumns);
     this.disposeWithMe(() => {
       this.frozenColumnsSubject.complete();
     });
 
-    this.frozenRowsSubject = new BehaviorSubject(frozenRows);
+    this.frozenRowsSubject = new BehaviorSubject(config.frozenRows);
     this.disposeWithMe(() => {
       this.frozenRowsSubject.complete();
     });
 
-    this.resizeLineColorSubject = new BehaviorSubject(resizeLineColor);
+    this.resizeLineColorSubject = new BehaviorSubject(config.resizeLineColor);
     this.disposeWithMe(() => {
       this.resizeLineColorSubject.complete();
     });

@@ -2,55 +2,57 @@ import type { IDisposable, TIdentifier } from '../../container';
 import type { IDimension, IExcelEntrance, ILocation, IOffset, IPoint, IRectBox, IRegionInfo } from '../types';
 import type { Observable } from 'rxjs';
 
+export interface ISheetOptions {
+  /**
+   * Header height: default is 30px
+   */
+  headerHeight?: number;
+  /**
+   * Header width: default is 40px
+   */
+  headerWidth?: number;
+  /**
+   * Row height: default is 28px
+   */
+  rowHeight?: number;
+  /**
+   * Min row height: default is 15px
+   */
+  minRowHeight?: number;
+  /**
+   * Column width: default is 100px
+   */
+  columnWidth?: number;
+  /**
+   * Min column width: default is 20px
+   */
+  minColumnWidth?: number;
+  /**
+   * Row count: default is 20
+   */
+  rowCount?: number;
+  /**
+   * Column count: default is 8
+   */
+  columnCount?: number;
+  /**
+   * Frozen columns: default is 1
+   */
+  frozenColumns?: number;
+  /**
+   * Frozen rows: default is 1
+   */
+  frozenRows?: number;
+  /**
+   * Resize line color: default is #4e95ff
+   */
+  resizeLineColor?: string;
+}
+
 /**
  * Sheet Config
  */
-export interface ISheetConfig extends IDisposable {
-  /**
-   * Header height
-   */
-  headerHeight: number;
-  /**
-   * Header width
-   */
-  headerWidth: number;
-  /**
-   * Row height
-   */
-  rowHeight: number;
-  /**
-   * Min row height
-   */
-  minRowHeight: number;
-  /**
-   * Column width
-   */
-  columnWidth: number;
-  /**
-   * Min column width
-   */
-  minColumnWidth: number;
-  /**
-   * Row count
-   */
-  rowCount: number;
-  /**
-   * Column count
-   */
-  columnCount: number;
-  /**
-   * Frozen columns
-   */
-  frozenColumns: number;
-  /**
-   * Frozen rows
-   */
-  frozenRows: number;
-  /**
-   * Resize line color
-   */
-  resizeLineColor: string;
-
+export interface ISheetConfig extends Required<ISheetOptions>, IDisposable {
   /**
    * Observable header height
    */

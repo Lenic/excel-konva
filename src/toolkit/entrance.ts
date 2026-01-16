@@ -213,4 +213,6 @@ export class ExcelEntrance extends ObservableDisposable implements IExcelEntranc
   }
 }
 
-export const excelEntrance = new ExcelEntrance(new SheetConfig(50000, 5000, 4, 3));
+export const excelEntrance = new ExcelEntrance(
+  new SheetConfig({ rowCount: 50000, columnCount: 5000, frozenRows: 3, frozenColumns: 4 }),
+);
