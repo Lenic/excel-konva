@@ -19,6 +19,7 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
   private columnCountSubject: BehaviorSubject<number>;
   private frozenColumnsSubject: BehaviorSubject<number>;
   private frozenRowsSubject: BehaviorSubject<number>;
+  private resizeLineColorSubject: BehaviorSubject<string>;
 
   headerHeight: number;
   headerWidth: number;
@@ -30,6 +31,7 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
   columnCount: number;
   frozenColumns: number;
   frozenRows: number;
+  resizeLineColor: string;
 
   headerHeight$: Observable<number>;
   headerWidth$: Observable<number>;
@@ -41,6 +43,7 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
   columnCount$: Observable<number>;
   frozenColumns$: Observable<number>;
   frozenRows$: Observable<number>;
+  resizeLineColor$: Observable<string>;
 
   /**
    * Constructor
@@ -55,6 +58,7 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
    * @param headerWidth - Header width
    * @param rowHeight - Row height
    * @param columnWidth - Column width
+   * @param resizeLineColor - Resize line color
    */
   constructor(
     rowCount: number,
@@ -68,6 +72,7 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
     headerWidth = 40,
     rowHeight = 28,
     columnWidth = 100,
+    resizeLineColor = '#4e95ff',
   ) {
     super();
 
@@ -81,6 +86,7 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
     this.columnCount = 0;
     this.minRowHeight = 0;
     this.minColumnWidth = 0;
+    this.resizeLineColor = '';
 
     this.headerHeightSubject = new BehaviorSubject(headerHeight);
     this.disposeWithMe(() => {
@@ -130,6 +136,11 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
     this.frozenRowsSubject = new BehaviorSubject(frozenRows);
     this.disposeWithMe(() => {
       this.frozenRowsSubject.complete();
+    });
+
+    this.resizeLineColorSubject = new BehaviorSubject(resizeLineColor);
+    this.disposeWithMe(() => {
+      this.resizeLineColorSubject.complete();
     });
 
     this.headerHeight$ = this.headerHeightSubject.asObservable();
@@ -201,6 +212,13 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
         this.frozenRows = count;
       }),
     );
+
+    this.resizeLineColor$ = this.resizeLineColorSubject.asObservable();
+    this.disposeWithMe(
+      this.resizeLineColor$.subscribe((color) => {
+        this.resizeLineColor = color;
+      }),
+    );
   }
 
   setHeaderHeight(height: number): void {
@@ -241,5 +259,9 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
 
   setMinColumnWidth(width: number): void {
     this.minColumnWidthSubject.next(width);
+  }
+
+  setResizeLineColor(color: string): void {
+    this.resizeLineColorSubject.next(color);
   }
 }

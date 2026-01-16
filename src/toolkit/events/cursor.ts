@@ -1,26 +1,42 @@
 import type { ICellDimension, IScrollOffset } from '../helpers';
+import type { IExcelEntrance } from '../types';
 import type { Observable } from 'rxjs';
 
 import { combineLatest, debounceTime, distinctUntilChanged, EMPTY, map, merge, of, skip, switchMap, take } from 'rxjs';
-
-import { rootElement } from '../core-elements';
-import { stage } from '../konva-items';
 
 import { RESIZE_TOLERANCE } from './constants';
 import { EventListener } from './listener';
 import { EBoundaryTypes, ECursorTypes, type ICursorListener, type IStageMouseEvent, type TCursorEvent } from './types';
 
+/**
+ * Cursor listener
+ */
 export class CursorListener extends EventListener implements ICursorListener {
   events: IStageMouseEvent;
   cell: ICellDimension;
   scrollOffset: IScrollOffset;
+  excelEntrance: IExcelEntrance;
 
-  constructor(events: IStageMouseEvent, cell: ICellDimension, scrollOffset: IScrollOffset) {
+  /**
+   * Constructor
+   *
+   * @param events - Events
+   * @param cell - Cell dimension
+   * @param scrollOffset - Scroll offset
+   * @param excelEntrance - Excel entrance
+   */
+  constructor(
+    events: IStageMouseEvent,
+    cell: ICellDimension,
+    scrollOffset: IScrollOffset,
+    excelEntrance: IExcelEntrance,
+  ) {
     super();
 
     this.events = events;
     this.cell = cell;
     this.scrollOffset = scrollOffset;
+    this.excelEntrance = excelEntrance;
   }
 
   protected build(): Observable<void> {
@@ -43,7 +59,7 @@ export class CursorListener extends EventListener implements ICursorListener {
       switchMap((isDown) => {
         if (isDown) return EMPTY;
 
-        const bounding = rootElement.getBoundingClientRect();
+        const bounding = this.excelEntrance.rootElement.getBoundingClientRect();
         return combineLatest([
           this.events.mouseMove$,
           this.cell.getCellLocation$.pipe(
@@ -94,7 +110,7 @@ export class CursorListener extends EventListener implements ICursorListener {
         return true;
       }),
       map((e) => {
-        const styles = stage.container().style;
+        const styles = this.excelEntrance.stage.container().style;
         switch (e.type) {
           case ECursorTypes.Empty:
             styles.cursor = 'default';

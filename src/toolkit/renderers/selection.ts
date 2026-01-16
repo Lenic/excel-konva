@@ -1,14 +1,13 @@
 import type { ISelectionStore } from '../events';
 import type { ICellDimension, ISheetConfig, ISheetDimension } from '../helpers';
-import type { ILocation } from '../types';
+import type { IRectPool } from '../pools';
+import type { IExcelEntrance, ILocation } from '../types';
 import type { Observable } from 'rxjs';
 
 import { combineLatest, distinctUntilChanged, map, switchMap, take } from 'rxjs';
 
 import { ServiceLocator } from '../../container';
 import { BORDER_STROKE, SELECTION_FILL_COLOR, SELECTION_STROKE_COLOR } from '../constants';
-import { selectionLayer } from '../konva-items';
-import { activeCellMarkerPool, selectionPool } from '../pools';
 
 import { RenderListener } from './renderer';
 import { IRangeCollection } from './types';
@@ -21,6 +20,9 @@ export class SelectionListener extends RenderListener<number> {
   private sheetDimension: ISheetDimension;
   private cellDimension: ICellDimension;
   private selectionStore: ISelectionStore;
+  private excelEntrance: IExcelEntrance;
+  private selectionPool: IRectPool;
+  private activeCellMarkerPool: IRectPool;
 
   /**
    * Constructor
@@ -28,12 +30,18 @@ export class SelectionListener extends RenderListener<number> {
    * @param sheetDimension Sheet dimension
    * @param cellDimension Cell dimension
    * @param selectionStore Selection store
+   * @param excelEntrance Excel entrance
+   * @param selectionPool Selection pool
+   * @param activeCellMarkerPool Active cell marker pool
    */
   constructor(
     config: ISheetConfig,
     sheetDimension: ISheetDimension,
     cellDimension: ICellDimension,
     selectionStore: ISelectionStore,
+    excelEntrance: IExcelEntrance,
+    selectionPool: IRectPool,
+    activeCellMarkerPool: IRectPool,
   ) {
     super();
 
@@ -41,6 +49,9 @@ export class SelectionListener extends RenderListener<number> {
     this.sheetDimension = sheetDimension;
     this.cellDimension = cellDimension;
     this.selectionStore = selectionStore;
+    this.excelEntrance = excelEntrance;
+    this.selectionPool = selectionPool;
+    this.activeCellMarkerPool = activeCellMarkerPool;
   }
 
   protected build(): Observable<number> {
@@ -61,13 +72,13 @@ export class SelectionListener extends RenderListener<number> {
       ]).pipe(
         map(([[getCellPoint, getColumnWidth, getRowHeight], visual]) => {
           // Draw a sub-selection rectangle
-          function drawSubRange(
+          const drawSubRange = (
             rowStartIndex: number,
             rowEndIndex: number,
             columnStartIndex: number,
             columnEndIndex: number,
             strokeWidth: number,
-          ) {
+          ) => {
             if (rowStartIndex > rowEndIndex || columnStartIndex > columnEndIndex) return;
 
             // 1. Get top-left Konva coordinate (start position)
@@ -82,7 +93,7 @@ export class SelectionListener extends RenderListener<number> {
               return;
             }
 
-            const selectionRect = selectionPool.getRect();
+            const selectionRect = this.selectionPool.getRect();
             selectionRect.setAttrs({
               x: left,
               y: top,
@@ -93,11 +104,11 @@ export class SelectionListener extends RenderListener<number> {
               strokeWidth: strokeWidth,
               listening: false,
             });
-          }
+          };
 
-          function drawActiveCell(cell: ILocation) {
+          const drawActiveCell = (cell: ILocation) => {
             const { x, y } = getCellPoint(cell.rowIndex, cell.columnIndex);
-            const markerRect = activeCellMarkerPool.getRect();
+            const markerRect = this.activeCellMarkerPool.getRect();
             markerRect.setAttrs({
               x,
               y,
@@ -105,7 +116,7 @@ export class SelectionListener extends RenderListener<number> {
               height: getRowHeight(cell.rowIndex),
             });
             markerRect.moveToTop();
-          }
+          };
 
           return [drawSubRange, drawActiveCell] as const;
         }),
@@ -140,8 +151,8 @@ export class SelectionListener extends RenderListener<number> {
           [drawSubRange, drawActiveCell, frozenColumns, frozenRows],
           [selectedRanges, highlightedRows, highlightedColumns],
         ]) => {
-          selectionPool.reset();
-          activeCellMarkerPool.reset();
+          this.selectionPool.reset();
+          this.activeCellMarkerPool.reset();
 
           // Draw selected areas
           selectedRanges.forEach((range) => {
@@ -216,7 +227,7 @@ export class SelectionListener extends RenderListener<number> {
             }
           }
 
-          selectionLayer.batchDraw();
+          this.excelEntrance.selectionLayer.batchDraw();
 
           return selectedRanges.length;
         },

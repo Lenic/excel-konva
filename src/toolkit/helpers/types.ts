@@ -1,5 +1,5 @@
 import type { IDisposable, TIdentifier } from '../../container';
-import type { IDimension, ILocation, IOffset, IPoint, IRectBox, IRegionInfo } from '../types';
+import type { IDimension, IExcelEntrance, ILocation, IOffset, IPoint, IRectBox, IRegionInfo } from '../types';
 import type { Observable } from 'rxjs';
 
 /**
@@ -46,6 +46,10 @@ export interface ISheetConfig extends IDisposable {
    * Frozen rows
    */
   frozenRows: number;
+  /**
+   * Resize line color
+   */
+  resizeLineColor: string;
 
   /**
    * Observable header height
@@ -87,6 +91,10 @@ export interface ISheetConfig extends IDisposable {
    * Observable frozen rows
    */
   frozenRows$: Observable<number>;
+  /**
+   * Observable resize line color
+   */
+  resizeLineColor$: Observable<string>;
 
   /**
    * Set header height
@@ -128,6 +136,10 @@ export interface ISheetConfig extends IDisposable {
    * Set min column width
    */
   setMinColumnWidth(width: number): void;
+  /**
+   * Set resize line color
+   */
+  setResizeLineColor(color: string): void;
 }
 /**
  * Sheet config identifier
@@ -261,6 +273,10 @@ export interface ISheetDimension extends IDisposable {
    * Real size
    */
   realSize: IDimension;
+  /**
+   * Excel entrance
+   */
+  excelEntrance: IExcelEntrance;
 
   /**
    * Observable visual size
@@ -304,6 +320,10 @@ export interface IScrollOffset extends IDisposable {
    * Scroll offset
    */
   offset: IOffset;
+  /**
+   * Excel entrance
+   */
+  excelEntrance: IExcelEntrance;
 
   /**
    * Observable scroll top

@@ -2,6 +2,8 @@ import type { IContainer, TFactory } from '../../container';
 
 import { combineLatest, map } from 'rxjs';
 
+import { IExcelEntrance } from '../types';
+
 import { AccumulatedDimension } from './accumulatedDimension';
 import { CellDimension } from './cellDimension';
 import { DataRegion } from './dataRegion';
@@ -77,10 +79,11 @@ export function registerHelpers(container: IContainer, sheetConfigFactory: TFact
           c.get(ISheetConfig),
           c.get(IAccumulatedDimension, COLUMN_TAG),
           c.get(IAccumulatedDimension, ROW_TAG),
+          c.get(IExcelEntrance),
         ),
     );
 
-  container.register(IScrollOffset).set((c) => new ScrollOffset(c.get(ISheetDimension)));
+  container.register(IScrollOffset).set((c) => new ScrollOffset(c.get(ISheetDimension), c.get(IExcelEntrance)));
 
   container
     .register(IItemBoundary)

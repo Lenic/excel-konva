@@ -1,4 +1,5 @@
 import type { ICellDimension, IItemBoundary, ISheetConfig, ISheetDimension } from '../helpers';
+import type { IExcelEntrance } from '../types';
 import type { IBoundaryInfo, IStageMouseEvent, TMousedownEvent } from './types';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
@@ -19,8 +20,6 @@ import {
 } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
-import { rootElement } from '../core-elements';
-import { stage } from '../konva-items';
 
 import { RESIZE_TOLERANCE } from './constants';
 import { EHeaderClickType, EMousedownTypes } from './types';
@@ -36,6 +35,7 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
   config: ISheetConfig;
   rowBoundary: IItemBoundary;
   sheetDimension: ISheetDimension;
+  excelEntrance: IExcelEntrance;
 
   mousedown$: Observable<Konva.KonvaEventObject<MouseEvent>>;
   mouseMove$: Observable<Konva.KonvaEventObject<MouseEvent>>;
@@ -47,6 +47,13 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
 
   /**
    * Constructor
+   *
+   * @param cellDimension - Cell dimension
+   * @param columnBoundary - Column boundary
+   * @param config - Sheet config
+   * @param rowBoundary - Row boundary
+   * @param sheetDimension - Sheet dimension
+   * @param excelEntrance - Excel entrance
    */
   constructor(
     cellDimension: ICellDimension,
@@ -54,6 +61,7 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
     config: ISheetConfig,
     rowBoundary: IItemBoundary,
     sheetDimension: ISheetDimension,
+    excelEntrance: IExcelEntrance,
   ) {
     super();
 
@@ -62,6 +70,7 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
     this.config = config;
     this.rowBoundary = rowBoundary;
     this.sheetDimension = sheetDimension;
+    this.excelEntrance = excelEntrance;
 
     this.checkResizeBoundary$ = this.buildCheckResizeBoundary$();
 
@@ -78,7 +87,7 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
       share(),
     );
 
-    this.typedMouseDownLeft$ = this.buildTypedMouseDownLeft$();
+    this.typedMouseDownLeft$ = this.buildTypedMouseDownLeft$(excelEntrance.rootElement);
 
     this.dblclick$ = this.getMouseEvent$('dblclick');
   }
@@ -87,15 +96,15 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
     return this.dispositionSubject.pipe(
       switchMap(() =>
         fromEventPattern<Konva.KonvaEventObject<MouseEvent>>(
-          (fn) => stage.on(key, fn),
-          (fn) => stage.off(key, fn),
+          (fn) => this.excelEntrance.stage.on(key, fn),
+          (fn) => this.excelEntrance.stage.off(key, fn),
         ),
       ),
       share(),
     );
   }
 
-  private buildTypedMouseDownLeft$() {
+  private buildTypedMouseDownLeft$(rootElement: HTMLDivElement) {
     return this.mouseDownLeft$.pipe(
       exhaustMap((e) =>
         merge(
@@ -150,7 +159,7 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
           } as TMousedownEvent);
         } else {
           // 1. Check if clicked on empty area of Konva Stage (not a cell)
-          if (e.target === stage) {
+          if (e.target === this.excelEntrance.stage) {
             return of({ mousedownType: EMousedownTypes.Empty, event: e } as TMousedownEvent);
           }
 

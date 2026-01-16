@@ -1,9 +1,8 @@
 import type { IItemBoundary, ISheetConfig, ISheetDimension } from '../helpers';
+import type { IExcelEntrance } from '../types';
 import type { IBoundaryResizeListener, IStageMouseEvent } from './types';
 
 import { EMPTY, finalize, map, of, switchMap, takeUntil, tap, withLatestFrom } from 'rxjs';
-
-import { resizeLine, selectionLayer, stage } from '../konva-items';
 
 import { EventListener } from './listener';
 import { EBoundaryTypes, EMousedownTypes } from './types';
@@ -17,6 +16,7 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
   columnBoundary: IItemBoundary;
   rowBoundary: IItemBoundary;
   events: IStageMouseEvent;
+  excelEntrance: IExcelEntrance;
 
   /**
    * Constructor
@@ -25,6 +25,7 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
    * @param columnBoundary column boundary
    * @param rowBoundary row boundary
    * @param events stage mouse events
+   * @param excelEntrance excel entrance
    */
   constructor(
     config: ISheetConfig,
@@ -32,6 +33,7 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
     columnBoundary: IItemBoundary,
     rowBoundary: IItemBoundary,
     events: IStageMouseEvent,
+    excelEntrance: IExcelEntrance,
   ) {
     super();
 
@@ -40,6 +42,7 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
     this.columnBoundary = columnBoundary;
     this.rowBoundary = rowBoundary;
     this.events = events;
+    this.excelEntrance = excelEntrance;
   }
 
   protected build() {
@@ -69,23 +72,24 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
           // Prevent default mousedown behavior
           e.evt.preventDefault();
           // Set current cursor style
-          stage.container().style.cursor = info.type === EBoundaryTypes.Column ? 'col-resize' : 'row-resize';
+          this.excelEntrance.stage.container().style.cursor =
+            info.type === EBoundaryTypes.Column ? 'col-resize' : 'row-resize';
 
           let initialDimension = 0;
           if (info.type === EBoundaryTypes.Column) {
             initialDimension = getColumnWidth(info.index);
-            resizeLine.points([info.boundary, 0, info.boundary, sheetVisualSize.height]);
+            this.excelEntrance.resizeLine.points([info.boundary, 0, info.boundary, sheetVisualSize.height]);
           } else {
             initialDimension = getRowHeight(info.index);
-            resizeLine.points([0, info.boundary, sheetVisualSize.width, info.boundary]);
+            this.excelEntrance.resizeLine.points([0, info.boundary, sheetVisualSize.width, info.boundary]);
           }
-          resizeLine.visible(true);
+          this.excelEntrance.resizeLine.visible(true);
 
-          selectionLayer.batchDraw();
+          this.excelEntrance.selectionLayer.batchDraw();
 
           const clear$ = this.events.mouseUp$.pipe(
             tap((ue) => {
-              resizeLine.visible(false);
+              this.excelEntrance.resizeLine.visible(false);
 
               if (info.type === EBoundaryTypes.Column) {
                 const dx = ue.evt.clientX - e.evt.clientX;
@@ -98,7 +102,7 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
               }
             }),
             finalize(() => {
-              stage.container().style.cursor = 'default';
+              this.excelEntrance.stage.container().style.cursor = 'default';
             }),
           );
 
@@ -114,7 +118,7 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
                 const widthDelta = newWidth - initialDimension;
                 const newX = currentBoundaryX + widthDelta;
 
-                resizeLine.points([newX, 0, newX, sheetVisualSize.height]);
+                this.excelEntrance.resizeLine.points([newX, 0, newX, sheetVisualSize.height]);
               } else {
                 const dy = me.evt.clientY - e.evt.clientY;
                 const newHeight = Math.max(initialDimension + dy, minRowHeight);
@@ -124,9 +128,9 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
                 const heightDelta = newHeight - initialDimension;
                 const newY = currentBoundaryY + heightDelta;
 
-                resizeLine.points([0, newY, sheetVisualSize.width, newY]);
+                this.excelEntrance.resizeLine.points([0, newY, sheetVisualSize.width, newY]);
               }
-              selectionLayer.batchDraw();
+              this.excelEntrance.selectionLayer.batchDraw();
             }),
           );
         },

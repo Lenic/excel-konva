@@ -1,6 +1,6 @@
 import type { IDisposable, TIdentifier } from '../../container';
 import type { ICellDimension, IItemBoundary, IScrollOffset, ISheetConfig, ISheetDimension } from '../helpers';
-import type { ILocation, IRegionInfo } from '../types';
+import type { IExcelEntrance, ILocation, IRegionInfo } from '../types';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
@@ -244,6 +244,10 @@ export interface IStageMouseEvent extends IDisposable {
    * Sheet dimension
    */
   sheetDimension: ISheetDimension;
+  /**
+   * Excel entrance
+   */
+  excelEntrance: IExcelEntrance;
 
   /**
    * Mouse down event
@@ -371,6 +375,10 @@ export interface IBoundaryResizeListener extends IEventListener {
    * Stage mouse events
    */
   events: IStageMouseEvent;
+  /**
+   * Excel entrance
+   */
+  excelEntrance: IExcelEntrance;
 }
 /**
  * Boundary resize listener interface identifier
@@ -411,6 +419,10 @@ export interface IStageEditListener extends IEventListener {
    * Scroll offset
    */
   offset: IScrollOffset;
+  /**
+   * Excel entrance
+   */
+  excelEntrance: IExcelEntrance;
 }
 /**
  * Stage edit listener interface identifier
@@ -437,6 +449,10 @@ export interface IStageDragListener extends IEventListener {
    * Cell dimension
    */
   cellDimension: ICellDimension;
+  /**
+   * Excel entrance
+   */
+  excelEntrance: IExcelEntrance;
 }
 /**
  * Stage drag listener interface identifier
@@ -506,6 +522,10 @@ export interface ICursorListener extends IEventListener {
    * Scroll offset
    */
   scrollOffset: IScrollOffset;
+  /**
+   * Excel entrance
+   */
+  excelEntrance: IExcelEntrance;
 }
 /**
  * Cursor listener interface identifier

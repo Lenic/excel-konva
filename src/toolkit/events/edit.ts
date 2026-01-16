@@ -1,9 +1,10 @@
 import type { ICellDimension, IScrollOffset } from '../helpers';
+import type { IExcelEntrance } from '../types';
 import type { IStageEditListener, IStageMouseEvent } from './types';
 
 import { EMPTY, filter, fromEvent, map, merge, of, skip, switchMap, take, withLatestFrom } from 'rxjs';
 
-import { editor, rootElement } from '../core-elements';
+import { editor } from '../entrance';
 
 import { EventListener } from './listener';
 
@@ -14,6 +15,7 @@ export class StageEditListener extends EventListener implements IStageEditListen
   events: IStageMouseEvent;
   cellDimension: ICellDimension;
   offset: IScrollOffset;
+  excelEntrance: IExcelEntrance;
 
   /**
    * Constructor
@@ -21,13 +23,20 @@ export class StageEditListener extends EventListener implements IStageEditListen
    * @param events stage mouse events
    * @param cellDimension cell dimension
    * @param offset scroll offset
+   * @param excelEntrance excel entrance
    */
-  constructor(events: IStageMouseEvent, cellDimension: ICellDimension, offset: IScrollOffset) {
+  constructor(
+    events: IStageMouseEvent,
+    cellDimension: ICellDimension,
+    offset: IScrollOffset,
+    excelEntrance: IExcelEntrance,
+  ) {
     super();
 
     this.events = events;
     this.cellDimension = cellDimension;
     this.offset = offset;
+    this.excelEntrance = excelEntrance;
   }
 
   protected build() {
@@ -40,15 +49,13 @@ export class StageEditListener extends EventListener implements IStageEditListen
         this.cellDimension.getCellData$,
       ),
       map(([e, getCellLocation, getCellRectBox, getCellData]) => {
-        const rootRect = rootElement.getBoundingClientRect();
+        const rootRect = this.excelEntrance.rootElement.getBoundingClientRect();
         const cell = getCellLocation(e.evt.clientX - rootRect.left, e.evt.clientY - rootRect.top);
         if (cell.rowIndex === 0 || cell.columnIndex === 0) return;
 
         const { x, y, width, height } = getCellRectBox(cell.rowIndex, cell.columnIndex);
-
-        const containerRect = rootElement.getBoundingClientRect();
-        const screenX = containerRect.left + x;
-        const screenY = containerRect.top + y;
+        const screenX = rootRect.left + x;
+        const screenY = rootRect.top + y;
 
         editor.value = getCellData(cell.rowIndex, cell.columnIndex);
         editor.style.left = `${screenX}px`;

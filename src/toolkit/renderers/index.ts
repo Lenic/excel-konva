@@ -2,6 +2,8 @@ import type { IContainer } from '../../container';
 
 import { ISelectionStore } from '../events';
 import { ICellDimension, IDataRegion, ISheetConfig, ISheetDimension } from '../helpers';
+import { IActiveCellMarkerPool, ICellPool, ISelectionPool } from '../pools';
+import { IExcelEntrance } from '../types';
 
 import { CellListener } from './cell';
 import { RangeCollection } from './range';
@@ -24,10 +26,19 @@ export function registerRenderers(container: IContainer) {
       c.get(ISheetDimension),
       c.get(ICellDimension),
       c.get(ISelectionStore),
+      c.get(IExcelEntrance),
+      c.get(ISelectionPool),
+      c.get(IActiveCellMarkerPool),
     );
   });
 
   container.register(ICellListener).set((c) => {
-    return new CellListener(c.get(ISheetConfig), c.get(ICellDimension), c.get(IDataRegion));
+    return new CellListener(
+      c.get(ISheetConfig),
+      c.get(ICellDimension),
+      c.get(IDataRegion),
+      c.get(IExcelEntrance),
+      c.get(ICellPool),
+    );
   });
 }
