@@ -4,6 +4,7 @@ import type { Observable } from 'rxjs';
 import { BehaviorSubject } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
+import type Konva from 'konva';
 
 export const defaultSheetConfig: Required<ISheetOptions> = {
   headerHeight: 30,
@@ -17,6 +18,32 @@ export const defaultSheetConfig: Required<ISheetOptions> = {
   frozenColumns: 1,
   frozenRows: 1,
   resizeLineColor: '#4e95ff',
+  selectionRectAttrs: {
+    fill: 'rgba(78, 149, 255, 0.15)',
+    stroke: '#4e95ff',
+    strokeWidth: 2,
+  },
+  activeCellRectAttrs: {
+    fill: 'rgba(255, 255, 255, 0.7)',
+    stroke: '#10B981',
+    strokeWidth: 3,
+  },
+  defaultCellRectAttrs: {
+    fill: '#ffffff',
+    stroke: '#e8e8e8',
+    strokeWidth: 0.5,
+  },
+  defaultCellTextAttrs: {
+    fontSize: 12,
+    fontFamily: 'Inter, Arial, sans-serif',
+    fill: '#333333',
+    verticalAlign: 'middle',
+    padding: 8,
+    listening: false,
+    align: 'left',
+    ellipsis: true,
+    wrap: 'none',
+  },
 };
 
 /**
@@ -34,6 +61,10 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
   private frozenColumnsSubject: BehaviorSubject<number>;
   private frozenRowsSubject: BehaviorSubject<number>;
   private resizeLineColorSubject: BehaviorSubject<string>;
+  private selectionRectAttrsSubject: BehaviorSubject<Partial<Konva.RectConfig>>;
+  private activeCellRectAttrsSubject: BehaviorSubject<Partial<Konva.RectConfig>>;
+  private defaultCellRectAttrsSubject: BehaviorSubject<Partial<Konva.RectConfig>>;
+  private defaultCellTextAttrsSubject: BehaviorSubject<Partial<Konva.TextConfig>>;
 
   headerHeight: number;
   headerWidth: number;
@@ -46,6 +77,10 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
   frozenColumns: number;
   frozenRows: number;
   resizeLineColor: string;
+  selectionRectAttrs: Partial<Konva.RectConfig>;
+  activeCellRectAttrs: Partial<Konva.RectConfig>;
+  defaultCellRectAttrs: Partial<Konva.RectConfig>;
+  defaultCellTextAttrs: Partial<Konva.TextConfig>;
 
   headerHeight$: Observable<number>;
   headerWidth$: Observable<number>;
@@ -58,6 +93,10 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
   frozenColumns$: Observable<number>;
   frozenRows$: Observable<number>;
   resizeLineColor$: Observable<string>;
+  selectionRectAttrs$: Observable<Partial<Konva.RectConfig>>;
+  activeCellRectAttrs$: Observable<Partial<Konva.RectConfig>>;
+  defaultCellRectAttrs$: Observable<Partial<Konva.RectConfig>>;
+  defaultCellTextAttrs$: Observable<Partial<Konva.TextConfig>>;
 
   /**
    * Constructor
@@ -74,10 +113,17 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
    * @param columnWidth - Column width
    * @param resizeLineColor - Resize line color
    */
-  constructor(options?: ISheetOptions) {
+  constructor(options: ISheetOptions = {}) {
     super();
 
-    const config: Required<ISheetOptions> = { ...defaultSheetConfig, ...options };
+    const config: Required<ISheetOptions> = {
+      ...defaultSheetConfig,
+      ...options,
+      selectionRectAttrs: { ...defaultSheetConfig.selectionRectAttrs, ...options.selectionRectAttrs },
+      activeCellRectAttrs: { ...defaultSheetConfig.activeCellRectAttrs, ...options.activeCellRectAttrs },
+      defaultCellRectAttrs: { ...defaultSheetConfig.defaultCellRectAttrs, ...options.defaultCellRectAttrs },
+      defaultCellTextAttrs: { ...defaultSheetConfig.defaultCellTextAttrs, ...options.defaultCellTextAttrs },
+    };
 
     this.headerHeight = config.headerHeight;
     this.headerWidth = config.headerWidth;
@@ -90,6 +136,10 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
     this.minRowHeight = config.minRowHeight;
     this.minColumnWidth = config.minColumnWidth;
     this.resizeLineColor = config.resizeLineColor;
+    this.selectionRectAttrs = config.selectionRectAttrs;
+    this.activeCellRectAttrs = config.activeCellRectAttrs;
+    this.defaultCellRectAttrs = config.defaultCellRectAttrs;
+    this.defaultCellTextAttrs = config.defaultCellTextAttrs;
 
     this.headerHeightSubject = new BehaviorSubject(config.headerHeight);
     this.disposeWithMe(() => {
@@ -144,6 +194,26 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
     this.resizeLineColorSubject = new BehaviorSubject(config.resizeLineColor);
     this.disposeWithMe(() => {
       this.resizeLineColorSubject.complete();
+    });
+
+    this.selectionRectAttrsSubject = new BehaviorSubject(config.selectionRectAttrs);
+    this.disposeWithMe(() => {
+      this.selectionRectAttrsSubject.complete();
+    });
+
+    this.activeCellRectAttrsSubject = new BehaviorSubject(config.activeCellRectAttrs);
+    this.disposeWithMe(() => {
+      this.activeCellRectAttrsSubject.complete();
+    });
+
+    this.defaultCellRectAttrsSubject = new BehaviorSubject(config.defaultCellRectAttrs);
+    this.disposeWithMe(() => {
+      this.defaultCellRectAttrsSubject.complete();
+    });
+
+    this.defaultCellTextAttrsSubject = new BehaviorSubject(config.defaultCellTextAttrs);
+    this.disposeWithMe(() => {
+      this.defaultCellTextAttrsSubject.complete();
     });
 
     this.headerHeight$ = this.headerHeightSubject.asObservable();
@@ -222,6 +292,34 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
         this.resizeLineColor = color;
       }),
     );
+
+    this.selectionRectAttrs$ = this.selectionRectAttrsSubject.asObservable();
+    this.disposeWithMe(
+      this.selectionRectAttrs$.subscribe((attrs) => {
+        this.selectionRectAttrs = attrs;
+      }),
+    );
+
+    this.activeCellRectAttrs$ = this.activeCellRectAttrsSubject.asObservable();
+    this.disposeWithMe(
+      this.activeCellRectAttrs$.subscribe((attrs) => {
+        this.activeCellRectAttrs = attrs;
+      }),
+    );
+
+    this.defaultCellRectAttrs$ = this.defaultCellRectAttrsSubject.asObservable();
+    this.disposeWithMe(
+      this.defaultCellRectAttrs$.subscribe((attrs) => {
+        this.defaultCellRectAttrs = attrs;
+      }),
+    );
+
+    this.defaultCellTextAttrs$ = this.defaultCellTextAttrsSubject.asObservable();
+    this.disposeWithMe(
+      this.defaultCellTextAttrs$.subscribe((attrs) => {
+        this.defaultCellTextAttrs = attrs;
+      }),
+    );
   }
 
   setHeaderHeight(height: number): void {
@@ -266,5 +364,21 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
 
   setResizeLineColor(color: string): void {
     this.resizeLineColorSubject.next(color);
+  }
+
+  setSelectionRectAttrs(attrs: Partial<Konva.RectConfig>): void {
+    this.selectionRectAttrsSubject.next(attrs);
+  }
+
+  setActiveCellRectAttrs(attrs: Partial<Konva.RectConfig>): void {
+    this.activeCellRectAttrsSubject.next(attrs);
+  }
+
+  setDefaultCellRectAttrs(attrs: Partial<Konva.RectConfig>): void {
+    this.defaultCellRectAttrsSubject.next(attrs);
+  }
+
+  setDefaultCellTextAttrs(attrs: Partial<Konva.TextConfig>): void {
+    this.defaultCellTextAttrsSubject.next(attrs);
   }
 }

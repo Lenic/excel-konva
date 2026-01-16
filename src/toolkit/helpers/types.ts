@@ -1,5 +1,6 @@
 import type { IDisposable, TIdentifier } from '../../container';
 import type { IDimension, IExcelEntrance, ILocation, IOffset, IPoint, IRectBox, IRegionInfo } from '../types';
+import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
 export interface ISheetOptions {
@@ -47,6 +48,22 @@ export interface ISheetOptions {
    * Resize line color: default is #4e95ff
    */
   resizeLineColor?: string;
+  /**
+   * Selection rect attrs: default is rgba(78, 149, 255, 0.15)
+   */
+  selectionRectAttrs?: Partial<Konva.RectConfig>;
+  /**
+   * Active cell rect attrs: default is rgba(255, 255, 255, 0.7)
+   */
+  activeCellRectAttrs?: Partial<Konva.RectConfig>;
+  /**
+   * Default cell rect attrs: default is #ffffff
+   */
+  defaultCellRectAttrs?: Partial<Konva.RectConfig>;
+  /**
+   * Default cell text attrs: default is #ffffff
+   */
+  defaultCellTextAttrs?: Partial<Konva.TextConfig>;
 }
 
 /**
@@ -97,6 +114,22 @@ export interface ISheetConfig extends Required<ISheetOptions>, IDisposable {
    * Observable resize line color
    */
   resizeLineColor$: Observable<string>;
+  /**
+   * Observable selection rect attrs
+   */
+  selectionRectAttrs$: Observable<Partial<Konva.RectConfig>>;
+  /**
+   * Observable active cell rect attrs
+   */
+  activeCellRectAttrs$: Observable<Partial<Konva.RectConfig>>;
+  /**
+   * Observable default cell rect attrs
+   */
+  defaultCellRectAttrs$: Observable<Partial<Konva.RectConfig>>;
+  /**
+   * Observable default cell text attrs
+   */
+  defaultCellTextAttrs$: Observable<Partial<Konva.TextConfig>>;
 
   /**
    * Set header height
@@ -142,6 +175,22 @@ export interface ISheetConfig extends Required<ISheetOptions>, IDisposable {
    * Set resize line color
    */
   setResizeLineColor(color: string): void;
+  /**
+   * Set selection rect attrs
+   */
+  setSelectionRectAttrs(attrs: Partial<Konva.RectConfig>): void;
+  /**
+   * Set active cell rect attrs
+   */
+  setActiveCellRectAttrs(attrs: Partial<Konva.RectConfig>): void;
+  /**
+   * Set default cell rect attrs
+   */
+  setDefaultCellRectAttrs(attrs: Partial<Konva.RectConfig>): void;
+  /**
+   * Set default cell text attrs
+   */
+  setDefaultCellTextAttrs(attrs: Partial<Konva.TextConfig>): void;
 }
 /**
  * Sheet config identifier
