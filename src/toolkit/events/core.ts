@@ -158,13 +158,12 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
             event: e,
           } as TMousedownEvent);
         } else {
-          // 1. Check if clicked on empty area of Konva Stage (not a cell)
-          if (e.target === this.excelEntrance.stage) {
+          const activeCell = getCellLocation(relX, relY);
+
+          // Return empty click if clicked on empty area of Konva Stage (not a cell)
+          if (activeCell.columnIndex === -1 || activeCell.rowIndex === -1) {
             return of({ mousedownType: EMousedownTypes.Empty, event: e } as TMousedownEvent);
           }
-
-          // 2. Start cell selection
-          const activeCell = getCellLocation(relX, relY);
 
           const isRowHeaderClick = activeCell.columnIndex === 0 && activeCell.rowIndex !== 0;
           const isColumnHeaderClick = activeCell.rowIndex === 0 && activeCell.columnIndex !== 0;
