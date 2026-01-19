@@ -44,6 +44,7 @@ export const defaultSheetConfig: Required<ISheetOptions> = {
     ellipsis: true,
     wrap: 'none',
   },
+  bufferCellCount: 1,
 };
 
 /**

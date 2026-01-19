@@ -108,6 +108,10 @@ export interface ISheetOptions {
    * ```
    */
   defaultCellTextAttrs?: Partial<Konva.TextConfig>;
+  /**
+   * Number of buffer cells: default is 1
+   */
+  bufferCellCount?: number;
 }
 
 /**
