@@ -1,13 +1,6 @@
+import type { TIdentifier } from '../container';
 import type Konva from 'konva';
-
-export interface ISelectedRange {
-  startRow: number;
-  endRow: number;
-  startCol: number;
-  endCol: number;
-  activeRow: number;
-  activeCol: number;
-}
+import type { Observable } from 'rxjs';
 
 /**
  * Location information of the cell
@@ -98,16 +91,76 @@ export interface IRegionInfo {
   endColumnIndex: number;
 }
 
-export interface IUserState {
-  scrollX: number;
-  scrollY: number;
-  selectedRanges: ISelectedRange[];
-  startCell: ILocation | null;
-  lastRenderTime: number;
-  animationFrameId: number | null;
-}
-
+/**
+ * Cell region options
+ */
 export interface ICellRegionOptions {
+  /**
+   * Rectangle attributes
+   */
   rectAttrs: Omit<Konva.RectConfig, 'x' | 'y' | 'width' | 'height'>;
+  /**
+   * Text attributes
+   */
   textAttrs: Omit<Konva.TextConfig, 'x' | 'y' | 'width' | 'height' | 'text'>;
 }
+
+/**
+ * Excel entrance interface
+ */
+export interface IExcelEntrance {
+  /**
+   * Root html element
+   */
+  rootElement: HTMLDivElement;
+  /**
+   * Scroll wrapper html element
+   */
+  scrollWrapper: HTMLDivElement;
+  /**
+   * Virtual content html element
+   */
+  virtualContent: HTMLDivElement;
+
+  /**
+   * Konva stage
+   */
+  stage: Konva.Stage;
+  /**
+   * Background layer
+   */
+  backgroundLayer: Konva.Layer;
+  /**
+   * Selection layer
+   */
+  selectionLayer: Konva.Layer;
+  /**
+   * Scrollable group
+   */
+  scrollableGroup: Konva.Group;
+  /**
+   * Side group
+   */
+  sideGroup: Konva.Group;
+  /**
+   * Header group
+   */
+  headerGroup: Konva.Group;
+  /**
+   * Corner group
+   */
+  cornerGroup: Konva.Group;
+  /**
+   * Resize line
+   */
+  resizeLine: Konva.Line;
+
+  /**
+   * Get cell group by row and column index
+   */
+  getCellGroup$: Observable<(rowIndex: number, columnIndex: number) => Konva.Group>;
+}
+/**
+ * Excel entrance interface identifier
+ */
+export const IExcelEntrance: TIdentifier<IExcelEntrance> = Symbol('IExcelEntrance');

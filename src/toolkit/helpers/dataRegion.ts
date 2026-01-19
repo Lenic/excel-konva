@@ -3,7 +3,6 @@ import type { IDataRegion, IItemBoundary, ISheetConfig, ISheetDimension } from '
 
 import { combineLatest, map, type Observable, shareReplay, switchMap, take } from 'rxjs';
 
-import { BUFFER_CELL_COUNT } from '../constants';
 import { binarySearch, ObservableDisposable } from '../core';
 
 /**
@@ -51,7 +50,7 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
   private buildDataRegion() {
     const column$ = this.columnBoundary.getBoundary$.pipe(
       switchMap((getColumnLeft) =>
-        combineLatest([this.columnBoundary.accumulated.get$, this.config.frozenColumns$]).pipe(
+        combineLatest([this.columnBoundary.accumulated.get$, this.config.get$('frozenColumns')]).pipe(
           take(1),
           map(
             ([getPrecedingTotalColumnWidth, frozenColumns]) =>
@@ -63,7 +62,7 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
 
     const row$ = this.rowBoundary.getBoundary$.pipe(
       switchMap((getRowTop) =>
-        combineLatest([this.rowBoundary.accumulated.get$, this.config.frozenRows$]).pipe(
+        combineLatest([this.rowBoundary.accumulated.get$, this.config.get$('frozenRows')]).pipe(
           take(1),
           map(
             ([getPrecedingTotalRowHeight, frozenRows]) => [getRowTop, getPrecedingTotalRowHeight, frozenRows] as const,
@@ -75,9 +74,10 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
     return combineLatest([
       column$,
       row$,
-      this.config.columnCount$,
-      this.config.rowCount$,
+      this.config.get$('columnCount'),
+      this.config.get$('rowCount'),
       this.sheetDimension.visualSize$,
+      this.config.get$('bufferCellCount'),
     ]).pipe(
       map(
         ([
@@ -86,6 +86,7 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
           columnCount,
           rowCount,
           sheetVisualSize,
+          bufferCellCount,
         ]) => {
           const [startColumnIndex, endColumnIndex] = this.findVisibleRange(
             getColumnLeft,
@@ -93,6 +94,7 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
             columnCount,
             getPrecedingTotalColumnWidth(frozenColumns),
             sheetVisualSize.width,
+            bufferCellCount,
           );
 
           const [startRowIndex, endRowIndex] = this.findVisibleRange(
@@ -101,6 +103,7 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
             rowCount,
             getPrecedingTotalRowHeight(frozenRows),
             sheetVisualSize.height,
+            bufferCellCount,
           );
 
           return { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } as IRegionInfo;
@@ -118,6 +121,7 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
    * @param totalCount - Total number of rows (columns)
    * @param viewportMin - Minimum coordinate value of the visible area
    * @param viewportMax - Maximum coordinate value of the visible area
+   * @param bufferCellCount - Number of buffer cells
    */
   private findVisibleRange(
     getBoundaryValue: (value: number) => number,
@@ -125,6 +129,7 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
     totalCount: number,
     viewportMin: number,
     viewportMax: number,
+    bufferCellCount: number,
   ) {
     /**
      * Binary search: Find the first element that becomes visible due to scrolling
@@ -160,8 +165,8 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
     );
 
     // Apply buffer
-    start = Math.max(frozenCount, start - BUFFER_CELL_COUNT);
-    end = Math.min(totalCount, end + BUFFER_CELL_COUNT);
+    start = Math.max(frozenCount, start - bufferCellCount);
+    end = Math.min(totalCount, end + bufferCellCount);
 
     return [start, end] as const;
   }

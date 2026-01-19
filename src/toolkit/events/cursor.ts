@@ -1,26 +1,41 @@
 import type { ICellDimension, IScrollOffset } from '../helpers';
+import type { IExcelEntrance } from '../types';
 import type { Observable } from 'rxjs';
 
 import { combineLatest, debounceTime, distinctUntilChanged, EMPTY, map, merge, of, skip, switchMap, take } from 'rxjs';
 
-import { rootElement } from '../core-elements';
-import { stage } from '../konva-items';
-
-import { RESIZE_TOLERANCE } from './constants';
 import { EventListener } from './listener';
 import { EBoundaryTypes, ECursorTypes, type ICursorListener, type IStageMouseEvent, type TCursorEvent } from './types';
 
+/**
+ * Cursor listener
+ */
 export class CursorListener extends EventListener implements ICursorListener {
   events: IStageMouseEvent;
   cell: ICellDimension;
   scrollOffset: IScrollOffset;
+  excelEntrance: IExcelEntrance;
 
-  constructor(events: IStageMouseEvent, cell: ICellDimension, scrollOffset: IScrollOffset) {
+  /**
+   * Constructor
+   *
+   * @param events - Events
+   * @param cell - Cell dimension
+   * @param scrollOffset - Scroll offset
+   * @param excelEntrance - Excel entrance
+   */
+  constructor(
+    events: IStageMouseEvent,
+    cell: ICellDimension,
+    scrollOffset: IScrollOffset,
+    excelEntrance: IExcelEntrance,
+  ) {
     super();
 
     this.events = events;
     this.cell = cell;
     this.scrollOffset = scrollOffset;
+    this.excelEntrance = excelEntrance;
   }
 
   protected build(): Observable<void> {
@@ -43,7 +58,7 @@ export class CursorListener extends EventListener implements ICursorListener {
       switchMap((isDown) => {
         if (isDown) return EMPTY;
 
-        const bounding = rootElement.getBoundingClientRect();
+        const bounding = this.excelEntrance.rootElement.getBoundingClientRect();
         return combineLatest([
           this.events.mouseMove$,
           this.cell.getCellLocation$.pipe(
@@ -54,16 +69,17 @@ export class CursorListener extends EventListener implements ICursorListener {
               ),
             ),
           ),
+          this.events.config.get$('resizeTolerance'),
         ]).pipe(
-          switchMap(([e, [getCellLocation, getCellRectBox]]): Observable<TCursorEvent> => {
+          switchMap(([e, [getCellLocation, getCellRectBox], resizeTolerance]): Observable<TCursorEvent> => {
             const relX = e.evt.clientX - bounding.left;
             const relY = e.evt.clientY - bounding.top;
 
             const location = getCellLocation(relX, relY);
             if (location.rowIndex === 0) {
               const rect = getCellRectBox(location.rowIndex, location.columnIndex);
-              const leftLeftX = rect.x - RESIZE_TOLERANCE;
-              const leftRightX = rect.x + RESIZE_TOLERANCE;
+              const leftLeftX = rect.x - resizeTolerance;
+              const leftRightX = rect.x + resizeTolerance;
               const rightLeftX = leftLeftX + rect.width;
               const rightRightX = leftRightX + rect.width;
               if ((leftLeftX <= relX && relX <= leftRightX) || (rightLeftX <= relX && relX <= rightRightX)) {
@@ -71,8 +87,8 @@ export class CursorListener extends EventListener implements ICursorListener {
               }
             } else if (location.columnIndex === 0) {
               const rect = getCellRectBox(location.rowIndex, location.columnIndex);
-              const topTopY = rect.y - RESIZE_TOLERANCE;
-              const topBottomY = rect.y + RESIZE_TOLERANCE;
+              const topTopY = rect.y - resizeTolerance;
+              const topBottomY = rect.y + resizeTolerance;
               const bottomTopY = topTopY + rect.height;
               const bottomBottomY = topBottomY + rect.height;
               if ((topTopY <= relY && relY <= topBottomY) || (bottomTopY <= relY && relY <= bottomBottomY)) {
@@ -94,7 +110,7 @@ export class CursorListener extends EventListener implements ICursorListener {
         return true;
       }),
       map((e) => {
-        const styles = stage.container().style;
+        const styles = this.excelEntrance.stage.container().style;
         switch (e.type) {
           case ECursorTypes.Empty:
             styles.cursor = 'default';

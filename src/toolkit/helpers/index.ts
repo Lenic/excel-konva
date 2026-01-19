@@ -2,6 +2,8 @@ import type { IContainer, TFactory } from '../../container';
 
 import { combineLatest, map } from 'rxjs';
 
+import { IExcelEntrance } from '../types';
+
 import { AccumulatedDimension } from './accumulatedDimension';
 import { CellDimension } from './cellDimension';
 import { DataRegion } from './dataRegion';
@@ -47,7 +49,7 @@ export function registerHelpers(container: IContainer, sheetConfigFactory: TFact
     .set((c) => {
       const config = c.get(ISheetConfig);
       return new ItemDimension(
-        combineLatest([config.minColumnWidth$, config.headerWidth$, config.columnWidth$]).pipe(
+        combineLatest([config.get$('minColumnWidth'), config.get$('headerWidth'), config.get$('columnWidth')]).pipe(
           map((v) => ({ minDimension: v[0], headerDimension: v[1], defaultDimension: v[2] })),
         ),
       );
@@ -55,7 +57,7 @@ export function registerHelpers(container: IContainer, sheetConfigFactory: TFact
     .set((c) => {
       const config = c.get(ISheetConfig);
       return new ItemDimension(
-        combineLatest([config.minRowHeight$, config.headerHeight$, config.rowHeight$]).pipe(
+        combineLatest([config.get$('minRowHeight'), config.get$('headerHeight'), config.get$('rowHeight')]).pipe(
           map((v) => ({ minDimension: v[0], headerDimension: v[1], defaultDimension: v[2] })),
         ),
       );
@@ -64,10 +66,13 @@ export function registerHelpers(container: IContainer, sheetConfigFactory: TFact
   container
     .register(IAccumulatedDimension)
     .set(
-      (c) => new AccumulatedDimension(c.get(IItemDimension, COLUMN_TAG), c.get(ISheetConfig).columnCount$),
+      (c) => new AccumulatedDimension(c.get(IItemDimension, COLUMN_TAG), c.get(ISheetConfig).get$('columnCount')),
       COLUMN_TAG,
     )
-    .set((c) => new AccumulatedDimension(c.get(IItemDimension, ROW_TAG), c.get(ISheetConfig).rowCount$), ROW_TAG);
+    .set(
+      (c) => new AccumulatedDimension(c.get(IItemDimension, ROW_TAG), c.get(ISheetConfig).get$('rowCount')),
+      ROW_TAG,
+    );
 
   container
     .register(ISheetDimension)
@@ -77,10 +82,11 @@ export function registerHelpers(container: IContainer, sheetConfigFactory: TFact
           c.get(ISheetConfig),
           c.get(IAccumulatedDimension, COLUMN_TAG),
           c.get(IAccumulatedDimension, ROW_TAG),
+          c.get(IExcelEntrance),
         ),
     );
 
-  container.register(IScrollOffset).set((c) => new ScrollOffset(c.get(ISheetDimension)));
+  container.register(IScrollOffset).set((c) => new ScrollOffset(c.get(ISheetDimension), c.get(IExcelEntrance)));
 
   container
     .register(IItemBoundary)
@@ -88,7 +94,7 @@ export function registerHelpers(container: IContainer, sheetConfigFactory: TFact
       (c) =>
         new ItemBoundary(c.get(IAccumulatedDimension, COLUMN_TAG), {
           scrollValue$: c.get(IScrollOffset).left$,
-          frozenCount$: c.get(ISheetConfig).frozenColumns$,
+          frozenCount$: c.get(ISheetConfig).get$('frozenColumns'),
         }),
       COLUMN_TAG,
     )
@@ -96,7 +102,7 @@ export function registerHelpers(container: IContainer, sheetConfigFactory: TFact
       (c) =>
         new ItemBoundary(c.get(IAccumulatedDimension, ROW_TAG), {
           scrollValue$: c.get(IScrollOffset).top$,
-          frozenCount$: c.get(ISheetConfig).frozenRows$,
+          frozenCount$: c.get(ISheetConfig).get$('frozenRows'),
         }),
       ROW_TAG,
     );

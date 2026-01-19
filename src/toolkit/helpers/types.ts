@@ -1,133 +1,148 @@
 import type { IDisposable, TIdentifier } from '../../container';
-import type { IDimension, ILocation, IOffset, IPoint, IRectBox, IRegionInfo } from '../types';
+import type { IDimension, IExcelEntrance, ILocation, IOffset, IPoint, IRectBox, IRegionInfo } from '../types';
+import type Konva from 'konva';
 import type { Observable } from 'rxjs';
+
+export interface ISheetOptions {
+  /**
+   * Header height: default is 30px
+   */
+  headerHeight?: number;
+  /**
+   * Header width: default is 40px
+   */
+  headerWidth?: number;
+  /**
+   * Row height: default is 28px
+   */
+  rowHeight?: number;
+  /**
+   * Min row height: default is 15px
+   */
+  minRowHeight?: number;
+  /**
+   * Column width: default is 100px
+   */
+  columnWidth?: number;
+  /**
+   * Min column width: default is 20px
+   */
+  minColumnWidth?: number;
+  /**
+   * Row count: default is 20
+   */
+  rowCount?: number;
+  /**
+   * Column count: default is 8
+   */
+  columnCount?: number;
+  /**
+   * Frozen columns: default is 1
+   */
+  frozenColumns?: number;
+  /**
+   * Frozen rows: default is 1
+   */
+  frozenRows?: number;
+  /**
+   * Resize line color: default is #4e95ff
+   */
+  resizeLineColor?: string;
+  /**
+   * Selection rect attrs
+   *
+   * The following object defines the default values:
+   * ```json
+   * {
+   *   fill: 'rgba(78, 149, 255, 0.15)',
+   *   stroke: '#4e95ff',
+   *   strokeWidth: 2
+   * }
+   * ```
+   */
+  selectionRectAttrs?: Partial<Konva.RectConfig>;
+  /**
+   * Active cell rect attrs
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   *   fill: 'rgba(255, 255, 255, 0.7)',
+   *   stroke: '#10B981',
+   *   strokeWidth: 3
+   * }
+   * ```
+   */
+  activeCellRectAttrs?: Partial<Konva.RectConfig>;
+  /**
+   * Default cell rect attrs
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   *   fill: '#ffffff',
+   *   stroke: '#e8e8e8',
+   *   strokeWidth: 0.5
+   * }
+   */
+  defaultCellRectAttrs?: Partial<Konva.RectConfig>;
+  /**
+   * Default cell text attrs
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   *   fontSize: 12,
+   *   fontFamily: 'Inter, Arial, sans-serif',
+   *   fill: '#333333',
+   *   verticalAlign: 'middle',
+   *   padding: 8,
+   *   listening: false,
+   *   align: 'left',
+   *   ellipsis: true,
+   *   wrap: 'none'
+   * }
+   * ```
+   */
+  defaultCellTextAttrs?: Partial<Konva.TextConfig>;
+  /**
+   * Number of buffer cells: default is 1
+   */
+  bufferCellCount?: number;
+  /**
+   * The tolerance of mouse detection boundary (pixels): default is 5
+   */
+  resizeTolerance?: number;
+}
 
 /**
  * Sheet Config
  */
 export interface ISheetConfig extends IDisposable {
   /**
-   * Header height
+   * Options
    */
-  headerHeight: number;
+  options: Required<ISheetOptions>;
   /**
-   * Header width
+   * Observable options
    */
-  headerWidth: number;
-  /**
-   * Row height
-   */
-  rowHeight: number;
-  /**
-   * Min row height
-   */
-  minRowHeight: number;
-  /**
-   * Column width
-   */
-  columnWidth: number;
-  /**
-   * Min column width
-   */
-  minColumnWidth: number;
-  /**
-   * Row count
-   */
-  rowCount: number;
-  /**
-   * Column count
-   */
-  columnCount: number;
-  /**
-   * Frozen columns
-   */
-  frozenColumns: number;
-  /**
-   * Frozen rows
-   */
-  frozenRows: number;
+  options$: Observable<Required<ISheetOptions>>;
 
   /**
-   * Observable header height
+   * Get option value
+   * @param key Option key
+   * @returns Observable option value
    */
-  headerHeight$: Observable<number>;
-  /**
-   * Observable header width
-   */
-  headerWidth$: Observable<number>;
-  /**
-   * Observable row height
-   */
-  rowHeight$: Observable<number>;
-  /**
-   * Observable min row height
-   */
-  minRowHeight$: Observable<number>;
-  /**
-   * Observable column width
-   */
-  columnWidth$: Observable<number>;
-  /**
-   * Observable min column width
-   */
-  minColumnWidth$: Observable<number>;
-  /**
-   * Observable row count
-   */
-  rowCount$: Observable<number>;
-  /**
-   * Observable column count
-   */
-  columnCount$: Observable<number>;
-  /**
-   * Observable frozen columns
-   */
-  frozenColumns$: Observable<number>;
-  /**
-   * Observable frozen rows
-   */
-  frozenRows$: Observable<number>;
+  get$<K extends keyof Required<ISheetOptions>>(key: K): Observable<Required<ISheetOptions>[K]>;
 
   /**
-   * Set header height
+   * Set options
+   * @param options - Options to set or a function to compute the new options
    */
-  setHeaderHeight(height: number): void;
-  /**
-   * Set header width
-   */
-  setHeaderWidth(width: number): void;
-  /**
-   * Set row height
-   */
-  setRowHeight(height: number): void;
-  /**
-   * Set column width
-   */
-  setColumnWidth(width: number): void;
-  /**
-   * Set row count
-   */
-  setRowCount(count: number): void;
-  /**
-   * Set column count
-   */
-  setColumnCount(count: number): void;
-  /**
-   * Set frozen columns
-   */
-  setFrozenColumns(count: number): void;
-  /**
-   * Set frozen rows
-   */
-  setFrozenRows(count: number): void;
-  /**
-   * Set min row height
-   */
-  setMinRowHeight(height: number): void;
-  /**
-   * Set min column width
-   */
-  setMinColumnWidth(width: number): void;
+  set(options: Partial<ISheetOptions> | ((options: Required<ISheetOptions>) => Required<ISheetOptions>)): void;
 }
 /**
  * Sheet config identifier
@@ -261,6 +276,10 @@ export interface ISheetDimension extends IDisposable {
    * Real size
    */
   realSize: IDimension;
+  /**
+   * Excel entrance
+   */
+  excelEntrance: IExcelEntrance;
 
   /**
    * Observable visual size
@@ -304,6 +323,10 @@ export interface IScrollOffset extends IDisposable {
    * Scroll offset
    */
   offset: IOffset;
+  /**
+   * Excel entrance
+   */
+  excelEntrance: IExcelEntrance;
 
   /**
    * Observable scroll top

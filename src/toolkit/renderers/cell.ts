@@ -1,11 +1,9 @@
 import type { ICellDimension, IDataRegion, ISheetConfig } from '../helpers';
-import type { ICellRegionOptions, IRegionInfo } from '../types';
+import type { ICellPool } from '../pools';
+import type { ICellRegionOptions, IExcelEntrance, IRegionInfo } from '../types';
 import type { Observable } from 'rxjs';
 
 import { combineLatest, map, switchMap, take } from 'rxjs';
-
-import { backgroundLayer, buildGetCellGroup$ } from '../konva-items';
-import { cellPool } from '../pools';
 
 import { RenderListener } from './renderer';
 
@@ -13,22 +11,34 @@ export class CellListener extends RenderListener<IRegionInfo> {
   private config: ISheetConfig;
   private cellDimension: ICellDimension;
   private dataRegion: IDataRegion;
+  private excelEntrance: IExcelEntrance;
+  private cellPool: ICellPool;
 
-  constructor(config: ISheetConfig, cellDimension: ICellDimension, dataRegion: IDataRegion) {
+  constructor(
+    config: ISheetConfig,
+    cellDimension: ICellDimension,
+    dataRegion: IDataRegion,
+    excelEntrance: IExcelEntrance,
+    cellPool: ICellPool,
+  ) {
     super();
 
     this.config = config;
     this.cellDimension = cellDimension;
     this.dataRegion = dataRegion;
+    this.excelEntrance = excelEntrance;
+    this.cellPool = cellPool;
   }
 
   protected build(): Observable<IRegionInfo> {
     return combineLatest([
-      buildGetCellGroup$(),
+      this.excelEntrance.getCellGroup$,
       this.cellDimension.getCellRectBox$,
       this.cellDimension.getCellData$,
+      this.cellPool.getRect$,
+      this.cellPool.getText$,
     ]).pipe(
-      switchMap(([getCellGroup, getCellRectBox, getCellData]) => {
+      switchMap(([getCellGroup, getCellRectBox, getCellData, getRect, getText]) => {
         /**
          * Draw target cell
          *
@@ -36,11 +46,11 @@ export class CellListener extends RenderListener<IRegionInfo> {
          * @param columnIndex - The column index of the cell
          * @param options - Configuration options for the cell
          */
-        function renderCellRegion(rowIndex: number, columnIndex: number, options: ICellRegionOptions) {
+        const renderCellRegion = (rowIndex: number, columnIndex: number, options: ICellRegionOptions) => {
           const group = getCellGroup(rowIndex, columnIndex);
           const { x, y, width, height } = getCellRectBox(rowIndex, columnIndex);
 
-          const rect = cellPool.getRect();
+          const rect = getRect();
           rect.setAttrs({
             ...options.rectAttrs,
             x,
@@ -50,7 +60,7 @@ export class CellListener extends RenderListener<IRegionInfo> {
           });
           if (rect.parent !== group) rect.moveTo(group);
 
-          const text = cellPool.getText();
+          const text = getText();
           text.setAttrs({
             ...options.textAttrs,
             x,
@@ -60,18 +70,18 @@ export class CellListener extends RenderListener<IRegionInfo> {
             text: getCellData(rowIndex, columnIndex),
           });
           if (text.parent !== group) text.moveTo(group);
-        }
+        };
 
         return combineLatest([
           this.dataRegion.region$,
-          this.config.frozenColumns$.pipe(take(1)),
-          this.config.frozenRows$.pipe(take(1)),
+          this.config.get$('frozenColumns').pipe(take(1)),
+          this.config.get$('frozenRows').pipe(take(1)),
         ]).pipe(map((items) => [renderCellRegion, ...items] as const));
       }),
       map(([renderCellRegion, dataRegion, frozenColumns, frozenRows]) => {
         const { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } = dataRegion;
 
-        cellPool.reset();
+        this.cellPool.reset();
 
         // Render Scrollable Data
         for (let r = startRowIndex; r < endRowIndex; r++) {
@@ -157,7 +167,7 @@ export class CellListener extends RenderListener<IRegionInfo> {
           }
         }
 
-        backgroundLayer.batchDraw();
+        this.excelEntrance.backgroundLayer.batchDraw();
 
         return dataRegion;
       }),

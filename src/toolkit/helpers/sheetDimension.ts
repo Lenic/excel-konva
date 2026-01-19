@@ -1,10 +1,9 @@
-import type { IDimension } from '../types';
+import type { IDimension, IExcelEntrance } from '../types';
 import type { IAccumulatedDimension, ISheetConfig, ISheetDimension } from './types';
 
 import { animationFrameScheduler, auditTime, combineLatest, map, Observable, shareReplay, startWith } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
-import { rootElement } from '../core-elements';
 
 /**
  * Sheet dimension
@@ -18,6 +17,7 @@ export class SheetDimension extends ObservableDisposable implements ISheetDimens
   realWidth: number;
   realHeight: number;
   realSize: IDimension;
+  excelEntrance: IExcelEntrance;
 
   visualSize$: Observable<IDimension>;
   realWidth$: Observable<number>;
@@ -30,31 +30,38 @@ export class SheetDimension extends ObservableDisposable implements ISheetDimens
    * @param config - Sheet
    * @param column - Accumulated column dimension
    * @param row - Accumulated row dimension
+   * @param excelEntrance - Excel entrance
    */
-  constructor(config: ISheetConfig, column: IAccumulatedDimension, row: IAccumulatedDimension) {
+  constructor(
+    config: ISheetConfig,
+    column: IAccumulatedDimension,
+    row: IAccumulatedDimension,
+    excelEntrance: IExcelEntrance,
+  ) {
     super();
 
     this.config = config;
     this.column = column;
     this.row = row;
+    this.excelEntrance = excelEntrance;
 
     this.visualSize = { width: 0, height: 0 };
     this.realWidth = 0;
     this.realHeight = 0;
     this.realSize = { width: 0, height: 0 };
 
-    this.visualSize$ = new Observable<void>((subscriber) => {
+    this.visualSize$ = new Observable<HTMLDivElement>((subscriber) => {
       const resizeObserver = new ResizeObserver(() => {
-        subscriber.next();
+        subscriber.next(this.excelEntrance.rootElement);
       });
-      resizeObserver.observe(rootElement);
+      resizeObserver.observe(this.excelEntrance.rootElement);
       return () => {
         resizeObserver.disconnect();
       };
     }).pipe(
       auditTime(16, animationFrameScheduler),
-      startWith(null),
-      map(() => ({ width: rootElement.clientWidth, height: rootElement.clientHeight }) as IDimension),
+      startWith(this.excelEntrance.rootElement),
+      map((el) => ({ width: el.clientWidth, height: el.clientHeight }) as IDimension),
       shareReplay({ refCount: true, bufferSize: 1 }),
     );
     this.disposeWithMe(
@@ -63,14 +70,14 @@ export class SheetDimension extends ObservableDisposable implements ISheetDimens
       }),
     );
 
-    this.realWidth$ = this.buildRealDimension(this.config.columnCount$, this.column.get$);
+    this.realWidth$ = this.buildRealDimension(this.config.get$('columnCount'), this.column.get$);
     this.disposeWithMe(
       this.realWidth$.subscribe((width) => {
         this.realWidth = width;
       }),
     );
 
-    this.realHeight$ = this.buildRealDimension(this.config.rowCount$, this.row.get$);
+    this.realHeight$ = this.buildRealDimension(this.config.get$('rowCount'), this.row.get$);
     this.disposeWithMe(
       this.realHeight$.subscribe((height) => {
         this.realHeight = height;

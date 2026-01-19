@@ -1,4 +1,4 @@
-import type { IDimension, IOffset } from '../types';
+import type { IDimension, IExcelEntrance, IOffset } from '../types';
 import type { IScrollOffset, ISheetDimension } from './types';
 import type { Observable } from 'rxjs';
 
@@ -14,7 +14,6 @@ import {
 } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
-import { scrollWrapper } from '../core-elements';
 
 /**
  * Scroll offset
@@ -25,6 +24,7 @@ export class ScrollOffset extends ObservableDisposable implements IScrollOffset 
   top: number;
   left: number;
   offset: IOffset;
+  excelEntrance: IExcelEntrance;
 
   top$: Observable<number>;
   left$: Observable<number>;
@@ -34,11 +34,13 @@ export class ScrollOffset extends ObservableDisposable implements IScrollOffset 
    * Constructor
    *
    * @param sheetDimension - Sheet dimension
+   * @param excelEntrance - Excel entrance
    */
-  constructor(sheetDimension: ISheetDimension) {
+  constructor(sheetDimension: ISheetDimension, excelEntrance: IExcelEntrance) {
     super();
 
     this.sheetDimension = sheetDimension;
+    this.excelEntrance = excelEntrance;
 
     this.top = 0;
     this.left = 0;
@@ -63,11 +65,12 @@ export class ScrollOffset extends ObservableDisposable implements IScrollOffset 
   }
 
   private buildOffset() {
+    const el = this.excelEntrance.scrollWrapper;
     return combineLatest([
-      fromEvent(scrollWrapper, 'scroll').pipe(
+      fromEvent(el, 'scroll').pipe(
         auditTime(16, animationFrameScheduler),
         startWith(null),
-        map(() => ({ deltaX: scrollWrapper.scrollLeft, deltaY: scrollWrapper.scrollTop }) as IOffset),
+        map(() => ({ deltaX: el.scrollLeft, deltaY: el.scrollTop }) as IOffset),
         distinctUntilChanged((x, y) => x.deltaX === y.deltaX && x.deltaY === y.deltaY),
       ),
       combineLatest([this.sheetDimension.realSize$, this.sheetDimension.visualSize$]).pipe(

@@ -9,6 +9,7 @@ import {
   ISheetDimension,
   ROW_TAG,
 } from '../helpers';
+import { IExcelEntrance } from '../types';
 
 import { StageClickListener } from './click';
 import { StageMouseEvent } from './core';
@@ -47,6 +48,7 @@ export function registerEvents(container: IContainer) {
           c.get(ISheetConfig),
           c.get(IItemBoundary, ROW_TAG),
           c.get(ISheetDimension),
+          c.get(IExcelEntrance),
         ),
     );
 
@@ -60,6 +62,7 @@ export function registerEvents(container: IContainer) {
           c.get(IItemBoundary, COLUMN_TAG),
           c.get(IItemBoundary, ROW_TAG),
           c.get(IStageMouseEvent),
+          c.get(IExcelEntrance),
         ),
     );
 
@@ -76,14 +79,26 @@ export function registerEvents(container: IContainer) {
           c.get(ISelectionStore),
           c.get(IStageMouseEvent),
           c.get(ICellDimension),
+          c.get(IExcelEntrance),
         ),
     );
 
   container
     .register(IStageEditListener)
-    .set((c) => new StageEditListener(c.get(IStageMouseEvent), c.get(ICellDimension), c.get(IScrollOffset)));
+    .set(
+      (c) =>
+        new StageEditListener(
+          c.get(IStageMouseEvent),
+          c.get(ICellDimension),
+          c.get(IScrollOffset),
+          c.get(IExcelEntrance),
+        ),
+    );
 
   container
     .register(ICursorListener)
-    .set((c) => new CursorListener(c.get(IStageMouseEvent), c.get(ICellDimension), c.get(IScrollOffset)));
+    .set(
+      (c) =>
+        new CursorListener(c.get(IStageMouseEvent), c.get(ICellDimension), c.get(IScrollOffset), c.get(IExcelEntrance)),
+    );
 }
