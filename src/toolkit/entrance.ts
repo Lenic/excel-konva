@@ -118,7 +118,7 @@ export class ExcelEntrance extends ObservableDisposable implements IExcelEntranc
      */
     this.resizeLine = new Konva.Line({
       points: [0, 0, 0, 0],
-      stroke: config.resizeLineColor,
+      stroke: config.options.resizeLineColor,
       strokeWidth: 2,
       dash: [4, 4],
       visible: false,
@@ -130,7 +130,7 @@ export class ExcelEntrance extends ObservableDisposable implements IExcelEntranc
     });
     this.selectionLayer.add(this.resizeLine);
     this.disposeWithMe(
-      config.resizeLineColor$.subscribe((color) => {
+      config.get$('resizeLineColor').subscribe((color) => {
         this.resizeLine.stroke(color);
       }),
     );
@@ -188,7 +188,7 @@ export class ExcelEntrance extends ObservableDisposable implements IExcelEntranc
   }
 
   private buildGetCellGroup$(config: ISheetConfig) {
-    return combineLatest([config.frozenRows$, config.frozenColumns$]).pipe(
+    return combineLatest([config.get$('frozenRows'), config.get$('frozenColumns')]).pipe(
       map(([frozenRows, frozenColumns]) => {
         /**
          * Get cell group by row and column index

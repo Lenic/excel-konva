@@ -11,16 +11,16 @@ import { ICellListener, ISelectionListener } from './toolkit/renderers';
 import { ServiceLocator } from './container';
 
 const config = ServiceLocator.current.get(ISheetConfig);
-config.rowCount$.subscribe((val) => {
+config.get$('rowCount').subscribe((val) => {
   document.getElementById('total-rows')!.textContent = val.toLocaleString();
 });
-config.columnCount$.subscribe((val) => {
+config.get$('columnCount').subscribe((val) => {
   document.getElementById('total-cols')!.textContent = val.toLocaleString();
 });
-config.frozenRows$.subscribe((val) => {
+config.get$('frozenRows').subscribe((val) => {
   document.getElementById('frozen-rows-count')!.textContent = val.toLocaleString();
 });
-config.frozenColumns$.subscribe((val) => {
+config.get$('frozenColumns').subscribe((val) => {
   document.getElementById('frozen-cols-count')!.textContent = val.toLocaleString();
 });
 

@@ -35,8 +35,10 @@ export class CellListener extends RenderListener<IRegionInfo> {
       this.excelEntrance.getCellGroup$,
       this.cellDimension.getCellRectBox$,
       this.cellDimension.getCellData$,
+      this.cellPool.getRect$,
+      this.cellPool.getText$,
     ]).pipe(
-      switchMap(([getCellGroup, getCellRectBox, getCellData]) => {
+      switchMap(([getCellGroup, getCellRectBox, getCellData, getRect, getText]) => {
         /**
          * Draw target cell
          *
@@ -48,7 +50,7 @@ export class CellListener extends RenderListener<IRegionInfo> {
           const group = getCellGroup(rowIndex, columnIndex);
           const { x, y, width, height } = getCellRectBox(rowIndex, columnIndex);
 
-          const rect = this.cellPool.getRect();
+          const rect = getRect();
           rect.setAttrs({
             ...options.rectAttrs,
             x,
@@ -58,7 +60,7 @@ export class CellListener extends RenderListener<IRegionInfo> {
           });
           if (rect.parent !== group) rect.moveTo(group);
 
-          const text = this.cellPool.getText();
+          const text = getText();
           text.setAttrs({
             ...options.textAttrs,
             x,
@@ -72,8 +74,8 @@ export class CellListener extends RenderListener<IRegionInfo> {
 
         return combineLatest([
           this.dataRegion.region$,
-          this.config.frozenColumns$.pipe(take(1)),
-          this.config.frozenRows$.pipe(take(1)),
+          this.config.get$('frozenColumns').pipe(take(1)),
+          this.config.get$('frozenRows').pipe(take(1)),
         ]).pipe(map((items) => [renderCellRegion, ...items] as const));
       }),
       map(([renderCellRegion, dataRegion, frozenColumns, frozenRows]) => {

@@ -69,8 +69,10 @@ export class SelectionListener extends RenderListener<number> {
           ),
         ),
         this.sheetDimension.visualSize$,
+        this.selectionPool.getRect$,
+        this.activeCellMarkerPool.getRect$,
       ]).pipe(
-        map(([[getCellPoint, getColumnWidth, getRowHeight], visual]) => {
+        map(([[getCellPoint, getColumnWidth, getRowHeight], visual, getRect, getMarkerRect]) => {
           // Draw a sub-selection rectangle
           const drawSubRange = (
             rowStartIndex: number,
@@ -93,22 +95,20 @@ export class SelectionListener extends RenderListener<number> {
               return;
             }
 
-            const selectionRect = this.selectionPool.getRect();
+            const selectionRect = getRect();
             selectionRect.setAttrs({
               x: left,
               y: top,
               width: right - left,
               height: bottom - top,
-              fill: SELECTION_FILL_COLOR,
-              stroke: strokeWidth > 0 ? SELECTION_STROKE_COLOR : 'transparent',
+              stroke: strokeWidth > 0 ? this.selectionPool.rectAttrs.stroke : 'transparent',
               strokeWidth: strokeWidth,
-              listening: false,
             });
           };
 
           const drawActiveCell = (cell: ILocation) => {
             const { x, y } = getCellPoint(cell.rowIndex, cell.columnIndex);
-            const markerRect = this.activeCellMarkerPool.getRect();
+            const markerRect = getMarkerRect();
             markerRect.setAttrs({
               x,
               y,
@@ -121,9 +121,10 @@ export class SelectionListener extends RenderListener<number> {
           return [drawSubRange, drawActiveCell] as const;
         }),
         switchMap((methods) =>
-          combineLatest([this.config.frozenColumns$.pipe(take(1)), this.config.frozenRows$.pipe(take(1))]).pipe(
-            map((items) => [...methods, ...items] as const),
-          ),
+          combineLatest([
+            this.config.get$('frozenColumns').pipe(take(1)),
+            this.config.get$('frozenRows').pipe(take(1)),
+          ]).pipe(map((items) => [...methods, ...items] as const)),
         ),
       ),
       this.selectionStore.list$.pipe(

@@ -119,8 +119,8 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
       withLatestFrom(
         this.checkResizeBoundary$,
         this.cellDimension.getCellLocation$,
-        this.config.columnCount$,
-        this.config.rowCount$,
+        this.config.get$('columnCount'),
+        this.config.get$('rowCount'),
       ),
       switchMap(([[e, up], checkResizeBoundary, getCellLocation, columnCount, rowCount]) => {
         /**
@@ -273,8 +273,8 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
           ),
         ),
       ),
-      this.config.columnCount$,
-      this.config.rowCount$,
+      this.config.get$('columnCount'),
+      this.config.get$('rowCount'),
       this.sheetDimension.visualSize$,
     ]).pipe(
       map(([[getColumnLeft, getColumnWidth], [getRowTop, getRowHeight], columnCount, rowCount, sheetVisualSize]) => {

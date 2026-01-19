@@ -1,14 +1,26 @@
 import type { TIdentifier } from '../../container';
 import type Konva from 'konva';
+import type { Observable } from 'rxjs';
 
 /**
  * Rectangle pool interface
  */
 export interface IRectPool {
   /**
-   * Get rectangle
+   * Rectangle attributes
    */
-  getRect(): Konva.Rect;
+  rectAttrs: Partial<Konva.RectConfig>;
+  /**
+   * Rectangle attributes Observable
+   */
+  rectAttrs$: Observable<Partial<Konva.RectConfig>>;
+  /**
+   * Get rectangle Observable
+   *
+   * The emitted function signature is: `() => Konva.Rect`
+   * - Returns: The rectangle factory function.
+   */
+  getRect$: Observable<() => Konva.Rect>;
   /**
    * Reset rectangle pool
    */
@@ -28,9 +40,20 @@ export const IActiveCellMarkerPool: TIdentifier<IRectPool> = Symbol('IActiveCell
  */
 export interface ICellPool extends IRectPool {
   /**
-   * Get cell text
+   * Text attributes
    */
-  getText(): Konva.Text;
+  textAttrs: Partial<Konva.TextConfig>;
+  /**
+   * Text attributes Observable
+   */
+  textAttrs$: Observable<Partial<Konva.TextConfig>>;
+  /**
+   * Get text Observable
+   *
+   * The emitted function signature is: `() => Konva.Text`
+   * - Returns: The text factory function.
+   */
+  getText$: Observable<() => Konva.Text>;
 }
 /**
  * Cell pool interface identifier

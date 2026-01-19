@@ -55,8 +55,8 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
         this.sheetDimension.visualSize$,
         this.columnBoundary.getBoundary$,
         this.rowBoundary.getBoundary$,
-        this.config.minRowHeight$,
-        this.config.minColumnWidth$,
+        this.config.get$('minRowHeight'),
+        this.config.get$('minColumnWidth'),
       ),
       switchMap(
         ([

@@ -51,7 +51,7 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
   private buildDataRegion() {
     const column$ = this.columnBoundary.getBoundary$.pipe(
       switchMap((getColumnLeft) =>
-        combineLatest([this.columnBoundary.accumulated.get$, this.config.frozenColumns$]).pipe(
+        combineLatest([this.columnBoundary.accumulated.get$, this.config.get$('frozenColumns')]).pipe(
           take(1),
           map(
             ([getPrecedingTotalColumnWidth, frozenColumns]) =>
@@ -63,7 +63,7 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
 
     const row$ = this.rowBoundary.getBoundary$.pipe(
       switchMap((getRowTop) =>
-        combineLatest([this.rowBoundary.accumulated.get$, this.config.frozenRows$]).pipe(
+        combineLatest([this.rowBoundary.accumulated.get$, this.config.get$('frozenRows')]).pipe(
           take(1),
           map(
             ([getPrecedingTotalRowHeight, frozenRows]) => [getRowTop, getPrecedingTotalRowHeight, frozenRows] as const,
@@ -75,8 +75,8 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
     return combineLatest([
       column$,
       row$,
-      this.config.columnCount$,
-      this.config.rowCount$,
+      this.config.get$('columnCount'),
+      this.config.get$('rowCount'),
       this.sheetDimension.visualSize$,
     ]).pipe(
       map(

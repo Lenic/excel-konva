@@ -49,19 +49,63 @@ export interface ISheetOptions {
    */
   resizeLineColor?: string;
   /**
-   * Selection rect attrs: default is `{ fill: 'rgba(78, 149, 255, 0.15)', stroke: '#4e95ff', strokeWidth: 2 }`
+   * Selection rect attrs
+   *
+   * The following object defines the default values:
+   * ```json
+   * {
+   *   fill: 'rgba(78, 149, 255, 0.15)',
+   *   stroke: '#4e95ff',
+   *   strokeWidth: 2
+   * }
+   * ```
    */
   selectionRectAttrs?: Partial<Konva.RectConfig>;
   /**
-   * Active cell rect attrs: default is `{ fill: 'rgba(255, 255, 255, 0.7)', stroke: '#10B981', strokeWidth: 3 }`
+   * Active cell rect attrs
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   *   fill: 'rgba(255, 255, 255, 0.7)',
+   *   stroke: '#10B981',
+   *   strokeWidth: 3
+   * }
+   * ```
    */
   activeCellRectAttrs?: Partial<Konva.RectConfig>;
   /**
-   * Default cell rect attrs: default is `{ fill: '#ffffff', stroke: '#e8e8e8', strokeWidth: 0.5 }`
+   * Default cell rect attrs
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   *   fill: '#ffffff',
+   *   stroke: '#e8e8e8',
+   *   strokeWidth: 0.5
+   * }
    */
   defaultCellRectAttrs?: Partial<Konva.RectConfig>;
   /**
-   * Default cell text attrs: default is `{ fontSize: 12, fontFamily: 'Inter, Arial, sans-serif', fill: '#333333', verticalAlign: 'middle', padding: 8, listening: false, align: 'left', ellipsis: true, wrap: 'none' }`
+   * Default cell text attrs
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   *   fontSize: 12,
+   *   fontFamily: 'Inter, Arial, sans-serif',
+   *   fill: '#333333',
+   *   verticalAlign: 'middle',
+   *   padding: 8,
+   *   listening: false,
+   *   align: 'left',
+   *   ellipsis: true,
+   *   wrap: 'none'
+   * }
+   * ```
    */
   defaultCellTextAttrs?: Partial<Konva.TextConfig>;
 }
@@ -69,128 +113,28 @@ export interface ISheetOptions {
 /**
  * Sheet Config
  */
-export interface ISheetConfig extends Required<ISheetOptions>, IDisposable {
+export interface ISheetConfig extends IDisposable {
   /**
-   * Observable header height
+   * Options
    */
-  headerHeight$: Observable<number>;
+  options: Required<ISheetOptions>;
   /**
-   * Observable header width
+   * Observable options
    */
-  headerWidth$: Observable<number>;
-  /**
-   * Observable row height
-   */
-  rowHeight$: Observable<number>;
-  /**
-   * Observable min row height
-   */
-  minRowHeight$: Observable<number>;
-  /**
-   * Observable column width
-   */
-  columnWidth$: Observable<number>;
-  /**
-   * Observable min column width
-   */
-  minColumnWidth$: Observable<number>;
-  /**
-   * Observable row count
-   */
-  rowCount$: Observable<number>;
-  /**
-   * Observable column count
-   */
-  columnCount$: Observable<number>;
-  /**
-   * Observable frozen columns
-   */
-  frozenColumns$: Observable<number>;
-  /**
-   * Observable frozen rows
-   */
-  frozenRows$: Observable<number>;
-  /**
-   * Observable resize line color
-   */
-  resizeLineColor$: Observable<string>;
-  /**
-   * Observable selection rect attrs
-   */
-  selectionRectAttrs$: Observable<Partial<Konva.RectConfig>>;
-  /**
-   * Observable active cell rect attrs
-   */
-  activeCellRectAttrs$: Observable<Partial<Konva.RectConfig>>;
-  /**
-   * Observable default cell rect attrs
-   */
-  defaultCellRectAttrs$: Observable<Partial<Konva.RectConfig>>;
-  /**
-   * Observable default cell text attrs
-   */
-  defaultCellTextAttrs$: Observable<Partial<Konva.TextConfig>>;
+  options$: Observable<Required<ISheetOptions>>;
 
   /**
-   * Set header height
+   * Get option value
+   * @param key Option key
+   * @returns Observable option value
    */
-  setHeaderHeight(height: number): void;
+  get$<K extends keyof Required<ISheetOptions>>(key: K): Observable<Required<ISheetOptions>[K]>;
+
   /**
-   * Set header width
+   * Set options
+   * @param options - Options to set or a function to compute the new options
    */
-  setHeaderWidth(width: number): void;
-  /**
-   * Set row height
-   */
-  setRowHeight(height: number): void;
-  /**
-   * Set column width
-   */
-  setColumnWidth(width: number): void;
-  /**
-   * Set row count
-   */
-  setRowCount(count: number): void;
-  /**
-   * Set column count
-   */
-  setColumnCount(count: number): void;
-  /**
-   * Set frozen columns
-   */
-  setFrozenColumns(count: number): void;
-  /**
-   * Set frozen rows
-   */
-  setFrozenRows(count: number): void;
-  /**
-   * Set min row height
-   */
-  setMinRowHeight(height: number): void;
-  /**
-   * Set min column width
-   */
-  setMinColumnWidth(width: number): void;
-  /**
-   * Set resize line color
-   */
-  setResizeLineColor(color: string): void;
-  /**
-   * Set selection rect attrs
-   */
-  setSelectionRectAttrs(attrs: Partial<Konva.RectConfig>): void;
-  /**
-   * Set active cell rect attrs
-   */
-  setActiveCellRectAttrs(attrs: Partial<Konva.RectConfig>): void;
-  /**
-   * Set default cell rect attrs
-   */
-  setDefaultCellRectAttrs(attrs: Partial<Konva.RectConfig>): void;
-  /**
-   * Set default cell text attrs
-   */
-  setDefaultCellTextAttrs(attrs: Partial<Konva.TextConfig>): void;
+  set(options: Partial<ISheetOptions> | ((options: Required<ISheetOptions>) => Required<ISheetOptions>)): void;
 }
 /**
  * Sheet config identifier

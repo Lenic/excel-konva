@@ -70,14 +70,14 @@ export class SheetDimension extends ObservableDisposable implements ISheetDimens
       }),
     );
 
-    this.realWidth$ = this.buildRealDimension(this.config.columnCount$, this.column.get$);
+    this.realWidth$ = this.buildRealDimension(this.config.get$('columnCount'), this.column.get$);
     this.disposeWithMe(
       this.realWidth$.subscribe((width) => {
         this.realWidth = width;
       }),
     );
 
-    this.realHeight$ = this.buildRealDimension(this.config.rowCount$, this.row.get$);
+    this.realHeight$ = this.buildRealDimension(this.config.get$('rowCount'), this.row.get$);
     this.disposeWithMe(
       this.realHeight$.subscribe((height) => {
         this.realHeight = height;
