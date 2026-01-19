@@ -45,6 +45,7 @@ export const defaultSheetConfig: Required<ISheetOptions> = {
     wrap: 'none',
   },
   bufferCellCount: 1,
+  resizeTolerance: 5,
 };
 
 /**

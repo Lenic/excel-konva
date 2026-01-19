@@ -21,7 +21,6 @@ import {
 
 import { ObservableDisposable } from '../core';
 
-import { RESIZE_TOLERANCE } from './constants';
 import { EHeaderClickType, EMousedownTypes } from './types';
 
 /**
@@ -275,60 +274,70 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
       this.config.get$('columnCount'),
       this.config.get$('rowCount'),
       this.sheetDimension.visualSize$,
+      this.config.get$('resizeTolerance'),
     ]).pipe(
-      map(([[getColumnLeft, getColumnWidth], [getRowTop, getRowHeight], columnCount, rowCount, sheetVisualSize]) => {
-        /**
-         * Check boundary information for the current position; return `null` if it's not a boundary.
-         *
-         * @param relX - The X coordinate of the mouse relative to the canvas.
-         * @param relY - The Y coordinate of the mouse relative to the canvas.
-         */
-        return function checkResizeBoundary(relX: number, relY: number): IBoundaryInfo | null {
+      map(
+        ([
+          [getColumnLeft, getColumnWidth],
+          [getRowTop, getRowHeight],
+          columnCount,
+          rowCount,
+          sheetVisualSize,
+          resizeTolerance,
+        ]) => {
           /**
-           * Check column boundary
+           * Check boundary information for the current position; return `null` if it's not a boundary.
            *
-           * - This event is only triggered within the column header area.
-           * - It will not be triggered within the normal cell area.
+           * @param relX - The X coordinate of the mouse relative to the canvas.
+           * @param relY - The Y coordinate of the mouse relative to the canvas.
            */
-          if (relY < getRowHeight(0) + RESIZE_TOLERANCE) {
-            for (let c = 0; c < columnCount; c++) {
-              // Use getColumnLeft to get the precise coordinate value of the right edge of column c
-              const boundary = getColumnLeft(c + 1);
+          return function checkResizeBoundary(relX: number, relY: number): IBoundaryInfo | null {
+            /**
+             * Check column boundary
+             *
+             * - This event is only triggered within the column header area.
+             * - It will not be triggered within the normal cell area.
+             */
+            if (relY < getRowHeight(0) + resizeTolerance) {
+              for (let c = 0; c < columnCount; c++) {
+                // Use getColumnLeft to get the precise coordinate value of the right edge of column c
+                const boundary = getColumnLeft(c + 1);
 
-              // If the difference between relX and the calculated boundary value is within the tolerance, it is considered a match
-              if (Math.abs(relX - boundary) < RESIZE_TOLERANCE) {
-                return { type: 'column-boundary', index: c, boundary };
+                // If the difference between relX and the calculated boundary value is within the tolerance, it is considered a match
+                if (Math.abs(relX - boundary) < resizeTolerance) {
+                  return { type: 'column-boundary', index: c, boundary };
+                }
+
+                // Out of viewport
+                if (boundary > sheetVisualSize.width) break;
               }
-
-              // Out of viewport
-              if (boundary > sheetVisualSize.width) break;
             }
-          }
 
-          /**
-           * Check row boundary
-           *
-           * - This event is only triggered within the row header area.
-           * - It will not be triggered within the normal cell area.
-           */
-          if (relX < getColumnWidth(0) + RESIZE_TOLERANCE) {
-            for (let r = 0; r < rowCount; r++) {
-              // Use getRowTop to get the precise coordinate value of the bottom edge of row r
-              const boundary = getRowTop(r + 1);
+            /**
+             * Check row boundary
+             *
+             * - This event is only triggered within the row header area.
+             * - It will not be triggered within the normal cell area.
+             */
+            if (relX < getColumnWidth(0) + resizeTolerance) {
+              for (let r = 0; r < rowCount; r++) {
+                // Use getRowTop to get the precise coordinate value of the bottom edge of row r
+                const boundary = getRowTop(r + 1);
 
-              // If the difference between relY and the calculated boundary value is within the tolerance, it is considered a match
-              if (Math.abs(relY - boundary) < RESIZE_TOLERANCE) {
-                return { type: 'row-boundary', index: r, boundary: boundary };
+                // If the difference between relY and the calculated boundary value is within the tolerance, it is considered a match
+                if (Math.abs(relY - boundary) < resizeTolerance) {
+                  return { type: 'row-boundary', index: r, boundary: boundary };
+                }
+
+                // Out of viewport
+                if (boundary > sheetVisualSize.height) break;
               }
-
-              // Out of viewport
-              if (boundary > sheetVisualSize.height) break;
             }
-          }
 
-          return null;
-        };
-      }),
+            return null;
+          };
+        },
+      ),
     );
   }
 }

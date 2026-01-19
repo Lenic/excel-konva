@@ -4,7 +4,6 @@ import type { Observable } from 'rxjs';
 
 import { combineLatest, debounceTime, distinctUntilChanged, EMPTY, map, merge, of, skip, switchMap, take } from 'rxjs';
 
-import { RESIZE_TOLERANCE } from './constants';
 import { EventListener } from './listener';
 import { EBoundaryTypes, ECursorTypes, type ICursorListener, type IStageMouseEvent, type TCursorEvent } from './types';
 
@@ -70,16 +69,17 @@ export class CursorListener extends EventListener implements ICursorListener {
               ),
             ),
           ),
+          this.events.config.get$('resizeTolerance'),
         ]).pipe(
-          switchMap(([e, [getCellLocation, getCellRectBox]]): Observable<TCursorEvent> => {
+          switchMap(([e, [getCellLocation, getCellRectBox], resizeTolerance]): Observable<TCursorEvent> => {
             const relX = e.evt.clientX - bounding.left;
             const relY = e.evt.clientY - bounding.top;
 
             const location = getCellLocation(relX, relY);
             if (location.rowIndex === 0) {
               const rect = getCellRectBox(location.rowIndex, location.columnIndex);
-              const leftLeftX = rect.x - RESIZE_TOLERANCE;
-              const leftRightX = rect.x + RESIZE_TOLERANCE;
+              const leftLeftX = rect.x - resizeTolerance;
+              const leftRightX = rect.x + resizeTolerance;
               const rightLeftX = leftLeftX + rect.width;
               const rightRightX = leftRightX + rect.width;
               if ((leftLeftX <= relX && relX <= leftRightX) || (rightLeftX <= relX && relX <= rightRightX)) {
@@ -87,8 +87,8 @@ export class CursorListener extends EventListener implements ICursorListener {
               }
             } else if (location.columnIndex === 0) {
               const rect = getCellRectBox(location.rowIndex, location.columnIndex);
-              const topTopY = rect.y - RESIZE_TOLERANCE;
-              const topBottomY = rect.y + RESIZE_TOLERANCE;
+              const topTopY = rect.y - resizeTolerance;
+              const topBottomY = rect.y + resizeTolerance;
               const bottomTopY = topTopY + rect.height;
               const bottomBottomY = topBottomY + rect.height;
               if ((topTopY <= relY && relY <= topBottomY) || (bottomTopY <= relY && relY <= bottomBottomY)) {
