@@ -66,12 +66,22 @@ export interface ILifecycle<T> extends IDisposable {
    * @returns The instance of the service.
    */
   get(container: IContainer, context: Map<symbol, any>, tag?: string | symbol): T;
+  /**
+   * Get all the instances of the service.
+   *
+   * - with the default instance.
+   *
+   * @param container - The container of the service.
+   * @param context - The context of the service.
+   * @returns The instances of the service.
+   */
+  getAll(container: IContainer, context: Map<symbol, any>): Map<string | symbol, T>;
 }
 
 /**
  * The lifecycle type of the service.
  */
-export type TLifecycleType = 'singleton' | 'transaction' | 'transient' | (() => object);
+export type TLifecycleType = 'singleton' | 'transaction' | 'transient' | (() => object | null);
 
 /**
  * The container of the service.
@@ -94,6 +104,16 @@ export interface IContainer extends IDisposable {
    * @returns The instance of the service.
    */
   get<T>(identifier: TIdentifier<T>, tag?: string | symbol, context?: Map<symbol, any>): T;
+  /**
+   * Get all the instances of the service.
+   *
+   * - with the default instance.
+   *
+   * @param identifier - The identifier of the service.
+   * @param context - The context of the service.
+   * @returns The instances of the service.
+   */
+  getAll<T>(identifier: TIdentifier<T>, context?: Map<symbol, any>): Map<string | symbol, T>;
 }
 
 /**
@@ -109,4 +129,14 @@ export interface IServiceLocator {
    * @returns The instance of the service.
    */
   get<T>(identifier: TIdentifier<T>, tag?: string | symbol, context?: Map<symbol, any>): T;
+  /**
+   * Get all the instances of the service.
+   *
+   * - with the default instance.
+   *
+   * @param identifier - The identifier of the service.
+   * @param context - The context of the service.
+   * @returns The instances of the service.
+   */
+  getAll<T>(identifier: TIdentifier<T>, context?: Map<symbol, any>): Map<string | symbol, T>;
 }

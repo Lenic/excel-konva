@@ -1,75 +1,30 @@
-import type { IContainer, ILifecycle, TFactory } from '../types';
+import type { IScopedStorage } from './types';
 
-import { Disposable } from '../disposable';
-
-import { TRANSACTION_DEFAULT_INSTANCE_KEY, TRANSACTION_INSTANCES_KEY } from './constants';
+import { DEFAULT_TAG_VALUE, TRANSACTION_INSTANCES_KEY } from './constants';
+import { BaseLifecycle } from './core';
 
 /**
  * Transaction lifecycle
  */
-export class TransactionLifecycle<T> extends Disposable implements ILifecycle<T> {
-  private defalutFactory: TFactory<T> | null;
-  private factories: Map<string | symbol, TFactory<T>>;
-
-  /**
-   * Constructor
-   */
-  constructor() {
-    super();
-
-    this.factories = new Map<string | symbol, TFactory<T>>();
-    this.defalutFactory = null;
-
-    this.disposeWithMe(() => {
-      this.factories.clear();
-      this.defalutFactory = null;
-    });
+export class TransactionLifecycle<T> extends BaseLifecycle<T> {
+  protected getStorage(context: Map<symbol, any>) {
+    let cache = context.get(TRANSACTION_INSTANCES_KEY) as Map<symbol, IScopedStorage<T>> | undefined;
+    if (!cache) {
+      cache = new Map<symbol, IScopedStorage<T>>();
+      context.set(TRANSACTION_INSTANCES_KEY, cache);
+    }
+    let storage = cache.get(this.identifier);
+    if (!storage) {
+      storage = {
+        defaultValue: DEFAULT_TAG_VALUE as unknown as T,
+        instances: new Map<string | symbol, T>(),
+      };
+      cache.set(this.identifier, storage);
+    }
+    return storage;
   }
 
-  set(factory: TFactory<T>, tag?: string | symbol): ILifecycle<T> {
-    this.checkDisposed();
-
-    if (tag) {
-      this.factories.set(tag, factory);
-    } else {
-      this.defalutFactory = factory;
-    }
-
-    return this;
-  }
-
-  get(container: IContainer, context: Map<symbol, any>, tag?: string | symbol): T {
-    this.checkDisposed();
-
-    let instances = context.get(TRANSACTION_INSTANCES_KEY) as Map<string | symbol, T> | undefined;
-    if (!instances) {
-      instances = new Map<string | symbol, T>();
-      context.set(TRANSACTION_INSTANCES_KEY, instances);
-    }
-
-    if (tag) {
-      let value = instances.get(tag);
-      if (value) return value;
-
-      const fn = this.factories.get(tag);
-      if (!fn) {
-        throw new Error(`[TransactionLifecycle]: Tag ${String(tag)} not found.`);
-      }
-      value = fn(container, context);
-
-      instances.set(tag, value);
-      return value;
-    } else {
-      let defaultValue = context.get(TRANSACTION_DEFAULT_INSTANCE_KEY) as T | undefined;
-      if (defaultValue) return defaultValue;
-
-      if (!this.defalutFactory) {
-        throw new Error(`[TransactionLifecycle]: The default factory not found.`);
-      }
-      defaultValue = this.defalutFactory(container, context);
-
-      context.set(TRANSACTION_DEFAULT_INSTANCE_KEY, defaultValue);
-      return defaultValue;
-    }
+  protected tryGetStorage() {
+    return undefined;
   }
 }

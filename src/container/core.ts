@@ -29,13 +29,13 @@ export class Container extends Disposable implements IContainer {
     if (lifecycleInstance) return lifecycleInstance;
 
     if (lifecycle === 'singleton') {
-      lifecycleInstance = new SingletonLifecycle();
+      lifecycleInstance = new SingletonLifecycle(identifier);
     } else if (lifecycle === 'transaction') {
-      lifecycleInstance = new TransactionLifecycle();
+      lifecycleInstance = new TransactionLifecycle(identifier);
     } else if (lifecycle === 'transient') {
-      lifecycleInstance = new TransientLifecycle();
+      lifecycleInstance = new TransientLifecycle(identifier);
     } else {
-      lifecycleInstance = new ScopedLifecycle(lifecycle);
+      lifecycleInstance = new ScopedLifecycle(identifier, lifecycle);
     }
 
     this.registry.set(identifier, lifecycleInstance);
@@ -43,15 +43,35 @@ export class Container extends Disposable implements IContainer {
   }
 
   get<T>(identifier: TIdentifier<T>, tag?: string | symbol, context?: Map<symbol, any>): T {
+    return this.buildGet(
+      identifier,
+      (lifecycle, effectiveContext) => lifecycle.get(this, effectiveContext, tag),
+      context,
+    );
+  }
+
+  getAll<T>(identifier: TIdentifier<T>, context?: Map<symbol, any>): Map<string | symbol, T> {
+    return this.buildGet(
+      identifier,
+      (lifecycle, effectiveContext) => lifecycle.getAll(this, effectiveContext),
+      context,
+    );
+  }
+
+  private buildGet<T, R>(
+    identifier: TIdentifier<T>,
+    getter: (lifecycle: ILifecycle<T>, effectiveContext: Map<symbol, any>, tag?: string | symbol) => R,
+    context?: Map<symbol, any>,
+  ): R {
     this.checkDisposed();
 
     const lifecycle = this.registry.get(identifier) as ILifecycle<T> | undefined;
     if (!lifecycle) {
-      throw new Error(`[Container]: Identifier ${String(identifier)} is not registered`);
+      throw new Error(`[Container]: Lifecycle ${String(identifier)} is not registered`);
     }
 
     const effectiveContext = context ?? new Map<symbol, any>();
 
-    return lifecycle.get(this, effectiveContext, tag);
+    return getter(lifecycle, effectiveContext);
   }
 }
