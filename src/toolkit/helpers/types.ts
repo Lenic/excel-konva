@@ -49,19 +49,19 @@ export interface ISheetOptions {
    */
   resizeLineColor?: string;
   /**
-   * Selection rect attrs: default is rgba(78, 149, 255, 0.15)
+   * Selection rect attrs: default is `{ fill: 'rgba(78, 149, 255, 0.15)', stroke: '#4e95ff', strokeWidth: 2 }`
    */
   selectionRectAttrs?: Partial<Konva.RectConfig>;
   /**
-   * Active cell rect attrs: default is rgba(255, 255, 255, 0.7)
+   * Active cell rect attrs: default is `{ fill: 'rgba(255, 255, 255, 0.7)', stroke: '#10B981', strokeWidth: 3 }`
    */
   activeCellRectAttrs?: Partial<Konva.RectConfig>;
   /**
-   * Default cell rect attrs: default is #ffffff
+   * Default cell rect attrs: default is `{ fill: '#ffffff', stroke: '#e8e8e8', strokeWidth: 0.5 }`
    */
   defaultCellRectAttrs?: Partial<Konva.RectConfig>;
   /**
-   * Default cell text attrs: default is #ffffff
+   * Default cell text attrs: default is `{ fontSize: 12, fontFamily: 'Inter, Arial, sans-serif', fill: '#333333', verticalAlign: 'middle', padding: 8, listening: false, align: 'left', ellipsis: true, wrap: 'none' }`
    */
   defaultCellTextAttrs?: Partial<Konva.TextConfig>;
 }

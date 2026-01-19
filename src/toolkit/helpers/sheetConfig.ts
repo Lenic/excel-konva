@@ -1,10 +1,10 @@
 import type { ISheetConfig, ISheetOptions } from './types';
+import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
 import { BehaviorSubject } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
-import type Konva from 'konva';
 
 export const defaultSheetConfig: Required<ISheetOptions> = {
   headerHeight: 30,
