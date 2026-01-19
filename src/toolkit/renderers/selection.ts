@@ -7,7 +7,6 @@ import type { Observable } from 'rxjs';
 import { combineLatest, distinctUntilChanged, map, switchMap, take } from 'rxjs';
 
 import { ServiceLocator } from '../../container';
-import { BORDER_STROKE, SELECTION_FILL_COLOR, SELECTION_STROKE_COLOR } from '../constants';
 
 import { RenderListener } from './renderer';
 import { IRangeCollection } from './types';
@@ -79,7 +78,7 @@ export class SelectionListener extends RenderListener<number> {
             rowEndIndex: number,
             columnStartIndex: number,
             columnEndIndex: number,
-            strokeWidth: number,
+            strokeWidth?: number,
           ) => {
             if (rowStartIndex > rowEndIndex || columnStartIndex > columnEndIndex) return;
 
@@ -101,8 +100,11 @@ export class SelectionListener extends RenderListener<number> {
               y: top,
               width: right - left,
               height: bottom - top,
-              stroke: strokeWidth > 0 ? this.selectionPool.rectAttrs.stroke : 'transparent',
-              strokeWidth: strokeWidth,
+              stroke:
+                typeof strokeWidth === 'number' && strokeWidth === 0
+                  ? 'transparent'
+                  : this.selectionPool.rectAttrs.stroke,
+              strokeWidth,
             });
           };
 
@@ -165,7 +167,7 @@ export class SelectionListener extends RenderListener<number> {
             const dataStartColumn = Math.max(startColumnIndex, frozenColumns);
 
             if (dataStartRow <= endRowIndex && dataStartColumn <= endColumnIndex) {
-              drawSubRange(dataStartRow, endRowIndex, dataStartColumn, endColumnIndex, BORDER_STROKE);
+              drawSubRange(dataStartRow, endRowIndex, dataStartColumn, endColumnIndex);
             }
 
             // B. Draw Frozen Side Area selection
@@ -175,7 +177,7 @@ export class SelectionListener extends RenderListener<number> {
             const sideEndColumn = Math.min(endColumnIndex, frozenColumns - 1);
 
             if (sideStartRow <= sideEndRow && sideStartColumn <= sideEndColumn) {
-              drawSubRange(sideStartRow, sideEndRow, sideStartColumn, sideEndColumn, BORDER_STROKE);
+              drawSubRange(sideStartRow, sideEndRow, sideStartColumn, sideEndColumn);
             }
 
             // C. Draw Frozen Header Area selection
@@ -185,7 +187,7 @@ export class SelectionListener extends RenderListener<number> {
             const headerEndColumn = endColumnIndex;
 
             if (headerStartRow <= headerEndRow && headerStartColumn <= headerEndColumn) {
-              drawSubRange(headerStartRow, headerEndRow, headerStartColumn, headerEndColumn, BORDER_STROKE);
+              drawSubRange(headerStartRow, headerEndRow, headerStartColumn, headerEndColumn);
             }
 
             // D. Draw Frozen Corner Area selection
@@ -195,7 +197,7 @@ export class SelectionListener extends RenderListener<number> {
             const cornerEndColumn = Math.min(endColumnIndex, frozenColumns - 1);
 
             if (cornerStartRow <= cornerEndRow && cornerStartColumn <= cornerEndColumn) {
-              drawSubRange(cornerStartRow, cornerEndRow, cornerStartColumn, cornerEndColumn, BORDER_STROKE);
+              drawSubRange(cornerStartRow, cornerEndRow, cornerStartColumn, cornerEndColumn);
             }
 
             // E. Draw Active Cell Marker
