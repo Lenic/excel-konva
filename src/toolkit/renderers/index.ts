@@ -1,17 +1,16 @@
 import type { IContainer } from '../../container';
 
+import { IContentManager } from '../contents';
 import { ISelectionStore } from '../events';
 import { ICellDimension, IDataRegion, ISheetConfig, ISheetDimension } from '../helpers';
 import { IActiveCellMarkerPool, ISelectionPool } from '../pools';
 import { IExcelEntrance } from '../types';
 
 import { CellListener } from './cell';
-import { IContentRenderer, registerContentRenderers } from './contents';
 import { RangeCollection } from './range';
 import { SelectionListener } from './selection';
 import { ICellListener, IRangeCollection, ISelectionListener } from './types';
 
-export * from './contents';
 export * from './types';
 
 /**
@@ -21,8 +20,6 @@ export * from './types';
  */
 export function registerRenderers(container: IContainer) {
   container.register(IRangeCollection, 'transient').set(() => new RangeCollection());
-
-  registerContentRenderers(container);
 
   container
     .register(ISelectionListener)
@@ -48,7 +45,7 @@ export function registerRenderers(container: IContainer) {
           c.get(ISheetConfig, ctx),
           c.get(IDataRegion, ctx),
           c.get(ICellDimension, ctx),
-          c.getAll(IContentRenderer, ctx),
+          c.getAll(IContentManager, ctx),
         ),
     );
 }

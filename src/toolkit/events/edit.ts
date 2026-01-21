@@ -1,10 +1,11 @@
-import type { ICellDimension, IScrollOffset } from '../helpers';
+import type { IContentManager } from '../contents';
+import type { ICellDimension, IScrollOffset, ISheetConfig } from '../helpers';
 import type { IExcelEntrance } from '../types';
 import type { IStageEditListener, IStageMouseEvent } from './types';
 
-import { EMPTY, filter, fromEvent, map, merge, of, skip, switchMap, take, withLatestFrom } from 'rxjs';
+import { EMPTY, filter, finalize, switchMap, takeWhile, tap, withLatestFrom } from 'rxjs';
 
-import { editor } from '../entrance';
+import { ECellFrozenType, EEditStatus } from '../contents';
 
 import { EventListener } from './listener';
 
@@ -12,10 +13,14 @@ import { EventListener } from './listener';
  * Stage click listener
  */
 export class StageEditListener extends EventListener implements IStageEditListener {
+  private status: EEditStatus;
+
   events: IStageMouseEvent;
   cellDimension: ICellDimension;
   offset: IScrollOffset;
   excelEntrance: IExcelEntrance;
+  editors: Map<string | symbol, IContentManager>;
+  config: ISheetConfig;
 
   /**
    * Constructor
@@ -24,79 +29,74 @@ export class StageEditListener extends EventListener implements IStageEditListen
    * @param cellDimension cell dimension
    * @param offset scroll offset
    * @param excelEntrance excel entrance
+   * @param editors editors
+   * @param config config
    */
   constructor(
     events: IStageMouseEvent,
     cellDimension: ICellDimension,
     offset: IScrollOffset,
     excelEntrance: IExcelEntrance,
+    editors: Map<string | symbol, IContentManager>,
+    config: ISheetConfig,
   ) {
     super();
+
+    this.status = EEditStatus.Normal;
 
     this.events = events;
     this.cellDimension = cellDimension;
     this.offset = offset;
     this.excelEntrance = excelEntrance;
+    this.editors = editors;
+    this.config = config;
   }
 
   protected build() {
     return this.dispositionSubject.pipe(
-      filter(() => editor.classList.contains('hidden')),
+      filter(() => this.status === EEditStatus.Normal),
       switchMap(() => this.events.dblclick$),
       withLatestFrom(
         this.cellDimension.getCellLocation$,
-        this.cellDimension.getCellRectBox$,
         this.cellDimension.getCellData$,
+        this.config.get$('frozenColumns'),
+        this.config.get$('frozenRows'),
       ),
-      map(([e, getCellLocation, getCellRectBox, getCellData]) => {
+      switchMap(([e, getCellLocation, getCellData, frozenColumns, frozenRows]) => {
         const rootRect = this.excelEntrance.rootElement.getBoundingClientRect();
         const cell = getCellLocation(e.evt.clientX - rootRect.left, e.evt.clientY - rootRect.top);
-        if (cell.rowIndex === 0 || cell.columnIndex === 0) return;
+        if (cell.rowIndex === 0 || cell.columnIndex === 0) return EMPTY;
 
-        const { x, y, width, height } = getCellRectBox(cell.rowIndex, cell.columnIndex);
-        const screenX = rootRect.left + x;
-        const screenY = rootRect.top + y;
+        let frozenType: ECellFrozenType = ECellFrozenType.None;
+        if (cell.rowIndex < frozenRows && cell.columnIndex < frozenColumns) {
+          frozenType = ECellFrozenType.Corner;
+        } else if (cell.rowIndex < frozenRows) {
+          frozenType = ECellFrozenType.Header;
+        } else if (cell.columnIndex < frozenColumns) {
+          frozenType = ECellFrozenType.Side;
+        }
 
-        editor.value = getCellData(cell.rowIndex, cell.columnIndex) as string;
-        editor.style.left = `${screenX}px`;
-        editor.style.top = `${screenY}px`;
-        editor.style.width = `${width + 2}px`;
-        editor.style.height = `${height + 2}px`;
-        editor.style.lineHeight = `${height - 2}px`;
-        editor.classList.remove('hidden');
-        editor.focus();
-        editor.select();
-
-        merge(
-          this.offset.offset$.pipe(
-            skip(1),
-            map(() => false),
-          ),
-          fromEvent<KeyboardEvent>(editor, 'keydown').pipe(
-            switchMap((e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                return of(true);
-              } else if (e.key === 'Escape') {
-                return of(false);
-              }
-              return EMPTY;
+        const content = getCellData(cell.rowIndex, cell.columnIndex);
+        return this.getEditor(content)
+          .edit(content, { rowIndex: cell.rowIndex, columnIndex: cell.columnIndex, frozenType })
+          .pipe(
+            takeWhile((status) => status !== EEditStatus.Saved && status !== EEditStatus.Canceled, true),
+            tap((status) => {
+              this.status = status;
             }),
-          ),
-          fromEvent(editor, 'blur').pipe(map(() => true)),
-        )
-          .pipe(take(1))
-          .subscribe((save) => {
-            if (editor.classList.contains('hidden')) return;
-
-            if (save) {
-              const newText = editor.value;
-              this.cellDimension.setCellData(cell.rowIndex, cell.columnIndex, newText || null);
-            }
-
-            editor.classList.add('hidden');
-          });
+            finalize(() => {
+              this.status = EEditStatus.Normal;
+            }),
+          );
       }),
     );
+  }
+
+  private getEditor(cellContent: unknown): IContentManager {
+    if (typeof cellContent === 'string') {
+      return this.editors.get('')!;
+    }
+
+    return this.editors.get('')!;
   }
 }

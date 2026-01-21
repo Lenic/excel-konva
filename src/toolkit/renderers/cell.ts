@@ -1,12 +1,13 @@
+import type { IContentManager, IContentRendererContext } from '../contents';
 import type { ICellDimension, IDataRegion, ISheetConfig } from '../helpers';
 import type { IRegionInfo } from '../types';
-import type { IContentRenderer, IContentRendererContext } from './contents';
 import type Konva from 'konva';
 import type { Observable, Subscription } from 'rxjs';
 
 import { combineLatest, distinctUntilChanged, map, switchMap } from 'rxjs';
 
-import { ECellFrozenType } from './contents';
+import { ECellFrozenType } from '../contents';
+
 import { RenderListener } from './renderer';
 
 export class CellListener extends RenderListener<IRegionInfo> {
@@ -14,7 +15,7 @@ export class CellListener extends RenderListener<IRegionInfo> {
   private config: ISheetConfig;
   private dataRegion: IDataRegion;
   private cellDimension: ICellDimension;
-  private renderers: Map<string | symbol, IContentRenderer>;
+  private renderers: Map<string | symbol, IContentManager>;
   private subscriptions = new Map<string, Subscription>();
 
   constructor(
@@ -22,7 +23,7 @@ export class CellListener extends RenderListener<IRegionInfo> {
     config: ISheetConfig,
     dataRegion: IDataRegion,
     cellDimension: ICellDimension,
-    renderers: Map<string | symbol, IContentRenderer>,
+    renderers: Map<string | symbol, IContentManager>,
   ) {
     super();
 
@@ -109,7 +110,7 @@ export class CellListener extends RenderListener<IRegionInfo> {
     );
   }
 
-  private getRenderer(cellContent: unknown): IContentRenderer {
+  private getRenderer(cellContent: unknown): IContentManager {
     if (typeof cellContent === 'string') {
       return this.renderers.get('')!;
     }

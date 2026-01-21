@@ -1,4 +1,4 @@
-import type { IDisposable, TIdentifier } from '../../../container';
+import type { IDisposable, TIdentifier } from '../../container';
 import type { Observable } from 'rxjs';
 
 /**
@@ -47,9 +47,32 @@ export interface IContentRendererContext {
 }
 
 /**
- * Content renderer
+ * Edit status
  */
-export interface IContentRenderer extends IDisposable {
+export const EEditStatus = {
+  /**
+   * Normal status
+   */
+  Normal: 'normal',
+  /**
+   * Editing status
+   */
+  Editing: 'editing',
+  /**
+   * Saved status
+   */
+  Saved: 'saved',
+  /**
+   * Canceled status
+   */
+  Canceled: 'canceled',
+} as const;
+export type EEditStatus = (typeof EEditStatus)[keyof typeof EEditStatus];
+
+/**
+ * Content manager
+ */
+export interface IContentManager extends IDisposable {
   /**
    * Render content
    *
@@ -57,8 +80,15 @@ export interface IContentRenderer extends IDisposable {
    * @param context - Content renderer context
    */
   render(content: unknown, context: IContentRendererContext): Observable<void>;
+  /**
+   * Edit content
+   *
+   * @param content - Cell content
+   * @param context - Content renderer context
+   */
+  edit(content: unknown, context: IContentRendererContext): Observable<EEditStatus>;
 }
 /**
- * Content renderer identifier
+ * Content manager identifier
  */
-export const IContentRenderer: TIdentifier<IContentRenderer> = Symbol('IContentRenderer');
+export const IContentManager: TIdentifier<IContentManager> = Symbol('IContentManager');

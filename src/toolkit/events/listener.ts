@@ -35,5 +35,5 @@ export abstract class EventListener extends ObservableDisposable implements IEve
   /**
    * Build event listener
    */
-  protected abstract build(): Observable<void>;
+  protected abstract build(): Observable<any>;
 }

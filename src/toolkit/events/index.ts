@@ -1,5 +1,6 @@
 import type { IContainer } from '../../container';
 
+import { IContentManager } from '../contents';
 import {
   COLUMN_TAG,
   ICellDimension,
@@ -92,6 +93,8 @@ export function registerEvents(container: IContainer) {
           c.get(ICellDimension, ctx),
           c.get(IScrollOffset, ctx),
           c.get(IExcelEntrance, ctx),
+          c.getAll(IContentManager, ctx),
+          c.get(ISheetConfig, ctx),
         ),
     );
 

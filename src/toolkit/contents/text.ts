@@ -1,20 +1,36 @@
-import type { ICellDimension, ISheetConfig } from '../../helpers';
-import type { ICellPool } from '../../pools';
-import type { IExcelEntrance } from '../../types';
-import type { IContentRenderer, IContentRendererContext } from './types';
+import type { ICellDimension, IScrollOffset, ISheetConfig } from '../helpers';
+import type { ICellPool } from '../pools';
+import type { IExcelEntrance } from '../types';
+import type { IContentManager, IContentRendererContext } from './types';
 import type Konva from 'konva';
 
-import { Observable, switchMap } from 'rxjs';
-import { combineLatest, distinctUntilChanged, map, of, shareReplay } from 'rxjs';
+import {
+  combineLatest,
+  distinctUntilChanged,
+  EMPTY,
+  exhaustMap,
+  finalize,
+  fromEvent,
+  map,
+  merge,
+  Observable,
+  of,
+  shareReplay,
+  skip,
+  startWith,
+  switchMap,
+  take,
+} from 'rxjs';
 
-import { ObservableDisposable } from '../../core';
+import { ObservableDisposable } from '../core';
 
+import { EEditStatus } from './types';
 import { ECellFrozenType } from './types';
 
 /**
  * Text content renderer
  */
-export class TextContentRenderer extends ObservableDisposable implements IContentRenderer {
+export class TextContentRenderer extends ObservableDisposable implements IContentManager {
   /**
    * Cell dimension
    */
@@ -34,6 +50,11 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
    * Sheet config
    */
   protected config: ISheetConfig;
+
+  /**
+   * Offset
+   */
+  protected offset: IScrollOffset;
 
   private defaultRectAttrs$: Observable<Partial<Konva.RectConfig>>;
   private defaultOddRectAttrs$: Observable<Partial<Konva.RectConfig>>;
@@ -63,14 +84,22 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
    * @param cellPool - Cell pool
    * @param excelEntrance - Excel entrance
    * @param config - Sheet config
+   * @param offset - Scroll offset
    */
-  constructor(cellDimension: ICellDimension, cellPool: ICellPool, excelEntrance: IExcelEntrance, config: ISheetConfig) {
+  constructor(
+    cellDimension: ICellDimension,
+    cellPool: ICellPool,
+    excelEntrance: IExcelEntrance,
+    config: ISheetConfig,
+    offset: IScrollOffset,
+  ) {
     super();
 
     this.cellDimension = cellDimension;
     this.cellPool = cellPool;
     this.excelEntrance = excelEntrance;
     this.config = config;
+    this.offset = offset;
 
     // ---- Rect ----
 
@@ -320,12 +349,6 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
     this.disposeWithMe(this.rowHeaderTextAttrs$.subscribe());
   }
 
-  /**
-   * Render cell content
-   *
-   * @param content - Cell content
-   * @param context - Render options
-   */
   render(content: unknown, context: IContentRendererContext): Observable<void> {
     const { rowIndex, columnIndex } = context;
 
@@ -382,6 +405,79 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
           text: content?.toString() ?? '',
         });
         if (text.parent !== group) text.moveTo(group);
+      }),
+    );
+  }
+
+  edit(content: unknown, context: IContentRendererContext): Observable<EEditStatus> {
+    const { rowIndex, columnIndex } = context;
+    return this.cellDimension.getCellRectBox$.pipe(
+      map((getRectBox) => getRectBox(rowIndex, columnIndex)),
+      exhaustMap((box) => {
+        const { x, y, width, height } = box;
+
+        const editor = document.createElement('textarea');
+        editor.id = `cell-text-editor-${Date.now()}`;
+        editor.classList.add('cell-editor');
+        this.excelEntrance.rootElement.appendChild(editor);
+
+        editor.value = content?.toString() ?? '';
+
+        editor.style.left = `${x - 1}px`;
+        editor.style.top = `${y - 1}px`;
+        editor.style.width = `${width + 2}px`;
+        editor.style.height = `${height + 2}px`;
+        editor.style.lineHeight = `${height - 2}px`;
+
+        editor.focus();
+        editor.select();
+
+        return merge(
+          context.frozenType !== ECellFrozenType.None
+            ? EMPTY
+            : this.offset.offset$.pipe(
+                skip(1),
+                map(() => false),
+              ),
+          context.frozenType !== ECellFrozenType.Side
+            ? EMPTY
+            : this.offset.top$.pipe(
+                skip(1),
+                map(() => false),
+              ),
+          context.frozenType !== ECellFrozenType.Header
+            ? EMPTY
+            : this.offset.left$.pipe(
+                skip(1),
+                map(() => false),
+              ),
+          fromEvent<KeyboardEvent>(editor, 'keydown').pipe(
+            switchMap((e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                return of(true);
+              } else if (e.key === 'Escape') {
+                return of(false);
+              }
+              return EMPTY;
+            }),
+          ),
+          fromEvent(editor, 'blur').pipe(map(() => true)),
+        ).pipe(
+          take(1),
+          finalize(() => {
+            editor.remove();
+          }),
+          map((save) => {
+            if (save) {
+              const newText = editor.value;
+              this.cellDimension.setCellData(rowIndex, columnIndex, newText || null);
+            }
+
+            return save ? EEditStatus.Saved : EEditStatus.Canceled;
+          }),
+          startWith(EEditStatus.Editing),
+        );
       }),
     );
   }

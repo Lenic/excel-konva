@@ -8,6 +8,7 @@ import { combineLatest, fromEventPattern, map, shareReplay, tap } from 'rxjs';
 import { Container, ServiceLocator } from '../container';
 
 import { ObservableDisposable } from './core/disposable';
+import { registerContentManagers } from './contents';
 import {
   IBoundaryResizeListener,
   ICursorListener,
@@ -159,6 +160,7 @@ export class ExcelEntrance extends ObservableDisposable implements IExcelEntranc
 
     registerHelpers(container, () => config);
     registerPools(container);
+    registerContentManagers(container);
     registerEvents(container);
     registerRenderers(container);
     ServiceLocator.setProvider(container);
