@@ -418,7 +418,7 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
 
         const editor = document.createElement('textarea');
         editor.id = `cell-text-editor-${Date.now()}`;
-        editor.classList.add('cell-editor');
+        editor.classList.add('cell-text-editor');
         this.excelEntrance.rootElement.appendChild(editor);
 
         editor.value = content?.toString() ?? '';

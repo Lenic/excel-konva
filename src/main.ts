@@ -1,11 +1,4 @@
-import {
-  excelEntrance,
-  renderedRangeColumn,
-  renderedRangeRow,
-  scrollXElement,
-  scrollYElement,
-  selectionCount,
-} from './toolkit/entrance';
+import { excelEntrance } from './toolkit/entrance';
 import { IScrollOffset, ISheetConfig } from './toolkit/helpers';
 import { ICellListener, ISelectionListener } from './toolkit/renderers';
 import { ServiceLocator } from './container';
@@ -28,18 +21,20 @@ const cellRenderer = ServiceLocator.current.get(ICellListener);
 cellRenderer.data$.subscribe((dataRegion) => {
   const { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } = dataRegion;
 
-  renderedRangeRow.textContent = `${startRowIndex.toLocaleString()} - ${endRowIndex.toLocaleString()}`;
-  renderedRangeColumn.textContent = `${startColumnIndex.toLocaleString()} - ${endColumnIndex.toLocaleString()}`;
+  document.getElementById('rendered-range-row')!.textContent =
+    `${startRowIndex.toLocaleString()} - ${endRowIndex.toLocaleString()}`;
+  document.getElementById('rendered-range-column')!.textContent =
+    `${startColumnIndex.toLocaleString()} - ${endColumnIndex.toLocaleString()}`;
 });
 
 const selectionRenderer = ServiceLocator.current.get(ISelectionListener);
 selectionRenderer.data$.subscribe((count) => {
-  selectionCount.textContent = count.toLocaleString();
+  document.getElementById('selection-count')!.textContent = count.toLocaleString();
 });
 
 ServiceLocator.current.get(IScrollOffset).offset$.subscribe((val) => {
-  scrollXElement.textContent = val.deltaX.toFixed(0);
-  scrollYElement.textContent = val.deltaY.toFixed(0);
+  document.getElementById('scroll-x')!.textContent = val.deltaX.toFixed(0);
+  document.getElementById('scroll-y')!.textContent = val.deltaY.toFixed(0);
 });
 
 excelEntrance.start();
