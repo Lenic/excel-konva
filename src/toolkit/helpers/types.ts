@@ -86,28 +86,245 @@ export interface ISheetOptions {
    *   stroke: '#e8e8e8',
    *   strokeWidth: 0.5
    * }
+   * ```
    */
   defaultCellRectAttrs?: Partial<Konva.RectConfig>;
+  /**
+   * Default odd cell rect attrs
+   *
+   * The final value is: defaultCellRectAttrs + defaultOddCellRectAttrs
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   * }
+   * ```
+   */
+  defaultOddCellRectAttrs?: Partial<Konva.RectConfig>;
+  /**
+   * Default even cell rect attrs
+   *
+   * The final value is: defaultCellRectAttrs + defaultEvenCellRectAttrs
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   *   fill: '#f9f9f9'
+   * }
+   * ```
+   */
+  defaultEvenCellRectAttrs?: Partial<Konva.RectConfig>;
+  /**
+   * Frozen cell rect attrs
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   *   stroke: '#cccccc',
+   *   strokeWidth: 1
+   * }
+   * ```
+   */
+  frozenCellRectAttrs?: Partial<Konva.RectConfig>;
+  /**
+   * Frozen odd cell rect attrs
+   *
+   * The final result is: defaultOddCellRectAttrs + frozenCellRectAttrs + current value
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   * }
+   * ```
+   */
+  frozenOddCellRectAttrs?: Partial<Konva.RectConfig>;
+  /**
+   * Frozen even cell rect attrs
+   *
+   * The final result is: defaultEvenCellRectAttrs + frozenCellRectAttrs + current value
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   * }
+   * ```
+   */
+  frozenEvenCellRectAttrs?: Partial<Konva.RectConfig>;
+  /**
+   * Header cell rect attrs
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   *   fill: '#f0f0f0'
+   * }
+   * ```
+   */
+  headerCellRectAttrs?: Partial<Konva.RectConfig>;
+  /**
+   * Column header cell rect attrs
+   *
+   * The final result is: defaultCellRectAttrs + frozenCellRectAttrs + headerCellRectAttrs + current value
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   * }
+   * ```
+   */
+  columnHeaderCellRectAttrs?: Partial<Konva.RectConfig>;
+  /**
+   * Row header cell rect attrs
+   *
+   * The final result is: defaultCellRectAttrs + frozenCellRectAttrs + headerCellRectAttrs + current value
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   */
+  rowHeaderCellRectAttrs?: Partial<Konva.RectConfig>;
+  /**
+   * Corner cell rect attrs
+   *
+   * The final result is: defaultCellRectAttrs + frozenCellRectAttrs + headerCellRectAttrs + current value
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   *   fill: '#e0e0e0',
+   * }
+   * ```
+   */
+  cornerCellRectAttrs?: Partial<Konva.RectConfig>;
   /**
    * Default cell text attrs
    *
    * The following object defines the default values:
    *
-   * ```json
+   *
    * {
    *   fontSize: 12,
    *   fontFamily: 'Inter, Arial, sans-serif',
    *   fill: '#333333',
    *   verticalAlign: 'middle',
    *   padding: 8,
-   *   listening: false,
    *   align: 'left',
    *   ellipsis: true,
    *   wrap: 'none'
+   */
+  defaultCellTextAttrs?: Partial<Konva.TextConfig>;
+  /**
+   * Default odd cell text attrs
+   *
+   * The final result is: defaultCellTextAttrs + defaultOddCellTextAttrs
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
    * }
    * ```
    */
-  defaultCellTextAttrs?: Partial<Konva.TextConfig>;
+  defaultOddCellTextAttrs?: Partial<Konva.TextConfig>;
+  /**
+   * Default even cell text attrs
+   *
+   * The final result is: defaultCellTextAttrs + defaultEvenCellTextAttrs
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   * }
+   * ```
+   */
+  defaultEvenCellTextAttrs?: Partial<Konva.TextConfig>;
+  /**
+   * Frozen cell text attrs
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   * }
+   * ```
+   */
+  frozenCellTextAttrs?: Partial<Konva.TextConfig>;
+  /**
+   * Frozen odd cell text attrs
+   *
+   * The final result is: defaultOddCellTextAttrs + frozenCellTextAttrs + current value
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   * }
+   * ```
+   */
+  frozenOddCellTextAttrs?: Partial<Konva.TextConfig>;
+  /**
+   * Frozen even cell text attrs
+   *
+   * The final result is: defaultEvenCellTextAttrs + frozenCellTextAttrs + current value
+   *
+   * The following object defines the default values:
+   *
+   * {
+   * }
+   * ```
+   */
+  frozenEvenCellTextAttrs?: Partial<Konva.TextConfig>;
+  /**
+   * Header cell text attrs
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   *   fontSize: 14,
+   *   fill: '#000000',
+   *   align: 'center'
+   * }
+   * ```
+   */
+  headerCellTextAttrs?: Partial<Konva.TextConfig>;
+  /**
+   * Column header cell text attrs
+   *
+   * The final result is: defaultCellTextAttrs + frozenCellTextAttrs + headerCellTextAttrs + current value
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   * }
+   * ```
+   */
+  columnHeaderCellTextAttrs?: Partial<Konva.TextConfig>;
+  /**
+   * Row header cell text attrs
+   *
+   * The final result is: defaultCellTextAttrs + frozenCellTextAttrs + headerCellTextAttrs + current value
+   *
+   * The following object defines the default values:
+   *
+   * ```json
+   * {
+   *   padding: 0
+   * }
+   * ```
+   */
+  rowHeaderCellTextAttrs?: Partial<Konva.TextConfig>;
   /**
    * Number of buffer cells: default is 1
    */
@@ -410,23 +627,23 @@ export interface ICellDimension extends IDisposable {
   /**
    * Cell data store
    */
-  cellDataStore: Map<string, string>;
+  cellDataStore: Map<string, unknown>;
 
   /**
    * Set the content of the given cell.
    *
    * @param key - The key of the cell.
-   * @param value - The value of the cell. `null` means clearing the cell content and setting it to the default value `undefined`.
+   * @param value - The value of the cell. `undefined` means clearing the cell content and setting it to the default value `undefined`.
    */
-  setCellData(key: string, value: string | null): void;
+  setCellData(key: string, value?: unknown): void;
   /**
    * Set the content of the given cell.
    *
    * @param rowIndex - The row index, starting from 0.
    * @param columnIndex - The column index, starting from 0.
-   * @param value - The value of the cell. `null` means clearing the cell content and setting it to the default value `undefined`.
+   * @param value - The value of the cell. `undefined` means clearing the cell content and setting it to the default value `undefined`.
    */
-  setCellData(rowIndex: number, columnIndex: number, value: string | null): void;
+  setCellData(rowIndex: number, columnIndex: number, value?: unknown): void;
 
   /**
    * An Observable that emits a function to retrieve the cell data for a specific row and column.
@@ -436,7 +653,7 @@ export interface ICellDimension extends IDisposable {
    * - `columnIndex`: The index of the column.
    * - Returns: The cell data.
    */
-  getCellData$: Observable<(rowIndex: number, columnIndex: number) => string>;
+  getCellData$: Observable<(rowIndex: number, columnIndex: number) => unknown>;
   /**
    * An Observable that emits a function to retrieve the cell rect box for a specific row and column.
    *

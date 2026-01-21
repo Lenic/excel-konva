@@ -2,14 +2,16 @@ import type { IContainer } from '../../container';
 
 import { ISelectionStore } from '../events';
 import { ICellDimension, IDataRegion, ISheetConfig, ISheetDimension } from '../helpers';
-import { IActiveCellMarkerPool, ICellPool, ISelectionPool } from '../pools';
+import { IActiveCellMarkerPool, ISelectionPool } from '../pools';
 import { IExcelEntrance } from '../types';
 
 import { CellListener } from './cell';
+import { IContentRenderer, registerContentRenderers } from './contents';
 import { RangeCollection } from './range';
 import { SelectionListener } from './selection';
 import { ICellListener, IRangeCollection, ISelectionListener } from './types';
 
+export * from './contents';
 export * from './types';
 
 /**
@@ -19,6 +21,8 @@ export * from './types';
  */
 export function registerRenderers(container: IContainer) {
   container.register(IRangeCollection, 'transient').set(() => new RangeCollection());
+
+  registerContentRenderers(container);
 
   container.register(ISelectionListener).set((c) => {
     return new SelectionListener(
@@ -34,11 +38,11 @@ export function registerRenderers(container: IContainer) {
 
   container.register(ICellListener).set((c) => {
     return new CellListener(
+      c.get(IExcelEntrance).backgroundLayer,
       c.get(ISheetConfig),
-      c.get(ICellDimension),
       c.get(IDataRegion),
-      c.get(IExcelEntrance),
-      c.get(ICellPool),
+      c.get(ICellDimension),
+      c.getAll(IContentRenderer),
     );
   });
 }

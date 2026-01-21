@@ -4,19 +4,20 @@ import type { Observable } from 'rxjs';
 import Konva from 'konva';
 import { map, shareReplay } from 'rxjs';
 
-import { RectPool } from './rect-pool';
+import { ObservableDisposable, Queue } from '../core';
 
 /**
  * Cell pool
  */
-export class CellPool extends RectPool implements ICellPool {
-  private texts: Konva.Text[];
-  private nextTextIndex: number;
+export class CellPool extends ObservableDisposable implements ICellPool {
+  private layer: Konva.Layer;
+  private rects: Queue<Konva.Rect>;
+  private texts: Queue<Konva.Text>;
 
-  textAttrs: Partial<Konva.TextConfig>;
-
+  rectAttrs$: Observable<Partial<Konva.RectConfig>>;
   textAttrs$: Observable<Partial<Konva.TextConfig>>;
 
+  getRect$: Observable<() => Konva.Rect>;
   getText$: Observable<() => Konva.Text>;
 
   /**
@@ -30,61 +31,81 @@ export class CellPool extends RectPool implements ICellPool {
     rectAttrs$: Observable<Partial<Konva.RectConfig>>,
     textAttrs$: Observable<Partial<Konva.TextConfig>>,
   ) {
-    super(layer, rectAttrs$);
+    super();
 
-    this.texts = [];
-    this.nextTextIndex = 0;
+    this.layer = layer;
+    this.rects = new Queue<Konva.Rect>();
+    this.texts = new Queue<Konva.Text>();
 
-    this.textAttrs = {};
-    this.disposeWithMe(() => void (this.textAttrs = {}));
+    this.rectAttrs$ = rectAttrs$.pipe(shareReplay({ bufferSize: 1, refCount: true }));
+    this.disposeWithMe(this.rectAttrs$.subscribe());
 
     this.textAttrs$ = textAttrs$.pipe(shareReplay({ bufferSize: 1, refCount: true }));
-    this.disposeWithMe(this.textAttrs$.subscribe((textAttrs) => void (this.textAttrs = textAttrs)));
+    this.disposeWithMe(this.textAttrs$.subscribe());
 
-    this.getText$ = this.buildGetText$();
+    this.getRect$ = this.buildGetShape$(this.rectAttrs$, this.rects, (attrs) => new Konva.Rect(attrs));
+    this.disposeWithMe(this.getRect$.subscribe());
+
+    this.getText$ = this.buildGetShape$(this.textAttrs$, this.texts, (attrs) => new Konva.Text(attrs));
     this.disposeWithMe(this.getText$.subscribe());
 
     this.disposeWithMe(() => {
-      this.texts.forEach((text) => text.destroy());
-      this.texts = [];
-      this.nextTextIndex = 0;
+      while (this.rects.length > 0) {
+        this.rects.dequeue()!.destroy();
+      }
+      while (this.texts.length > 0) {
+        this.texts.dequeue()!.destroy();
+      }
     });
   }
 
-  reset(): void {
-    this.checkDisposed();
-
-    super.reset();
-
-    this.texts.forEach((text) => text.visible(false));
-    this.nextTextIndex = 0;
+  disposeRect(rect: Konva.Rect): void {
+    this.disposeShape(rect, this.rects);
   }
 
-  private buildGetText$() {
-    return this.textAttrs$.pipe(
-      map((textAttrs) => {
-        const getText = () => {
-          if (this.nextTextIndex < this.texts.length) {
-            const text = this.texts[this.nextTextIndex++];
-            text.setAttrs({
-              ...textAttrs,
+  disposeText(text: Konva.Text): void {
+    this.disposeShape(text, this.texts);
+  }
+
+  private disposeShape<TShape extends Konva.Shape>(shape: TShape, queue: Queue<TShape>) {
+    this.checkDisposed();
+
+    shape.visible(false);
+    if (shape.parent !== this.layer) shape.moveTo(this.layer);
+
+    queue.enqueue(shape);
+  }
+
+  private buildGetShape$<TConfig extends Konva.ShapeConfig, TShape extends Konva.Shape>(
+    attrs$: Observable<Partial<TConfig>>,
+    queue: Queue<TShape>,
+    creator: (config: Partial<TConfig>) => TShape,
+  ) {
+    return attrs$.pipe(
+      map((attrs) => {
+        /**
+         * Get shape from pool
+         * @returns Shape
+         */
+        const getShape = (): TShape => {
+          this.checkDisposed();
+
+          if (queue.length > 0) {
+            const shape = queue.dequeue()!;
+            shape.setAttrs({
+              ...attrs,
               visible: true,
             });
-            return text;
+            return shape;
           }
 
-          const newText = new Konva.Text({
-            ...textAttrs,
-            listening: false,
-          });
-          this.layer.add(newText);
-          this.texts.push(newText);
-          this.nextTextIndex++;
+          const newShape = creator(attrs);
+          this.layer.add(newShape);
 
-          return newText;
+          return newShape;
         };
 
-        return getText;
+        return getShape;
       }),
       shareReplay({ bufferSize: 1, refCount: true }),
     );
