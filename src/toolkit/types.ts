@@ -1,4 +1,4 @@
-import type { TIdentifier } from '../container';
+import type { IDisposable, TIdentifier } from '../container';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
@@ -92,23 +92,9 @@ export interface IRegionInfo {
 }
 
 /**
- * Cell region options
- */
-export interface ICellRegionOptions {
-  /**
-   * Rectangle attributes
-   */
-  rectAttrs: Omit<Konva.RectConfig, 'x' | 'y' | 'width' | 'height'>;
-  /**
-   * Text attributes
-   */
-  textAttrs: Omit<Konva.TextConfig, 'x' | 'y' | 'width' | 'height' | 'text'>;
-}
-
-/**
  * Excel entrance interface
  */
-export interface IExcelEntrance {
+export interface IExcelEntrance extends IDisposable {
   /**
    * Root html element
    */
@@ -159,6 +145,11 @@ export interface IExcelEntrance {
    * Get cell group by row and column index
    */
   getCellGroup$: Observable<(rowIndex: number, columnIndex: number) => Konva.Group>;
+
+  /**
+   * Start the Excel entrance
+   */
+  start(): void;
 }
 /**
  * Excel entrance interface identifier

@@ -33,16 +33,48 @@ export const defaultSheetConfig: Required<ISheetOptions> = {
     stroke: '#e8e8e8',
     strokeWidth: 0.5,
   },
+  defaultOddCellRectAttrs: {},
+  defaultEvenCellRectAttrs: {
+    fill: '#f9f9f9',
+  },
+  frozenCellRectAttrs: {
+    stroke: '#cccccc',
+    strokeWidth: 1,
+  },
+  frozenOddCellRectAttrs: {},
+  frozenEvenCellRectAttrs: {},
+  headerCellRectAttrs: {
+    fill: '#f0f0f0',
+  },
+  columnHeaderCellRectAttrs: {},
+  rowHeaderCellRectAttrs: {},
+  cornerCellRectAttrs: {
+    fill: '#e0e0e0',
+  },
   defaultCellTextAttrs: {
     fontSize: 12,
     fontFamily: 'Inter, Arial, sans-serif',
     fill: '#333333',
     verticalAlign: 'middle',
     padding: 8,
-    listening: false,
     align: 'left',
     ellipsis: true,
     wrap: 'none',
+    listening: false,
+  },
+  defaultOddCellTextAttrs: {},
+  defaultEvenCellTextAttrs: {},
+  frozenCellTextAttrs: {},
+  frozenOddCellTextAttrs: {},
+  frozenEvenCellTextAttrs: {},
+  headerCellTextAttrs: {
+    fontSize: 14,
+    fill: '#000000',
+    align: 'center',
+  },
+  columnHeaderCellTextAttrs: {},
+  rowHeaderCellTextAttrs: {
+    padding: 0,
   },
   bufferCellCount: 1,
   resizeTolerance: 5,
@@ -73,7 +105,25 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
       selectionRectAttrs: { ...defaultSheetConfig.selectionRectAttrs, ...options.selectionRectAttrs },
       activeCellRectAttrs: { ...defaultSheetConfig.activeCellRectAttrs, ...options.activeCellRectAttrs },
       defaultCellRectAttrs: { ...defaultSheetConfig.defaultCellRectAttrs, ...options.defaultCellRectAttrs },
+      frozenCellRectAttrs: { ...defaultSheetConfig.frozenCellRectAttrs, ...options.frozenCellRectAttrs },
+      frozenOddCellRectAttrs: { ...defaultSheetConfig.frozenOddCellRectAttrs, ...options.frozenOddCellRectAttrs },
+      frozenEvenCellRectAttrs: {
+        ...defaultSheetConfig.frozenEvenCellRectAttrs,
+        ...options.frozenEvenCellRectAttrs,
+      },
+      headerCellRectAttrs: { ...defaultSheetConfig.headerCellRectAttrs, ...options.headerCellRectAttrs },
+      columnHeaderCellRectAttrs: {
+        ...defaultSheetConfig.columnHeaderCellRectAttrs,
+        ...options.columnHeaderCellRectAttrs,
+      },
+      rowHeaderCellRectAttrs: { ...defaultSheetConfig.rowHeaderCellRectAttrs, ...options.rowHeaderCellRectAttrs },
       defaultCellTextAttrs: { ...defaultSheetConfig.defaultCellTextAttrs, ...options.defaultCellTextAttrs },
+      headerCellTextAttrs: { ...defaultSheetConfig.headerCellTextAttrs, ...options.headerCellTextAttrs },
+      columnHeaderCellTextAttrs: {
+        ...defaultSheetConfig.columnHeaderCellTextAttrs,
+        ...options.columnHeaderCellTextAttrs,
+      },
+      rowHeaderCellTextAttrs: { ...defaultSheetConfig.rowHeaderCellTextAttrs, ...options.rowHeaderCellTextAttrs },
     };
 
     this.optionsSubject = new BehaviorSubject(this.options);

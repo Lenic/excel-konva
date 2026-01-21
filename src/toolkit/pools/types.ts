@@ -1,4 +1,4 @@
-import type { TIdentifier } from '../../container';
+import type { IDisposable, TIdentifier } from '../../container';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
@@ -38,15 +38,18 @@ export const IActiveCellMarkerPool: TIdentifier<IRectPool> = Symbol('IActiveCell
 /**
  * Cell pool interface
  */
-export interface ICellPool extends IRectPool {
+export interface ICellPool extends IDisposable {
   /**
-   * Text attributes
+   * Get rectangle Observable
+   *
+   * The emitted function signature is: `() => Konva.Rect`
+   * - Returns: The rectangle factory function.
    */
-  textAttrs: Partial<Konva.TextConfig>;
+  getRect$: Observable<() => Konva.Rect>;
   /**
-   * Text attributes Observable
+   * Dispose rectangle shape
    */
-  textAttrs$: Observable<Partial<Konva.TextConfig>>;
+  disposeRect(rect: Konva.Rect): void;
   /**
    * Get text Observable
    *
@@ -54,6 +57,10 @@ export interface ICellPool extends IRectPool {
    * - Returns: The text factory function.
    */
   getText$: Observable<() => Konva.Text>;
+  /**
+   * Dispose text shape
+   */
+  disposeText(text: Konva.Text): void;
 }
 /**
  * Cell pool interface identifier

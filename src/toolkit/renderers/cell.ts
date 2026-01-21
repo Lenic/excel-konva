@@ -1,176 +1,120 @@
+import type { IContentManager, IContentRendererContext } from '../contents';
 import type { ICellDimension, IDataRegion, ISheetConfig } from '../helpers';
-import type { ICellPool } from '../pools';
-import type { ICellRegionOptions, IExcelEntrance, IRegionInfo } from '../types';
-import type { Observable } from 'rxjs';
+import type { IRegionInfo } from '../types';
+import type Konva from 'konva';
+import type { Observable, Subscription } from 'rxjs';
 
-import { combineLatest, map, switchMap, take } from 'rxjs';
+import { combineLatest, distinctUntilChanged, map, switchMap } from 'rxjs';
+
+import { ECellFrozenType } from '../contents';
 
 import { RenderListener } from './renderer';
 
 export class CellListener extends RenderListener<IRegionInfo> {
+  private layer: Konva.Layer;
   private config: ISheetConfig;
-  private cellDimension: ICellDimension;
   private dataRegion: IDataRegion;
-  private excelEntrance: IExcelEntrance;
-  private cellPool: ICellPool;
+  private cellDimension: ICellDimension;
+  private renderers: Map<string | symbol, IContentManager>;
+  private subscriptions = new Map<string, Subscription>();
 
   constructor(
+    layer: Konva.Layer,
     config: ISheetConfig,
-    cellDimension: ICellDimension,
     dataRegion: IDataRegion,
-    excelEntrance: IExcelEntrance,
-    cellPool: ICellPool,
+    cellDimension: ICellDimension,
+    renderers: Map<string | symbol, IContentManager>,
   ) {
     super();
 
+    this.layer = layer;
     this.config = config;
-    this.cellDimension = cellDimension;
     this.dataRegion = dataRegion;
-    this.excelEntrance = excelEntrance;
-    this.cellPool = cellPool;
+    this.cellDimension = cellDimension;
+    this.renderers = renderers;
   }
 
   protected build(): Observable<IRegionInfo> {
     return combineLatest([
-      this.excelEntrance.getCellGroup$,
-      this.cellDimension.getCellRectBox$,
-      this.cellDimension.getCellData$,
-      this.cellPool.getRect$,
-      this.cellPool.getText$,
+      this.dataRegion.region$,
+      this.config.get$('frozenColumns'),
+      this.config.get$('frozenRows'),
     ]).pipe(
-      switchMap(([getCellGroup, getCellRectBox, getCellData, getRect, getText]) => {
-        /**
-         * Draw target cell
-         *
-         * @param rowIndex - The row index of the cell
-         * @param columnIndex - The column index of the cell
-         * @param options - Configuration options for the cell
-         */
-        const renderCellRegion = (rowIndex: number, columnIndex: number, options: ICellRegionOptions) => {
-          const group = getCellGroup(rowIndex, columnIndex);
-          const { x, y, width, height } = getCellRectBox(rowIndex, columnIndex);
-
-          const rect = getRect();
-          rect.setAttrs({
-            ...options.rectAttrs,
-            x,
-            y,
-            width,
-            height,
-          });
-          if (rect.parent !== group) rect.moveTo(group);
-
-          const text = getText();
-          text.setAttrs({
-            ...options.textAttrs,
-            x,
-            y,
-            width,
-            height,
-            text: getCellData(rowIndex, columnIndex),
-          });
-          if (text.parent !== group) text.moveTo(group);
-        };
-
-        return combineLatest([
-          this.dataRegion.region$,
-          this.config.get$('frozenColumns').pipe(take(1)),
-          this.config.get$('frozenRows').pipe(take(1)),
-        ]).pipe(map((items) => [renderCellRegion, ...items] as const));
-      }),
-      map(([renderCellRegion, dataRegion, frozenColumns, frozenRows]) => {
+      map(([dataRegion, frozenColumns, frozenRows]) => {
         const { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } = dataRegion;
 
-        this.cellPool.reset();
+        const items: IContentRendererContext[] = [];
 
         // Render Scrollable Data
         for (let r = startRowIndex; r < endRowIndex; r++) {
           for (let c = startColumnIndex; c < endColumnIndex; c++) {
-            renderCellRegion(r, c, {
-              rectAttrs: {
-                fill: r % 2 === 0 ? '#ffffff' : '#f9f9f9',
-                stroke: '#e8e8e8',
-                strokeWidth: 0.5,
-              },
-              textAttrs: {
-                fill: '#333333',
-                fontSize: 12,
-                align: 'left',
-                padding: 8,
-                ellipsis: true,
-                wrap: 'none',
-              },
-            });
+            items.push({ rowIndex: r, columnIndex: c, frozenType: ECellFrozenType.None });
           }
         }
 
         // Render Frozen Header
         for (let r = 0; r < frozenRows; r++) {
           for (let c = startColumnIndex; c < endColumnIndex; c++) {
-            renderCellRegion(r, c, {
-              rectAttrs: {
-                fill: r === 0 ? '#f0f0f0' : r % 2 === 0 ? '#ffffff' : '#f9f9f9',
-                stroke: '#cccccc',
-                strokeWidth: 1,
-              },
-              textAttrs: {
-                fill: '#000000',
-                fontSize: r === 0 ? 14 : 12,
-                align: r === 0 ? 'center' : 'left',
-                padding: 8,
-                ellipsis: true,
-                wrap: 'none',
-              },
-            });
+            items.push({ rowIndex: r, columnIndex: c, frozenType: ECellFrozenType.Header });
           }
         }
 
         // Render Frozen Side
         for (let c = 0; c < frozenColumns; c++) {
           for (let r = startRowIndex; r < endRowIndex; r++) {
-            renderCellRegion(r, c, {
-              rectAttrs: {
-                fill: c === 0 ? '#f0f0f0' : r % 2 === 0 ? '#ffffff' : '#f9f9f9',
-                stroke: '#cccccc',
-                strokeWidth: 1,
-              },
-              textAttrs: {
-                fill: '#333333',
-                fontSize: 12,
-                align: c === 0 ? 'center' : 'left',
-                padding: c === 0 ? 0 : 8,
-                ellipsis: true,
-                wrap: 'none',
-              },
-            });
+            items.push({ rowIndex: r, columnIndex: c, frozenType: ECellFrozenType.Side });
           }
         }
 
         // Render Corner
         for (let r = 0; r < frozenRows; r++) {
           for (let c = 0; c < frozenColumns; c++) {
-            renderCellRegion(r, c, {
-              rectAttrs: {
-                fill: r === 0 && c === 0 ? '#e0e0e0' : '#f0f0f0',
-                stroke: '#cccccc',
-                strokeWidth: 1,
-              },
-              textAttrs: {
-                fill: '#000000',
-                fontSize: r === 0 ? 14 : 12,
-                align: c === 0 ? 'center' : r === 0 ? 'center' : 'left',
-                padding: c === 0 ? 0 : 8,
-                ellipsis: true,
-                wrap: 'none',
-              },
-            });
+            items.push({ rowIndex: r, columnIndex: c, frozenType: ECellFrozenType.Corner });
           }
         }
 
-        this.excelEntrance.backgroundLayer.batchDraw();
+        const currentKeys = new Set<string>();
+
+        // 1. Add new subscriptions
+        for (const item of items) {
+          const key = `${item.rowIndex}:${item.columnIndex}:${item.frozenType}`;
+          currentKeys.add(key);
+
+          // New → create subscription
+          if (!this.subscriptions.has(key)) {
+            const subscription = this.cellDimension.getCellData$
+              .pipe(
+                map((getData) => getData(item.rowIndex, item.columnIndex)),
+                distinctUntilChanged(),
+                switchMap((cellContent) => this.getRenderer(cellContent).render(cellContent, item)),
+              )
+              .subscribe();
+            this.subscriptions.set(key, subscription);
+          }
+        }
+
+        // 2. Clear old subscriptions
+        for (const [key, subscription] of this.subscriptions) {
+          if (!currentKeys.has(key)) {
+            subscription.unsubscribe();
+            this.subscriptions.delete(key);
+          }
+        }
+
+        if (currentKeys.size > 0) {
+          this.layer.batchDraw();
+        }
 
         return dataRegion;
       }),
     );
+  }
+
+  private getRenderer(cellContent: unknown): IContentManager {
+    if (typeof cellContent === 'string') {
+      return this.renderers.get('')!;
+    }
+
+    return this.renderers.get('')!;
   }
 }

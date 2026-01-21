@@ -8,6 +8,7 @@ import { combineLatest, fromEventPattern, map, shareReplay, tap } from 'rxjs';
 import { Container, ServiceLocator } from '../container';
 
 import { ObservableDisposable } from './core/disposable';
+import { registerContentManagers } from './contents';
 import {
   IBoundaryResizeListener,
   ICursorListener,
@@ -20,17 +21,6 @@ import { ISheetDimension, registerHelpers, SheetConfig } from './helpers';
 import { registerPools } from './pools';
 import { ICellListener, ISelectionListener, registerRenderers } from './renderers';
 import { IExcelEntrance } from './types';
-
-/**
- * The cell content editor: #cell-editor
- */
-export const editor = document.getElementById('cell-editor') as HTMLTextAreaElement;
-
-export const selectionCount = document.getElementById('selection-count') as HTMLDivElement;
-export const renderedRangeRow = document.getElementById('rendered-range-row') as HTMLDivElement;
-export const renderedRangeColumn = document.getElementById('rendered-range-col') as HTMLDivElement;
-export const scrollXElement = document.getElementById('scroll-x') as HTMLDivElement;
-export const scrollYElement = document.getElementById('scroll-y') as HTMLDivElement;
 
 /**
  * Excel entrance class
@@ -159,6 +149,7 @@ export class ExcelEntrance extends ObservableDisposable implements IExcelEntranc
 
     registerHelpers(container, () => config);
     registerPools(container);
+    registerContentManagers(container);
     registerEvents(container);
     registerRenderers(container);
     ServiceLocator.setProvider(container);

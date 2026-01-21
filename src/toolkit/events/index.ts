@@ -1,5 +1,6 @@
 import type { IContainer } from '../../container';
 
+import { IContentManager } from '../contents';
 import {
   COLUMN_TAG,
   ICellDimension,
@@ -41,64 +42,71 @@ export function registerEvents(container: IContainer) {
   container
     .register(IStageMouseEvent)
     .set(
-      (c) =>
+      (c, ctx) =>
         new StageMouseEvent(
-          c.get(ICellDimension),
-          c.get(IItemBoundary, COLUMN_TAG),
-          c.get(ISheetConfig),
-          c.get(IItemBoundary, ROW_TAG),
-          c.get(ISheetDimension),
-          c.get(IExcelEntrance),
+          c.get(ICellDimension, ctx),
+          c.get(IItemBoundary, COLUMN_TAG, ctx),
+          c.get(ISheetConfig, ctx),
+          c.get(IItemBoundary, ROW_TAG, ctx),
+          c.get(ISheetDimension, ctx),
+          c.get(IExcelEntrance, ctx),
         ),
     );
 
   container
     .register(IBoundaryResizeListener)
     .set(
-      (c) =>
+      (c, ctx) =>
         new BoundaryResizeListener(
-          c.get(ISheetConfig),
-          c.get(ISheetDimension),
-          c.get(IItemBoundary, COLUMN_TAG),
-          c.get(IItemBoundary, ROW_TAG),
-          c.get(IStageMouseEvent),
-          c.get(IExcelEntrance),
+          c.get(ISheetConfig, ctx),
+          c.get(ISheetDimension, ctx),
+          c.get(IItemBoundary, COLUMN_TAG, ctx),
+          c.get(IItemBoundary, ROW_TAG, ctx),
+          c.get(IStageMouseEvent, ctx),
+          c.get(IExcelEntrance, ctx),
         ),
     );
 
   container
     .register(IStageClickListener)
-    .set((c) => new StageClickListener(c.get(ISelectionStore), c.get(IStageMouseEvent)));
+    .set((c, ctx) => new StageClickListener(c.get(ISelectionStore, ctx), c.get(IStageMouseEvent, ctx)));
 
   container
     .register(IStageDragListener)
     .set(
-      (c) =>
+      (c, ctx) =>
         new StageDragListener(
-          c.get(ISheetConfig),
-          c.get(ISelectionStore),
-          c.get(IStageMouseEvent),
-          c.get(ICellDimension),
-          c.get(IExcelEntrance),
+          c.get(ISheetConfig, ctx),
+          c.get(ISelectionStore, ctx),
+          c.get(IStageMouseEvent, ctx),
+          c.get(ICellDimension, ctx),
+          c.get(IExcelEntrance, ctx),
         ),
     );
 
   container
     .register(IStageEditListener)
     .set(
-      (c) =>
+      (c, ctx) =>
         new StageEditListener(
-          c.get(IStageMouseEvent),
-          c.get(ICellDimension),
-          c.get(IScrollOffset),
-          c.get(IExcelEntrance),
+          c.get(IStageMouseEvent, ctx),
+          c.get(ICellDimension, ctx),
+          c.get(IScrollOffset, ctx),
+          c.get(IExcelEntrance, ctx),
+          c.getAll(IContentManager, ctx),
+          c.get(ISheetConfig, ctx),
         ),
     );
 
   container
     .register(ICursorListener)
     .set(
-      (c) =>
-        new CursorListener(c.get(IStageMouseEvent), c.get(ICellDimension), c.get(IScrollOffset), c.get(IExcelEntrance)),
+      (c, ctx) =>
+        new CursorListener(
+          c.get(IStageMouseEvent, ctx),
+          c.get(ICellDimension, ctx),
+          c.get(IScrollOffset, ctx),
+          c.get(IExcelEntrance, ctx),
+        ),
     );
 }

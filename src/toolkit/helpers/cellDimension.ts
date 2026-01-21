@@ -10,14 +10,14 @@ import { getCellKey, getColumnLabel, ObservableDisposable } from '../core';
  * Cell dimension
  */
 export class CellDimension extends ObservableDisposable implements ICellDimension {
-  private cellDataSubject: Subject<[string, string | null]>;
+  private cellDataSubject: Subject<[string, unknown]>;
 
   columnBoundary: IItemBoundary;
   rowBoundary: IItemBoundary;
 
-  cellDataStore: Map<string, string>;
+  cellDataStore: Map<string, unknown>;
 
-  getCellData$: Observable<(rowIndex: number, columnIndex: number) => string>;
+  getCellData$: Observable<(rowIndex: number, columnIndex: number) => unknown>;
   getCellRectBox$: Observable<(rowIndex: number, columnIndex: number) => IRectBox>;
   getCellLocation$: Observable<(relX: number, relY: number) => ILocation>;
   getCellPoint$: Observable<(rowIndex: number, columnIndex: number) => IPoint>;
@@ -57,13 +57,13 @@ export class CellDimension extends ObservableDisposable implements ICellDimensio
     this.disposeWithMe(this.getCellPoint$.subscribe());
   }
 
-  setCellData(key: string, value: string | null): void;
-  setCellData(rowIndex: number, columnIndex: number, value: string | null): void;
+  setCellData(key: string, value?: unknown): void;
+  setCellData(rowIndex: number, columnIndex: number, value?: unknown): void;
   setCellData(...args: any[]) {
     if (args.length === 2) {
-      this.cellDataSubject.next(args as [string, string | null]);
+      this.cellDataSubject.next(args as [string, unknown]);
     } else if (args.length === 3) {
-      this.cellDataSubject.next([getCellKey(args[0] as number, args[1] as number), args[2]] as [string, string | null]);
+      this.cellDataSubject.next([getCellKey(args[0] as number, args[1] as number), args[2]] as [string, unknown]);
     }
   }
 
@@ -74,7 +74,7 @@ export class CellDimension extends ObservableDisposable implements ICellDimensio
         if (item === null) return acc;
 
         const [key, value] = item;
-        if (value === null) {
+        if (value === undefined) {
           acc.delete(key);
           return acc;
         } else {

@@ -1,8 +1,9 @@
 import type { IContainer } from '../../container';
 
+import { IContentManager } from '../contents';
 import { ISelectionStore } from '../events';
 import { ICellDimension, IDataRegion, ISheetConfig, ISheetDimension } from '../helpers';
-import { IActiveCellMarkerPool, ICellPool, ISelectionPool } from '../pools';
+import { IActiveCellMarkerPool, ISelectionPool } from '../pools';
 import { IExcelEntrance } from '../types';
 
 import { CellListener } from './cell';
@@ -20,25 +21,31 @@ export * from './types';
 export function registerRenderers(container: IContainer) {
   container.register(IRangeCollection, 'transient').set(() => new RangeCollection());
 
-  container.register(ISelectionListener).set((c) => {
-    return new SelectionListener(
-      c.get(ISheetConfig),
-      c.get(ISheetDimension),
-      c.get(ICellDimension),
-      c.get(ISelectionStore),
-      c.get(IExcelEntrance),
-      c.get(ISelectionPool),
-      c.get(IActiveCellMarkerPool),
+  container
+    .register(ISelectionListener)
+    .set(
+      (c, ctx) =>
+        new SelectionListener(
+          c.get(ISheetConfig, ctx),
+          c.get(ISheetDimension, ctx),
+          c.get(ICellDimension, ctx),
+          c.get(ISelectionStore, ctx),
+          c.get(IExcelEntrance, ctx),
+          c.get(ISelectionPool, ctx),
+          c.get(IActiveCellMarkerPool, ctx),
+        ),
     );
-  });
 
-  container.register(ICellListener).set((c) => {
-    return new CellListener(
-      c.get(ISheetConfig),
-      c.get(ICellDimension),
-      c.get(IDataRegion),
-      c.get(IExcelEntrance),
-      c.get(ICellPool),
+  container
+    .register(ICellListener)
+    .set(
+      (c, ctx) =>
+        new CellListener(
+          c.get(IExcelEntrance, ctx).backgroundLayer,
+          c.get(ISheetConfig, ctx),
+          c.get(IDataRegion, ctx),
+          c.get(ICellDimension, ctx),
+          c.getAll(IContentManager, ctx),
+        ),
     );
-  });
 }
