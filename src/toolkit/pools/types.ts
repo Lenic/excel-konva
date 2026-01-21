@@ -5,15 +5,7 @@ import type { Observable } from 'rxjs';
 /**
  * Rectangle pool interface
  */
-export interface IRectPool {
-  /**
-   * Rectangle attributes
-   */
-  rectAttrs: Partial<Konva.RectConfig>;
-  /**
-   * Rectangle attributes Observable
-   */
-  rectAttrs$: Observable<Partial<Konva.RectConfig>>;
+export interface IRectPool extends IDisposable {
   /**
    * Get rectangle Observable
    *
@@ -22,9 +14,9 @@ export interface IRectPool {
    */
   getRect$: Observable<() => Konva.Rect>;
   /**
-   * Reset rectangle pool
+   * Dispose rectangle shape
    */
-  reset(): void;
+  disposeRect(rect: Konva.Rect): void;
 }
 /**
  * Selection pool interface identifier
@@ -38,18 +30,7 @@ export const IActiveCellMarkerPool: TIdentifier<IRectPool> = Symbol('IActiveCell
 /**
  * Cell pool interface
  */
-export interface ICellPool extends IDisposable {
-  /**
-   * Get rectangle Observable
-   *
-   * The emitted function signature is: `() => Konva.Rect`
-   * - Returns: The rectangle factory function.
-   */
-  getRect$: Observable<() => Konva.Rect>;
-  /**
-   * Dispose rectangle shape
-   */
-  disposeRect(rect: Konva.Rect): void;
+export interface ICellPool extends IRectPool, IDisposable {
   /**
    * Get text Observable
    *
