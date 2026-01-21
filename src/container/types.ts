@@ -99,6 +99,14 @@ export interface IContainer extends IDisposable {
    * Get the instance of the service.
    *
    * @param identifier - The identifier of the service.
+   * @param context - The context of the service.
+   * @returns The instance of the service.
+   */
+  get<T>(identifier: TIdentifier<T>, context?: Map<symbol, any>): T;
+  /**
+   * Get the instance of the service.
+   *
+   * @param identifier - The identifier of the service.
    * @param tag - The tag of the service.
    * @param context - The context of the service.
    * @returns The instance of the service.

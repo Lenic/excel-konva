@@ -46,16 +46,16 @@ export function registerHelpers(container: IContainer, sheetConfigFactory: TFact
 
   container
     .register(IItemDimension)
-    .set((c) => {
-      const config = c.get(ISheetConfig);
+    .set((c, ctx) => {
+      const config = c.get(ISheetConfig, ctx);
       return new ItemDimension(
         combineLatest([config.get$('minColumnWidth'), config.get$('headerWidth'), config.get$('columnWidth')]).pipe(
           map((v) => ({ minDimension: v[0], headerDimension: v[1], defaultDimension: v[2] })),
         ),
       );
     }, COLUMN_TAG)
-    .set((c) => {
-      const config = c.get(ISheetConfig);
+    .set((c, ctx) => {
+      const config = c.get(ISheetConfig, ctx);
       return new ItemDimension(
         combineLatest([config.get$('minRowHeight'), config.get$('headerHeight'), config.get$('rowHeight')]).pipe(
           map((v) => ({ minDimension: v[0], headerDimension: v[1], defaultDimension: v[2] })),
@@ -66,60 +66,64 @@ export function registerHelpers(container: IContainer, sheetConfigFactory: TFact
   container
     .register(IAccumulatedDimension)
     .set(
-      (c) => new AccumulatedDimension(c.get(IItemDimension, COLUMN_TAG), c.get(ISheetConfig).get$('columnCount')),
+      (c, ctx) =>
+        new AccumulatedDimension(c.get(IItemDimension, COLUMN_TAG, ctx), c.get(ISheetConfig, ctx).get$('columnCount')),
       COLUMN_TAG,
     )
     .set(
-      (c) => new AccumulatedDimension(c.get(IItemDimension, ROW_TAG), c.get(ISheetConfig).get$('rowCount')),
+      (c, ctx) =>
+        new AccumulatedDimension(c.get(IItemDimension, ROW_TAG, ctx), c.get(ISheetConfig, ctx).get$('rowCount')),
       ROW_TAG,
     );
 
   container
     .register(ISheetDimension)
     .set(
-      (c) =>
+      (c, ctx) =>
         new SheetDimension(
-          c.get(ISheetConfig),
-          c.get(IAccumulatedDimension, COLUMN_TAG),
-          c.get(IAccumulatedDimension, ROW_TAG),
-          c.get(IExcelEntrance),
+          c.get(ISheetConfig, ctx),
+          c.get(IAccumulatedDimension, COLUMN_TAG, ctx),
+          c.get(IAccumulatedDimension, ROW_TAG, ctx),
+          c.get(IExcelEntrance, ctx),
         ),
     );
 
-  container.register(IScrollOffset).set((c) => new ScrollOffset(c.get(ISheetDimension), c.get(IExcelEntrance)));
+  container
+    .register(IScrollOffset)
+    .set((c, ctx) => new ScrollOffset(c.get(ISheetDimension, ctx), c.get(IExcelEntrance, ctx)));
 
   container
     .register(IItemBoundary)
     .set(
-      (c) =>
-        new ItemBoundary(c.get(IAccumulatedDimension, COLUMN_TAG), {
-          scrollValue$: c.get(IScrollOffset).left$,
-          frozenCount$: c.get(ISheetConfig).get$('frozenColumns'),
+      (c, ctx) =>
+        new ItemBoundary(c.get(IAccumulatedDimension, COLUMN_TAG, ctx), {
+          scrollValue$: c.get(IScrollOffset, ctx).left$,
+          frozenCount$: c.get(ISheetConfig, ctx).get$('frozenColumns'),
         }),
       COLUMN_TAG,
     )
     .set(
-      (c) =>
-        new ItemBoundary(c.get(IAccumulatedDimension, ROW_TAG), {
-          scrollValue$: c.get(IScrollOffset).top$,
-          frozenCount$: c.get(ISheetConfig).get$('frozenRows'),
+      (c, ctx) =>
+        new ItemBoundary(c.get(IAccumulatedDimension, ROW_TAG, ctx), {
+          scrollValue$: c.get(IScrollOffset, ctx).top$,
+          frozenCount$: c.get(ISheetConfig, ctx).get$('frozenRows'),
         }),
       ROW_TAG,
     );
 
   container
     .register(ICellDimension)
-    .set((c) => new CellDimension(c.get(IItemBoundary, COLUMN_TAG), c.get(IItemBoundary, ROW_TAG)));
+    .set((c, ctx) => new CellDimension(c.get(IItemBoundary, COLUMN_TAG, ctx), c.get(IItemBoundary, ROW_TAG, ctx)));
 
   container
     .register(IDataRegion)
     .set(
-      (c) =>
+      (c, ctx) =>
         new DataRegion(
-          c.get(ISheetConfig),
-          c.get(IItemBoundary, COLUMN_TAG),
-          c.get(IItemBoundary, ROW_TAG),
-          c.get(ISheetDimension),
+          c.get(ISheetConfig, ctx),
+          c.get(IItemBoundary, COLUMN_TAG, ctx),
+          c.get(IItemBoundary, ROW_TAG, ctx),
+          c.get(ISheetDimension, ctx),
         ),
     );
 }

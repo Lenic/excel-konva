@@ -24,25 +24,31 @@ export function registerRenderers(container: IContainer) {
 
   registerContentRenderers(container);
 
-  container.register(ISelectionListener).set((c) => {
-    return new SelectionListener(
-      c.get(ISheetConfig),
-      c.get(ISheetDimension),
-      c.get(ICellDimension),
-      c.get(ISelectionStore),
-      c.get(IExcelEntrance),
-      c.get(ISelectionPool),
-      c.get(IActiveCellMarkerPool),
+  container
+    .register(ISelectionListener)
+    .set(
+      (c, ctx) =>
+        new SelectionListener(
+          c.get(ISheetConfig, ctx),
+          c.get(ISheetDimension, ctx),
+          c.get(ICellDimension, ctx),
+          c.get(ISelectionStore, ctx),
+          c.get(IExcelEntrance, ctx),
+          c.get(ISelectionPool, ctx),
+          c.get(IActiveCellMarkerPool, ctx),
+        ),
     );
-  });
 
-  container.register(ICellListener).set((c) => {
-    return new CellListener(
-      c.get(IExcelEntrance).backgroundLayer,
-      c.get(ISheetConfig),
-      c.get(IDataRegion),
-      c.get(ICellDimension),
-      c.getAll(IContentRenderer),
+  container
+    .register(ICellListener)
+    .set(
+      (c, ctx) =>
+        new CellListener(
+          c.get(IExcelEntrance, ctx).backgroundLayer,
+          c.get(ISheetConfig, ctx),
+          c.get(IDataRegion, ctx),
+          c.get(ICellDimension, ctx),
+          c.getAll(IContentRenderer, ctx),
+        ),
     );
-  });
 }

@@ -42,12 +42,36 @@ export class Container extends Disposable implements IContainer {
     return lifecycleInstance;
   }
 
-  get<T>(identifier: TIdentifier<T>, tag?: string | symbol, context?: Map<symbol, any>): T {
-    return this.buildGet(
-      identifier,
-      (lifecycle, effectiveContext) => lifecycle.get(this, effectiveContext, tag),
-      context,
-    );
+  get<T>(identifier: TIdentifier<T>, context?: Map<symbol, any>): T;
+  get<T>(identifier: TIdentifier<T>, tag?: string | symbol, context?: Map<symbol, any>): T;
+  get<T>(...args: any[]): T {
+    if (args.length === 1) {
+      return this.buildGet(
+        args[0] as TIdentifier<T>,
+        (lifecycle, effectiveContext) => lifecycle.get(this, effectiveContext),
+        undefined,
+      );
+    } else if (args.length === 2) {
+      if (typeof args[1] === 'string' || typeof args[1] === 'symbol') {
+        return this.buildGet(
+          args[0] as TIdentifier<T>,
+          (lifecycle, effectiveContext) => lifecycle.get(this, effectiveContext, args[1] as string | symbol),
+          undefined,
+        );
+      } else {
+        return this.buildGet(
+          args[0] as TIdentifier<T>,
+          (lifecycle, effectiveContext) => lifecycle.get(this, effectiveContext),
+          args[1] as Map<symbol, any>,
+        );
+      }
+    } else {
+      return this.buildGet(
+        args[0] as TIdentifier<T>,
+        (lifecycle, effectiveContext) => lifecycle.get(this, effectiveContext, args[1] as string | symbol),
+        args[2] as Map<symbol, any>,
+      );
+    }
   }
 
   getAll<T>(identifier: TIdentifier<T>, context?: Map<symbol, any>): Map<string | symbol, T> {

@@ -15,12 +15,15 @@ export * from './types';
  * @param container - Container
  */
 export function registerContentRenderers(container: IContainer) {
-  container.register(IContentRenderer).set((c, ctx) => {
-    return new TextContentRenderer(
-      c.get(ICellDimension, undefined, ctx),
-      c.get(ICellPool, undefined, ctx),
-      c.get(IExcelEntrance, undefined, ctx),
-      c.get(ISheetConfig, undefined, ctx),
+  container
+    .register(IContentRenderer)
+    .set(
+      (c, ctx) =>
+        new TextContentRenderer(
+          c.get(ICellDimension, ctx),
+          c.get(ICellPool, ctx),
+          c.get(IExcelEntrance, ctx),
+          c.get(ISheetConfig, ctx),
+        ),
     );
-  });
 }

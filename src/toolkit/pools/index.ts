@@ -12,18 +12,24 @@ export * from './types';
 export function registerPools(container: IContainer) {
   container
     .register(ISelectionPool)
-    .set((c) => new RectPool(c.get(IExcelEntrance).selectionLayer, c.get(ISheetConfig).get$('selectionRectAttrs')));
+    .set(
+      (c, ctx) =>
+        new RectPool(c.get(IExcelEntrance, ctx).selectionLayer, c.get(ISheetConfig, ctx).get$('selectionRectAttrs')),
+    );
   container
     .register(IActiveCellMarkerPool)
-    .set((c) => new RectPool(c.get(IExcelEntrance).selectionLayer, c.get(ISheetConfig).get$('activeCellRectAttrs')));
+    .set(
+      (c, ctx) =>
+        new RectPool(c.get(IExcelEntrance, ctx).selectionLayer, c.get(ISheetConfig, ctx).get$('activeCellRectAttrs')),
+    );
   container
     .register(ICellPool)
     .set(
-      (c) =>
+      (c, ctx) =>
         new CellPool(
-          c.get(IExcelEntrance).backgroundLayer,
-          c.get(ISheetConfig).get$('defaultCellRectAttrs'),
-          c.get(ISheetConfig).get$('defaultCellTextAttrs'),
+          c.get(IExcelEntrance, ctx).backgroundLayer,
+          c.get(ISheetConfig, ctx).get$('defaultCellRectAttrs'),
+          c.get(ISheetConfig, ctx).get$('defaultCellTextAttrs'),
         ),
     );
 }
