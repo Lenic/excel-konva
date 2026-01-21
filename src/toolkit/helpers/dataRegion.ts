@@ -1,7 +1,8 @@
 import type { IRegionInfo } from '../types';
 import type { IDataRegion, IItemBoundary, ISheetConfig, ISheetDimension } from './types';
+import type { Observable } from 'rxjs';
 
-import { combineLatest, map, type Observable, shareReplay, switchMap, take } from 'rxjs';
+import { combineLatest, map, shareReplay, switchMap, take } from 'rxjs';
 
 import { binarySearch, ObservableDisposable } from '../core';
 

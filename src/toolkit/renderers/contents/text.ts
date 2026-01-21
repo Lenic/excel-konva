@@ -1,6 +1,7 @@
 import type { ICellDimension, ISheetConfig } from '../../helpers';
 import type { ICellPool } from '../../pools';
 import type { IExcelEntrance } from '../../types';
+import type { IContentRenderer, IContentRendererContext } from './types';
 import type Konva from 'konva';
 
 import { Observable, switchMap } from 'rxjs';
@@ -8,7 +9,7 @@ import { combineLatest, distinctUntilChanged, map, of, shareReplay } from 'rxjs'
 
 import { ObservableDisposable } from '../../core';
 
-import { ECellFrozenType, type IContentRenderer, type IContentRendererContext } from './types';
+import { ECellFrozenType } from './types';
 
 /**
  * Text content renderer

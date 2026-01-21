@@ -1,11 +1,12 @@
 import type { ICellDimension, IScrollOffset } from '../helpers';
 import type { IExcelEntrance } from '../types';
+import type { ICursorListener, IStageMouseEvent, TCursorEvent } from './types';
 import type { Observable } from 'rxjs';
 
 import { combineLatest, debounceTime, distinctUntilChanged, EMPTY, map, merge, of, skip, switchMap, take } from 'rxjs';
 
 import { EventListener } from './listener';
-import { EBoundaryTypes, ECursorTypes, type ICursorListener, type IStageMouseEvent, type TCursorEvent } from './types';
+import { EBoundaryTypes, ECursorTypes } from './types';
 
 /**
  * Cursor listener

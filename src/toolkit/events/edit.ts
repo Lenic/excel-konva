@@ -57,7 +57,7 @@ export class StageEditListener extends EventListener implements IStageEditListen
         const screenX = rootRect.left + x;
         const screenY = rootRect.top + y;
 
-        editor.value = getCellData(cell.rowIndex, cell.columnIndex);
+        editor.value = getCellData(cell.rowIndex, cell.columnIndex) as string;
         editor.style.left = `${screenX}px`;
         editor.style.top = `${screenY}px`;
         editor.style.width = `${width + 2}px`;

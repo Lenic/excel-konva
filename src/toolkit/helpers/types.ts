@@ -3,6 +3,18 @@ import type { IDimension, IExcelEntrance, ILocation, IOffset, IPoint, IRectBox, 
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
+/**
+ * Excel cell rect attrs
+ */
+export type TRectAttrs = Omit<Konva.RectConfig, 'x' | 'y' | 'width' | 'height'>;
+/**
+ * Excel cell text attrs
+ */
+export type TTextAttrs = Omit<Konva.TextConfig, 'x' | 'y' | 'width' | 'height' | 'text'>;
+
+/**
+ * Excel sheet options
+ */
 export interface ISheetOptions {
   /**
    * Header height: default is 30px
@@ -60,7 +72,7 @@ export interface ISheetOptions {
    * }
    * ```
    */
-  selectionRectAttrs?: Partial<Konva.RectConfig>;
+  selectionRectAttrs?: Partial<TRectAttrs>;
   /**
    * Active cell rect attrs
    *
@@ -74,7 +86,7 @@ export interface ISheetOptions {
    * }
    * ```
    */
-  activeCellRectAttrs?: Partial<Konva.RectConfig>;
+  activeCellRectAttrs?: Partial<TRectAttrs>;
   /**
    * Default cell rect attrs
    *
@@ -88,7 +100,7 @@ export interface ISheetOptions {
    * }
    * ```
    */
-  defaultCellRectAttrs?: Partial<Konva.RectConfig>;
+  defaultCellRectAttrs?: Partial<TRectAttrs>;
   /**
    * Default odd cell rect attrs
    *
@@ -101,7 +113,7 @@ export interface ISheetOptions {
    * }
    * ```
    */
-  defaultOddCellRectAttrs?: Partial<Konva.RectConfig>;
+  defaultOddCellRectAttrs?: Partial<TRectAttrs>;
   /**
    * Default even cell rect attrs
    *
@@ -115,7 +127,7 @@ export interface ISheetOptions {
    * }
    * ```
    */
-  defaultEvenCellRectAttrs?: Partial<Konva.RectConfig>;
+  defaultEvenCellRectAttrs?: Partial<TRectAttrs>;
   /**
    * Frozen cell rect attrs
    *
@@ -128,7 +140,7 @@ export interface ISheetOptions {
    * }
    * ```
    */
-  frozenCellRectAttrs?: Partial<Konva.RectConfig>;
+  frozenCellRectAttrs?: Partial<TRectAttrs>;
   /**
    * Frozen odd cell rect attrs
    *
@@ -141,7 +153,7 @@ export interface ISheetOptions {
    * }
    * ```
    */
-  frozenOddCellRectAttrs?: Partial<Konva.RectConfig>;
+  frozenOddCellRectAttrs?: Partial<TRectAttrs>;
   /**
    * Frozen even cell rect attrs
    *
@@ -154,7 +166,7 @@ export interface ISheetOptions {
    * }
    * ```
    */
-  frozenEvenCellRectAttrs?: Partial<Konva.RectConfig>;
+  frozenEvenCellRectAttrs?: Partial<TRectAttrs>;
   /**
    * Header cell rect attrs
    *
@@ -166,7 +178,7 @@ export interface ISheetOptions {
    * }
    * ```
    */
-  headerCellRectAttrs?: Partial<Konva.RectConfig>;
+  headerCellRectAttrs?: Partial<TRectAttrs>;
   /**
    * Column header cell rect attrs
    *
@@ -179,7 +191,7 @@ export interface ISheetOptions {
    * }
    * ```
    */
-  columnHeaderCellRectAttrs?: Partial<Konva.RectConfig>;
+  columnHeaderCellRectAttrs?: Partial<TRectAttrs>;
   /**
    * Row header cell rect attrs
    *
@@ -190,7 +202,7 @@ export interface ISheetOptions {
    * ```json
    * {
    */
-  rowHeaderCellRectAttrs?: Partial<Konva.RectConfig>;
+  rowHeaderCellRectAttrs?: Partial<TRectAttrs>;
   /**
    * Corner cell rect attrs
    *
@@ -204,7 +216,7 @@ export interface ISheetOptions {
    * }
    * ```
    */
-  cornerCellRectAttrs?: Partial<Konva.RectConfig>;
+  cornerCellRectAttrs?: Partial<TRectAttrs>;
   /**
    * Default cell text attrs
    *
@@ -221,7 +233,7 @@ export interface ISheetOptions {
    *   ellipsis: true,
    *   wrap: 'none'
    */
-  defaultCellTextAttrs?: Partial<Konva.TextConfig>;
+  defaultCellTextAttrs?: Partial<TTextAttrs>;
   /**
    * Default odd cell text attrs
    *
@@ -234,7 +246,7 @@ export interface ISheetOptions {
    * }
    * ```
    */
-  defaultOddCellTextAttrs?: Partial<Konva.TextConfig>;
+  defaultOddCellTextAttrs?: Partial<TTextAttrs>;
   /**
    * Default even cell text attrs
    *
@@ -247,7 +259,7 @@ export interface ISheetOptions {
    * }
    * ```
    */
-  defaultEvenCellTextAttrs?: Partial<Konva.TextConfig>;
+  defaultEvenCellTextAttrs?: Partial<TTextAttrs>;
   /**
    * Frozen cell text attrs
    *
@@ -258,7 +270,7 @@ export interface ISheetOptions {
    * }
    * ```
    */
-  frozenCellTextAttrs?: Partial<Konva.TextConfig>;
+  frozenCellTextAttrs?: Partial<TTextAttrs>;
   /**
    * Frozen odd cell text attrs
    *
@@ -271,7 +283,7 @@ export interface ISheetOptions {
    * }
    * ```
    */
-  frozenOddCellTextAttrs?: Partial<Konva.TextConfig>;
+  frozenOddCellTextAttrs?: Partial<TTextAttrs>;
   /**
    * Frozen even cell text attrs
    *
@@ -283,7 +295,7 @@ export interface ISheetOptions {
    * }
    * ```
    */
-  frozenEvenCellTextAttrs?: Partial<Konva.TextConfig>;
+  frozenEvenCellTextAttrs?: Partial<TTextAttrs>;
   /**
    * Header cell text attrs
    *
@@ -297,7 +309,7 @@ export interface ISheetOptions {
    * }
    * ```
    */
-  headerCellTextAttrs?: Partial<Konva.TextConfig>;
+  headerCellTextAttrs?: Partial<TTextAttrs>;
   /**
    * Column header cell text attrs
    *
@@ -310,7 +322,7 @@ export interface ISheetOptions {
    * }
    * ```
    */
-  columnHeaderCellTextAttrs?: Partial<Konva.TextConfig>;
+  columnHeaderCellTextAttrs?: Partial<TTextAttrs>;
   /**
    * Row header cell text attrs
    *
@@ -324,7 +336,7 @@ export interface ISheetOptions {
    * }
    * ```
    */
-  rowHeaderCellTextAttrs?: Partial<Konva.TextConfig>;
+  rowHeaderCellTextAttrs?: Partial<TTextAttrs>;
   /**
    * Number of buffer cells: default is 1
    */
