@@ -14,7 +14,7 @@ config.get$('frozenRows').subscribe((val) => {
   document.getElementById('frozen-rows-count')!.textContent = val.toLocaleString();
 });
 config.get$('frozenColumns').subscribe((val) => {
-  document.getElementById('frozen-cols-count')!.textContent = val.toLocaleString();
+  document.getElementById('frozen-columns-count')!.textContent = val.toLocaleString();
 });
 
 const cellRenderer = ServiceLocator.current.get(ICellListener);
