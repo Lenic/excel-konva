@@ -133,18 +133,16 @@ export interface IServiceLocator {
    *
    * @param identifier - The identifier of the service.
    * @param tag - The tag of the service.
-   * @param context - The context of the service.
    * @returns The instance of the service.
    */
-  get<T>(identifier: TIdentifier<T>, tag?: string | symbol, context?: Map<symbol, any>): T;
+  get<T>(identifier: TIdentifier<T>, tag?: string | symbol): T;
   /**
    * Get all the instances of the service.
    *
    * - with the default instance.
    *
    * @param identifier - The identifier of the service.
-   * @param context - The context of the service.
    * @returns The instances of the service.
    */
-  getAll<T>(identifier: TIdentifier<T>, context?: Map<symbol, any>): Map<string | symbol, T>;
+  getAll<T>(identifier: TIdentifier<T>): Map<string | symbol, T>;
 }
