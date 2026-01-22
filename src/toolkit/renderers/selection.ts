@@ -9,8 +9,8 @@ import { combineLatest, distinctUntilChanged, map, switchMap, take } from 'rxjs'
 
 import { ServiceLocator } from '../../container';
 
-import { CollectionSubscription } from './collection-subscription';
 import { RenderListener } from './renderer';
+import { CollectionSubscription } from './subscription';
 import { IRangeCollection } from './types';
 
 interface MultipleRegion {
