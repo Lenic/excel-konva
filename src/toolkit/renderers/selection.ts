@@ -79,20 +79,26 @@ export class SelectionListener extends RenderListener<number> {
 
           // ---- region ----
 
-          // A. Draw Data Area selection
-          const dataStartRowIndex = Math.max(startRowIndex, frozenRows);
-          const dataStartColumnIndex = Math.max(startColumnIndex, frozenColumns);
+          // A. Draw Frozen Corner Area selection
+          const cornerStartRowIndex = startRowIndex;
+          const cornerEndRowIndex = Math.min(endRowIndex, frozenRows - 1);
+          const cornerStartColumnIndex = startColumnIndex;
+          const cornerEndColumnIndex = Math.min(endColumnIndex, frozenColumns - 1);
 
-          if (dataStartRowIndex <= endRowIndex && dataStartColumnIndex <= endColumnIndex) {
+          if (cornerStartRowIndex <= cornerEndRowIndex && cornerStartColumnIndex <= cornerEndColumnIndex) {
             items.push([
-              `data-${suffix}`,
-              this.renderSelectionRegion(this.scrollOffset.offset$, {
-                startRowIndex: dataStartRowIndex,
-                endRowIndex,
-                startColumnIndex: dataStartColumnIndex,
-                endColumnIndex,
+              `corner-${suffix}`,
+              this.renderSelectionRegion(of(1), {
+                startRowIndex: cornerStartRowIndex,
+                endRowIndex: cornerEndRowIndex,
+                startColumnIndex: cornerStartColumnIndex,
+                endColumnIndex: cornerEndColumnIndex,
               }),
             ]);
+
+            if (rowIndex < frozenRows && columnIndex < frozenColumns) {
+              items.push([`cornerActiveCell-${suffix}`, this.renderActiveCellMarker(of(1), activeCell)]);
+            }
           }
 
           // B. Draw Frozen Side Area selection
@@ -111,6 +117,10 @@ export class SelectionListener extends RenderListener<number> {
                 endColumnIndex: sideEndColumnIndex,
               }),
             ]);
+
+            if (columnIndex < frozenColumns && rowIndex >= frozenRows) {
+              items.push([`sideActiveCell-${suffix}`, this.renderActiveCellMarker(this.scrollOffset.top$, activeCell)]);
+            }
           }
 
           // C. Draw Frozen Header Area selection
@@ -129,42 +139,36 @@ export class SelectionListener extends RenderListener<number> {
                 endColumnIndex: headerEndColumnIndex,
               }),
             ]);
+
+            if (rowIndex < frozenRows && columnIndex >= frozenColumns) {
+              items.push([
+                `headerActiveCell-${suffix}`,
+                this.renderActiveCellMarker(this.scrollOffset.left$, activeCell),
+              ]);
+            }
           }
 
-          // D. Draw Frozen Corner Area selection
-          const cornerStartRowIndex = startRowIndex;
-          const cornerEndRowIndex = Math.min(endRowIndex, frozenRows - 1);
-          const cornerStartColumnIndex = startColumnIndex;
-          const cornerEndColumnIndex = Math.min(endColumnIndex, frozenColumns - 1);
+          // D. Draw Data Area selection
+          const dataStartRowIndex = Math.max(startRowIndex, frozenRows);
+          const dataStartColumnIndex = Math.max(startColumnIndex, frozenColumns);
 
-          if (cornerStartRowIndex <= cornerEndRowIndex && cornerStartColumnIndex <= cornerEndColumnIndex) {
+          if (dataStartRowIndex <= endRowIndex && dataStartColumnIndex <= endColumnIndex) {
             items.push([
-              `corner-${suffix}`,
-              this.renderSelectionRegion(of(1), {
-                startRowIndex: cornerStartRowIndex,
-                endRowIndex: cornerEndRowIndex,
-                startColumnIndex: cornerStartColumnIndex,
-                endColumnIndex: cornerEndColumnIndex,
+              `data-${suffix}`,
+              this.renderSelectionRegion(this.scrollOffset.offset$, {
+                startRowIndex: dataStartRowIndex,
+                endRowIndex,
+                startColumnIndex: dataStartColumnIndex,
+                endColumnIndex,
               }),
             ]);
-          }
 
-          // ---- active cell ----
-
-          if (rowIndex < frozenRows && columnIndex < frozenColumns) {
-            items.push([`cornerActiveCell-${suffix}`, this.renderActiveCellMarker(of(1), activeCell)]);
-          } else if (rowIndex < frozenRows) {
-            items.push([
-              `headerActiveCell-${suffix}`,
-              this.renderActiveCellMarker(this.scrollOffset.left$, activeCell),
-            ]);
-          } else if (columnIndex < frozenColumns) {
-            items.push([`sideActiveCell-${suffix}`, this.renderActiveCellMarker(this.scrollOffset.top$, activeCell)]);
-          } else {
-            items.push([
-              `dataActiveCell-${suffix}`,
-              this.renderActiveCellMarker(this.scrollOffset.offset$, activeCell),
-            ]);
+            if (rowIndex >= frozenRows && columnIndex >= frozenColumns) {
+              items.push([
+                `dataActiveCell-${suffix}`,
+                this.renderActiveCellMarker(this.scrollOffset.offset$, activeCell),
+              ]);
+            }
           }
 
           // ---- highlight ----
@@ -328,6 +332,8 @@ export class SelectionListener extends RenderListener<number> {
                   height: bottom - top,
                   ...extraRectAttrs,
                 });
+                selectionRect.moveToTop();
+
                 observer.next(selectionRect);
 
                 return () => {
