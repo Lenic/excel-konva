@@ -13,26 +13,6 @@ import { RenderListener } from './renderer';
 import { CollectionSubscription } from './subscription';
 import { IRangeCollection } from './types';
 
-interface MultipleRegion {
-  dataList: [key: string, item: IRegionInfo][];
-  sideList: [key: string, item: IRegionInfo][];
-  headerList: [key: string, item: IRegionInfo][];
-  cornerList: [key: string, item: IRegionInfo][];
-  dataActiveCellList: [key: string, item: ILocation][];
-  sideActiveCellList: [key: string, item: ILocation][];
-  headerActiveCellList: [key: string, item: ILocation][];
-  cornerActiveCellList: [key: string, item: ILocation][];
-  highlightedRows: [key: string, item: IRegionInfo][];
-  highlightedColumns: [key: string, item: IRegionInfo][];
-}
-
-interface IRectWrapper {
-  top: number;
-  left: number;
-  bottom: number;
-  right: number;
-}
-
 /**
  * Selection renderer
  */
@@ -89,18 +69,7 @@ export class SelectionListener extends RenderListener<number> {
         const highlightedRows = ServiceLocator.current.get(IRangeCollection);
         const highlightedColumns = ServiceLocator.current.get(IRangeCollection);
 
-        const regionInfo: MultipleRegion = {
-          dataList: [],
-          sideList: [],
-          headerList: [],
-          cornerList: [],
-          dataActiveCellList: [],
-          sideActiveCellList: [],
-          headerActiveCellList: [],
-          cornerActiveCellList: [],
-          highlightedRows: [],
-          highlightedColumns: [],
-        };
+        const items: [key: string, item: Observable<any>][] = [];
 
         selectedRanges.forEach(({ activeCell, region }) => {
           const { rowIndex, columnIndex } = activeCell;
@@ -108,37 +77,21 @@ export class SelectionListener extends RenderListener<number> {
 
           const suffix = `${startColumnIndex}-${startRowIndex}-${endColumnIndex}-${endRowIndex}-${rowIndex}-${columnIndex}`;
 
-          // ---- active cell ----
-
-          if (rowIndex < frozenRows && columnIndex < frozenColumns) {
-            regionInfo.cornerActiveCellList.push([`cornerActiveCell-${suffix}`, activeCell]);
-          } else if (rowIndex < frozenRows) {
-            regionInfo.headerActiveCellList.push([`headerActiveCell-${suffix}`, activeCell]);
-          } else if (columnIndex < frozenColumns) {
-            regionInfo.sideActiveCellList.push([`sideActiveCell-${suffix}`, activeCell]);
-          } else {
-            regionInfo.dataActiveCellList.push([`dataActiveCell-${suffix}`, activeCell]);
-          }
-
           // ---- region ----
-
-          // Collect indices for row/column header highlighting
-          highlightedRows.push([startRowIndex, endRowIndex]);
-          highlightedColumns.push([startColumnIndex, endColumnIndex]);
 
           // A. Draw Data Area selection
           const dataStartRowIndex = Math.max(startRowIndex, frozenRows);
           const dataStartColumnIndex = Math.max(startColumnIndex, frozenColumns);
 
           if (dataStartRowIndex <= endRowIndex && dataStartColumnIndex <= endColumnIndex) {
-            regionInfo.dataList.push([
+            items.push([
               `data-${suffix}`,
-              {
+              this.renderSelectionRegion(this.scrollOffset.offset$, {
                 startRowIndex: dataStartRowIndex,
                 endRowIndex,
                 startColumnIndex: dataStartColumnIndex,
                 endColumnIndex,
-              },
+              }),
             ]);
           }
 
@@ -149,14 +102,14 @@ export class SelectionListener extends RenderListener<number> {
           const sideEndColumnIndex = Math.min(endColumnIndex, frozenColumns - 1);
 
           if (sideStartRowIndex <= sideEndRowIndex && sideStartColumnIndex <= sideEndColumnIndex) {
-            regionInfo.sideList.push([
+            items.push([
               `side-${suffix}`,
-              {
+              this.renderSelectionRegion(this.scrollOffset.top$, {
                 startRowIndex: sideStartRowIndex,
                 endRowIndex: sideEndRowIndex,
                 startColumnIndex: sideStartColumnIndex,
                 endColumnIndex: sideEndColumnIndex,
-              },
+              }),
             ]);
           }
 
@@ -167,14 +120,14 @@ export class SelectionListener extends RenderListener<number> {
           const headerEndColumnIndex = endColumnIndex;
 
           if (headerStartRowIndex <= headerEndRowIndex && headerStartColumnIndex <= headerEndColumnIndex) {
-            regionInfo.headerList.push([
+            items.push([
               `header-${suffix}`,
-              {
+              this.renderSelectionRegion(this.scrollOffset.left$, {
                 startRowIndex: headerStartRowIndex,
                 endRowIndex: headerEndRowIndex,
                 startColumnIndex: headerStartColumnIndex,
                 endColumnIndex: headerEndColumnIndex,
-              },
+              }),
             ]);
           }
 
@@ -185,54 +138,88 @@ export class SelectionListener extends RenderListener<number> {
           const cornerEndColumnIndex = Math.min(endColumnIndex, frozenColumns - 1);
 
           if (cornerStartRowIndex <= cornerEndRowIndex && cornerStartColumnIndex <= cornerEndColumnIndex) {
-            regionInfo.cornerList.push([
+            items.push([
               `corner-${suffix}`,
-              {
+              this.renderSelectionRegion(of(1), {
                 startRowIndex: cornerStartRowIndex,
                 endRowIndex: cornerEndRowIndex,
                 startColumnIndex: cornerStartColumnIndex,
                 endColumnIndex: cornerEndColumnIndex,
-              },
+              }),
             ]);
           }
+
+          // ---- active cell ----
+
+          if (rowIndex < frozenRows && columnIndex < frozenColumns) {
+            items.push([`cornerActiveCell-${suffix}`, this.renderActiveCellMarker(of(1), activeCell)]);
+          } else if (rowIndex < frozenRows) {
+            items.push([
+              `headerActiveCell-${suffix}`,
+              this.renderActiveCellMarker(this.scrollOffset.left$, activeCell),
+            ]);
+          } else if (columnIndex < frozenColumns) {
+            items.push([`sideActiveCell-${suffix}`, this.renderActiveCellMarker(this.scrollOffset.top$, activeCell)]);
+          } else {
+            items.push([
+              `dataActiveCell-${suffix}`,
+              this.renderActiveCellMarker(this.scrollOffset.offset$, activeCell),
+            ]);
+          }
+
+          // ---- highlight ----
+
+          // Collect indices for row/column header highlighting
+          highlightedRows.push([startRowIndex, endRowIndex]);
+          highlightedColumns.push([startColumnIndex, endColumnIndex]);
         });
 
         highlightedRows.merge();
         highlightedColumns.merge();
 
+        const extraAttrs: Partial<Konva.RectConfig> = { stroke: 'transparent', strokeWidth: 0 };
+
         // Draw highlighting for column headers
         if (highlightedColumns.values.length > 0) {
           const frozenColumnMaxIndex = frozenColumns - 1;
           for (const [start, end] of highlightedColumns.values) {
-            if (frozenColumnMaxIndex < start || frozenColumnMaxIndex >= end) {
-              regionInfo.highlightedColumns.push([
-                `highlightedColumns-${start}-${end}`,
-                {
-                  startColumnIndex: start,
-                  endColumnIndex: end,
-                  startRowIndex: 0,
-                  endRowIndex: 0,
-                },
+            if (frozenColumnMaxIndex >= end) {
+              items.push([
+                `frozen-highlightedColumns-${start}-${end}`,
+                this.renderSelectionRegion(
+                  of(1),
+                  { startColumnIndex: start, endColumnIndex: end, startRowIndex: 0, endRowIndex: 0 },
+                  extraAttrs,
+                ),
+              ]);
+            } else if (frozenColumnMaxIndex < start) {
+              items.push([
+                `data-highlightedColumns-${start}-${end}`,
+                this.renderSelectionRegion(
+                  this.scrollOffset.left$,
+                  { startColumnIndex: start, endColumnIndex: end, startRowIndex: 0, endRowIndex: 0 },
+                  extraAttrs,
+                ),
               ]);
             } else {
-              regionInfo.highlightedColumns.push([
-                `highlightedColumns-${start}-${frozenColumnMaxIndex}`,
-                {
-                  startColumnIndex: start,
-                  endColumnIndex: frozenColumnMaxIndex,
-                  startRowIndex: 0,
-                  endRowIndex: 0,
-                },
-              ]);
-              regionInfo.highlightedColumns.push([
-                `highlightedColumns-${frozenColumnMaxIndex + 1}-${end}`,
-                {
-                  startColumnIndex: frozenColumnMaxIndex + 1,
-                  endColumnIndex: end,
-                  startRowIndex: 0,
-                  endRowIndex: 0,
-                },
-              ]);
+              items.push(
+                [
+                  `split-frozen-highlightedColumns-${start}-${frozenColumnMaxIndex}`,
+                  this.renderSelectionRegion(
+                    of(1),
+                    { startColumnIndex: start, endColumnIndex: frozenColumnMaxIndex, startRowIndex: 0, endRowIndex: 0 },
+                    extraAttrs,
+                  ),
+                ],
+                [
+                  `split-data-highlightedColumns-${frozenColumns}-${end}`,
+                  this.renderSelectionRegion(
+                    this.scrollOffset.left$,
+                    { startColumnIndex: frozenColumns, endColumnIndex: end, startRowIndex: 0, endRowIndex: 0 },
+                    extraAttrs,
+                  ),
+                ],
+              );
             }
           }
         }
@@ -241,92 +228,44 @@ export class SelectionListener extends RenderListener<number> {
         if (highlightedRows.values.length > 0) {
           const frozenRowMaxIndex = frozenRows - 1;
           for (const [start, end] of highlightedRows.values) {
-            if (frozenRowMaxIndex < start || frozenRowMaxIndex >= end) {
-              regionInfo.highlightedRows.push([
-                `highlightedRows-${start}-${end}`,
-                {
-                  startRowIndex: start,
-                  endRowIndex: end,
-                  startColumnIndex: 0,
-                  endColumnIndex: 0,
-                },
+            if (frozenRowMaxIndex >= end) {
+              items.push([
+                `frozen-highlightedRows-${start}-${end}`,
+                this.renderSelectionRegion(
+                  of(1),
+                  { startRowIndex: start, endRowIndex: end, startColumnIndex: 0, endColumnIndex: 0 },
+                  extraAttrs,
+                ),
+              ]);
+            } else if (frozenRowMaxIndex < start) {
+              items.push([
+                `data-highlightedRows-${start}-${end}`,
+                this.renderSelectionRegion(
+                  this.scrollOffset.top$,
+                  { startRowIndex: start, endRowIndex: end, startColumnIndex: 0, endColumnIndex: 0 },
+                  extraAttrs,
+                ),
               ]);
             } else {
-              regionInfo.highlightedRows.push([
-                `highlightedRows-${start}-${frozenRowMaxIndex}`,
-                {
-                  startRowIndex: start,
-                  endRowIndex: frozenRowMaxIndex,
-                  startColumnIndex: 0,
-                  endColumnIndex: 0,
-                },
+              items.push([
+                `split-frozen-highlightedRows-${start}-${frozenRowMaxIndex}`,
+                this.renderSelectionRegion(
+                  of(1),
+                  { startRowIndex: start, endRowIndex: frozenRowMaxIndex, startColumnIndex: 0, endColumnIndex: 0 },
+                  extraAttrs,
+                ),
               ]);
-              regionInfo.highlightedRows.push([
-                `highlightedRows-${frozenRowMaxIndex + 1}-${end}`,
-                {
-                  startRowIndex: frozenRowMaxIndex + 1,
-                  endRowIndex: end,
-                  startColumnIndex: 0,
-                  endColumnIndex: 0,
-                },
+              items.push([
+                `split-data-highlightedRows-${frozenRows}-${end}`,
+                this.renderSelectionRegion(
+                  this.scrollOffset.top$,
+                  { startRowIndex: frozenRows, endRowIndex: end, startColumnIndex: 0, endColumnIndex: 0 },
+                  extraAttrs,
+                ),
               ]);
             }
           }
         }
-
-        const items: [key: string, item: Observable<any>][] = [];
-
-        regionInfo.dataList.forEach(([key, region]) => {
-          items.push([key, this.renderSelectionRegion(this.scrollOffset.offset$, region)]);
-        });
-
-        regionInfo.sideList.forEach(([key, region]) => {
-          items.push([key, this.renderSelectionRegion(this.scrollOffset.top$, region)]);
-        });
-
-        regionInfo.headerList.forEach(([key, region]) => {
-          items.push([key, this.renderSelectionRegion(this.scrollOffset.left$, region)]);
-        });
-
-        regionInfo.cornerList.forEach(([key, region]) => {
-          items.push([key, this.renderSelectionRegion(of(1), region)]);
-        });
-
-        regionInfo.dataActiveCellList.forEach(([key, cell]) => {
-          items.push([key, this.renderActiveCellMarker(this.scrollOffset.offset$, cell)]);
-        });
-
-        regionInfo.sideActiveCellList.forEach(([key, cell]) => {
-          items.push([key, this.renderActiveCellMarker(this.scrollOffset.top$, cell)]);
-        });
-
-        regionInfo.headerActiveCellList.forEach(([key, cell]) => {
-          items.push([key, this.renderActiveCellMarker(this.scrollOffset.left$, cell)]);
-        });
-
-        regionInfo.cornerActiveCellList.forEach(([key, cell]) => {
-          items.push([key, this.renderActiveCellMarker(of(1), cell)]);
-        });
-
-        regionInfo.highlightedRows.forEach(([key, region]) => {
-          items.push([
-            key,
-            this.renderSelectionRegion(this.scrollOffset.top$, region, {
-              stroke: 'transparent',
-              strokeWidth: 0,
-            }),
-          ]);
-        });
-
-        regionInfo.highlightedColumns.forEach(([key, region]) => {
-          items.push([
-            key,
-            this.renderSelectionRegion(this.scrollOffset.left$, region, {
-              stroke: 'transparent',
-              strokeWidth: 0,
-            }),
-          ]);
-        });
 
         this.subscriptions.update(items);
         return items.length;
@@ -369,7 +308,7 @@ export class SelectionListener extends RenderListener<number> {
         const right = rightBottom.x + lastColumnWidth;
         const bottom = rightBottom.y + lastRowHeight;
 
-        return { top, left, bottom, right } as IRectWrapper;
+        return { top, left, bottom, right };
       }),
       combineLatestWith(this.sheetDimension.visualSize$),
       switchMap(([{ top, left, bottom, right }, visual]) => {
@@ -409,7 +348,7 @@ export class SelectionListener extends RenderListener<number> {
           take(1),
           map((getCellRectBox) => {
             const { x, y, width, height } = getCellRectBox(rowIndex, columnIndex);
-            return { top: y, left: x, bottom: y + height, right: x + width } as IRectWrapper;
+            return { top: y, left: x, bottom: y + height, right: x + width };
           }),
         ),
       ),
