@@ -84,7 +84,7 @@ export const defaultSheetConfig: Required<ISheetOptions> = {
  */
 export class SheetConfig extends ObservableDisposable implements ISheetConfig {
   private optionsSubject: BehaviorSubject<Required<ISheetOptions>>;
-  private getMap: Map<keyof Required<ISheetOptions>, Observable<any>>;
+  private getterMap: Map<keyof Required<ISheetOptions>, Observable<any>>;
 
   options: Required<ISheetOptions>;
 
@@ -97,6 +97,8 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
    */
   constructor(options: ISheetOptions) {
     super();
+
+    window.config = this;
 
     this.options = {
       ...defaultSheetConfig,
@@ -130,9 +132,9 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
       this.optionsSubject.complete();
     });
 
-    this.getMap = new Map<keyof Required<ISheetOptions>, Observable<any>>();
+    this.getterMap = new Map<keyof Required<ISheetOptions>, Observable<any>>();
     this.disposeWithMe(() => {
-      this.getMap.clear();
+      this.getterMap.clear();
     });
 
     this.options$ = this.optionsSubject.asObservable();
@@ -144,15 +146,15 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
   }
 
   get$<K extends keyof Required<ISheetOptions>>(key: K): Observable<Required<ISheetOptions>[K]> {
-    let obs$ = this.getMap.get(key) as Observable<Required<ISheetOptions>[K]> | undefined;
+    let obs$ = this.getterMap.get(key) as Observable<Required<ISheetOptions>[K]> | undefined;
     if (!obs$) {
       obs$ = this.options$.pipe(
         map((options) => options[key]),
         distinctUntilChanged(),
-        finalize(() => void this.getMap.delete(key)),
+        finalize(() => void this.getterMap.delete(key)),
         this.withPublish(),
       );
-      this.getMap.set(key, obs$);
+      this.getterMap.set(key, obs$);
     }
     return obs$;
   }
