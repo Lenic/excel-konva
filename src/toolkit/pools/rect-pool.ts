@@ -4,17 +4,14 @@ import type { Observable } from 'rxjs';
 import Konva from 'konva';
 import { map, shareReplay } from 'rxjs';
 
-import { Disposable } from '../../container';
+import { ObservableDisposable, Queue } from '../core';
 
 /**
  * Rectangle pool
  */
-export class RectPool extends Disposable implements IRectPool {
-  protected layer: Konva.Layer;
-  private rects: Konva.Rect[] = [];
-  private nextRectIndex = 0;
-
-  rectAttrs: Partial<Konva.RectConfig>;
+export class RectPool extends ObservableDisposable implements IRectPool {
+  private layer: Konva.Layer;
+  private rects: Queue<Konva.Rect>;
 
   rectAttrs$: Observable<Partial<Konva.RectConfig>>;
 
@@ -29,61 +26,67 @@ export class RectPool extends Disposable implements IRectPool {
     super();
 
     this.layer = layer;
-
-    this.rectAttrs = {};
-    this.disposeWithMe(() => void (this.rectAttrs = {}));
+    this.rects = new Queue<Konva.Rect>();
 
     this.rectAttrs$ = rectAttrs$.pipe(shareReplay({ bufferSize: 1, refCount: true }));
-    this.disposeWithMe(this.rectAttrs$.subscribe((rectAttrs) => void (this.rectAttrs = rectAttrs)));
+    this.disposeWithMe(this.rectAttrs$.subscribe());
 
-    this.getRect$ = this.buildGetRect$();
+    this.getRect$ = this.buildGetShape$(this.rectAttrs$, this.rects, (attrs) => new Konva.Rect(attrs));
     this.disposeWithMe(this.getRect$.subscribe());
 
     this.disposeWithMe(() => {
-      this.layer.destroy();
-      this.layer = null as unknown as Konva.Layer;
-      this.rects.forEach((rect) => rect.destroy());
-      this.rects = [];
-      this.nextRectIndex = 0;
+      while (this.rects.length > 0) {
+        this.rects.dequeue()!.destroy();
+      }
     });
   }
 
-  reset() {
-    this.checkDisposed();
-
-    this.rects.forEach((rect) => rect.visible(false));
-    this.nextRectIndex = 0;
+  disposeRect(rect: Konva.Rect): void {
+    this.disposeShape(rect, this.rects);
   }
 
-  private buildGetRect$() {
-    return this.rectAttrs$.pipe(
-      map((rectAttrs) => {
+  protected disposeShape<TShape extends Konva.Shape>(shape: TShape, queue: Queue<TShape>) {
+    if (this.isDisposed) {
+      shape.destroy();
+      return;
+    }
+
+    shape.visible(false);
+    if (shape.parent !== this.layer) shape.moveTo(this.layer);
+
+    queue.enqueue(shape);
+  }
+
+  protected buildGetShape$<TConfig extends Konva.ShapeConfig, TShape extends Konva.Shape>(
+    attrs$: Observable<Partial<TConfig>>,
+    queue: Queue<TShape>,
+    creator: (config: Partial<TConfig>) => TShape,
+  ) {
+    return attrs$.pipe(
+      map((attrs) => {
         /**
-         * Get a rectangle from the pool
-         * @returns A rectangle from the pool
+         * Get shape from pool
+         * @returns Shape
          */
-        const getRect = () => {
-          if (this.nextRectIndex < this.rects.length) {
-            const rect = this.rects[this.nextRectIndex++];
-            rect.setAttrs({
-              ...rectAttrs,
+        const getShape = (): TShape => {
+          this.checkDisposed();
+
+          if (queue.length > 0) {
+            const shape = queue.dequeue()!;
+            shape.setAttrs({
+              ...attrs,
               visible: true,
             });
-            return rect;
+            return shape;
           }
 
-          const newRect = new Konva.Rect({
-            ...rectAttrs,
-            listening: false,
-          });
-          this.layer.add(newRect);
-          this.rects.push(newRect);
-          this.nextRectIndex++;
+          const newShape = creator(attrs);
+          this.layer.add(newShape);
 
-          return newRect;
+          return newShape;
         };
 
-        return getRect;
+        return getShape;
       }),
       shareReplay({ bufferSize: 1, refCount: true }),
     );

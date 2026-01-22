@@ -1,25 +1,35 @@
 import type { IContentManager, IContentRendererContext } from '../contents';
 import type { ICellDimension, IDataRegion, ISheetConfig } from '../helpers';
 import type { IRegionInfo } from '../types';
-import type Konva from 'konva';
-import type { Observable, Subscription } from 'rxjs';
+import type { Observable } from 'rxjs';
 
 import { combineLatest, distinctUntilChanged, map, switchMap } from 'rxjs';
 
 import { ECellFrozenType } from '../contents';
 
 import { RenderListener } from './renderer';
+import { CollectionSubscription } from './subscription';
 
+/**
+ * Cell listener
+ */
 export class CellListener extends RenderListener<IRegionInfo> {
-  private layer: Konva.Layer;
   private config: ISheetConfig;
   private dataRegion: IDataRegion;
   private cellDimension: ICellDimension;
   private renderers: Map<string | symbol, IContentManager>;
-  private subscriptions = new Map<string, Subscription>();
 
+  private subscriptions: CollectionSubscription;
+
+  /**
+   * Cell listener
+   *
+   * @param config - sheet config
+   * @param dataRegion - data region
+   * @param cellDimension - cell dimension
+   * @param renderers - content renderers
+   */
   constructor(
-    layer: Konva.Layer,
     config: ISheetConfig,
     dataRegion: IDataRegion,
     cellDimension: ICellDimension,
@@ -27,11 +37,13 @@ export class CellListener extends RenderListener<IRegionInfo> {
   ) {
     super();
 
-    this.layer = layer;
     this.config = config;
     this.dataRegion = dataRegion;
     this.cellDimension = cellDimension;
     this.renderers = renderers;
+
+    this.subscriptions = new CollectionSubscription();
+    this.disposeWithMe(this.subscriptions);
   }
 
   protected build(): Observable<IRegionInfo> {
@@ -73,38 +85,16 @@ export class CellListener extends RenderListener<IRegionInfo> {
           }
         }
 
-        const currentKeys = new Set<string>();
-
-        // 1. Add new subscriptions
-        for (const item of items) {
-          const key = `${item.rowIndex}:${item.columnIndex}:${item.frozenType}`;
-          currentKeys.add(key);
-
-          // New → create subscription
-          if (!this.subscriptions.has(key)) {
-            const subscription = this.cellDimension.getCellData$
-              .pipe(
-                map((getData) => getData(item.rowIndex, item.columnIndex)),
-                distinctUntilChanged(),
-                switchMap((cellContent) => this.getRenderer(cellContent).render(cellContent, item)),
-              )
-              .subscribe();
-            this.subscriptions.set(key, subscription);
-          }
-        }
-
-        // 2. Clear old subscriptions
-        for (const [key, subscription] of this.subscriptions) {
-          if (!currentKeys.has(key)) {
-            subscription.unsubscribe();
-            this.subscriptions.delete(key);
-          }
-        }
-
-        if (currentKeys.size > 0) {
-          this.layer.batchDraw();
-        }
-
+        this.subscriptions.update(
+          items.map((item) => [
+            `${item.rowIndex}:${item.columnIndex}:${item.frozenType}`,
+            this.cellDimension.getCellData$.pipe(
+              map((getData) => getData(item.rowIndex, item.columnIndex)),
+              distinctUntilChanged(),
+              switchMap((cellContent) => this.getRenderer(cellContent).render(cellContent, item)),
+            ),
+          ]),
+        );
         return dataRegion;
       }),
     );
