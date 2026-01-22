@@ -23,9 +23,9 @@ export const defaultSheetConfig: Required<ISheetOptions> = {
     strokeWidth: 2,
   },
   activeCellRectAttrs: {
-    fill: 'rgba(255, 255, 255, 0.7)',
+    fill: 'rgba(0, 0, 0, 0)',
     stroke: '#10B981',
-    strokeWidth: 3,
+    strokeWidth: 2,
   },
   defaultCellRectAttrs: {
     fill: '#ffffff',

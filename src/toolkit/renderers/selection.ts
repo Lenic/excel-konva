@@ -363,21 +363,34 @@ export class SelectionListener extends RenderListener<number> {
         return this.activeCellMarkerPool.getRect$.pipe(
           switchMap(
             (getRect) =>
-              new Observable<Konva.Rect>((observer) => {
-                const activeCellRect = getRect();
+              new Observable<[Konva.Rect, Konva.Rect]>((observer) => {
+                const activeCellRectEraser = getRect();
+                const activeCellRectBorder = getRect();
 
-                activeCellRect.setAttrs({
+                activeCellRectEraser.setAttrs({
+                  x: left + 1,
+                  y: top + 1,
+                  width: right - left - 2,
+                  height: bottom - top - 2,
+                  fill: '#000000',
+                  strokeWidth: 0,
+                  globalCompositeOperation: 'destination-out',
+                });
+                activeCellRectEraser.moveToTop();
+
+                activeCellRectBorder.setAttrs({
                   x: left,
                   y: top,
                   width: right - left,
                   height: bottom - top,
                 });
-                activeCellRect.moveToTop();
+                activeCellRectBorder.moveToTop();
 
-                observer.next(activeCellRect);
+                observer.next([activeCellRectEraser, activeCellRectBorder]);
 
                 return () => {
-                  this.activeCellMarkerPool.disposeRect(activeCellRect);
+                  this.activeCellMarkerPool.disposeRect(activeCellRectEraser);
+                  this.activeCellMarkerPool.disposeRect(activeCellRectBorder);
                 };
               }),
           ),
