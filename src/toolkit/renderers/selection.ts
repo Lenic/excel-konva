@@ -4,25 +4,26 @@ import type { IRectPool } from '../pools';
 import type { ILocation, IRegionInfo } from '../types';
 import type Konva from 'konva';
 
-import { combineLatestWith, concatMap, EMPTY, merge, Observable, of } from 'rxjs';
+import { combineLatestWith, EMPTY, Observable, of } from 'rxjs';
 import { combineLatest, distinctUntilChanged, map, switchMap, take } from 'rxjs';
 
 import { ServiceLocator } from '../../container';
 
+import { CollectionSubscription } from './collection-subscription';
 import { RenderListener } from './renderer';
 import { IRangeCollection } from './types';
 
 interface MultipleRegion {
-  dataList: IRegionInfo[];
-  sideList: IRegionInfo[];
-  headerList: IRegionInfo[];
-  cornerList: IRegionInfo[];
-  dataActiveCellList: ILocation[];
-  sideActiveCellList: ILocation[];
-  headerActiveCellList: ILocation[];
-  cornerActiveCellList: ILocation[];
-  highlightedRows: IRegionInfo[];
-  highlightedColumns: IRegionInfo[];
+  dataList: [key: string, item: IRegionInfo][];
+  sideList: [key: string, item: IRegionInfo][];
+  headerList: [key: string, item: IRegionInfo][];
+  cornerList: [key: string, item: IRegionInfo][];
+  dataActiveCellList: [key: string, item: ILocation][];
+  sideActiveCellList: [key: string, item: ILocation][];
+  headerActiveCellList: [key: string, item: ILocation][];
+  cornerActiveCellList: [key: string, item: ILocation][];
+  highlightedRows: [key: string, item: IRegionInfo][];
+  highlightedColumns: [key: string, item: IRegionInfo][];
 }
 
 interface IRectWrapper {
@@ -42,7 +43,8 @@ export class SelectionListener extends RenderListener<number> {
   private selectionStore: ISelectionStore;
   private selectionPool: IRectPool;
   private activeCellMarkerPool: IRectPool;
-  private scrollOffset$: IScrollOffset;
+  private scrollOffset: IScrollOffset;
+  private subscriptions: CollectionSubscription;
 
   /**
    * Constructor
@@ -52,6 +54,7 @@ export class SelectionListener extends RenderListener<number> {
    * @param selectionStore Selection store
    * @param selectionPool Selection pool
    * @param activeCellMarkerPool Active cell marker pool
+   * @param scrollOffset Scroll offset
    */
   constructor(
     config: ISheetConfig,
@@ -60,7 +63,7 @@ export class SelectionListener extends RenderListener<number> {
     selectionStore: ISelectionStore,
     selectionPool: IRectPool,
     activeCellMarkerPool: IRectPool,
-    scrollOffset$: IScrollOffset,
+    scrollOffset: IScrollOffset,
   ) {
     super();
 
@@ -70,7 +73,10 @@ export class SelectionListener extends RenderListener<number> {
     this.selectionStore = selectionStore;
     this.selectionPool = selectionPool;
     this.activeCellMarkerPool = activeCellMarkerPool;
-    this.scrollOffset$ = scrollOffset$;
+    this.scrollOffset = scrollOffset;
+
+    this.subscriptions = new CollectionSubscription();
+    this.disposeWithMe(this.subscriptions);
   }
 
   protected build(): Observable<number> {
@@ -96,82 +102,98 @@ export class SelectionListener extends RenderListener<number> {
           highlightedColumns: [],
         };
 
-        selectedRanges.forEach(({ activeCell }) => {
+        selectedRanges.forEach(({ activeCell, region }) => {
           const { rowIndex, columnIndex } = activeCell;
-          if (rowIndex < frozenRows && columnIndex < frozenColumns) {
-            regionInfo.cornerActiveCellList.push(activeCell);
-          } else if (rowIndex < frozenRows) {
-            regionInfo.headerActiveCellList.push(activeCell);
-          } else if (columnIndex < frozenColumns) {
-            regionInfo.sideActiveCellList.push(activeCell);
-          } else {
-            regionInfo.dataActiveCellList.push(activeCell);
-          }
-        });
+          const { startColumnIndex, startRowIndex, endColumnIndex, endRowIndex } = region;
 
-        selectedRanges.forEach((range) => {
-          const { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } = range.region;
+          const suffix = `${startColumnIndex}-${startRowIndex}-${endColumnIndex}-${endRowIndex}-${rowIndex}-${columnIndex}`;
+
+          // ---- active cell ----
+
+          if (rowIndex < frozenRows && columnIndex < frozenColumns) {
+            regionInfo.cornerActiveCellList.push([`cornerActiveCell-${suffix}`, activeCell]);
+          } else if (rowIndex < frozenRows) {
+            regionInfo.headerActiveCellList.push([`headerActiveCell-${suffix}`, activeCell]);
+          } else if (columnIndex < frozenColumns) {
+            regionInfo.sideActiveCellList.push([`sideActiveCell-${suffix}`, activeCell]);
+          } else {
+            regionInfo.dataActiveCellList.push([`dataActiveCell-${suffix}`, activeCell]);
+          }
+
+          // ---- region ----
 
           // Collect indices for row/column header highlighting
           highlightedRows.push([startRowIndex, endRowIndex]);
           highlightedColumns.push([startColumnIndex, endColumnIndex]);
 
           // A. Draw Data Area selection
-          const dataStartRow = Math.max(startRowIndex, frozenRows);
-          const dataStartColumn = Math.max(startColumnIndex, frozenColumns);
+          const dataStartRowIndex = Math.max(startRowIndex, frozenRows);
+          const dataStartColumnIndex = Math.max(startColumnIndex, frozenColumns);
 
-          if (dataStartRow <= endRowIndex && dataStartColumn <= endColumnIndex) {
-            regionInfo.dataList.push({
-              startRowIndex: dataStartRow,
-              endRowIndex,
-              startColumnIndex: dataStartColumn,
-              endColumnIndex,
-            });
+          if (dataStartRowIndex <= endRowIndex && dataStartColumnIndex <= endColumnIndex) {
+            regionInfo.dataList.push([
+              `data-${suffix}`,
+              {
+                startRowIndex: dataStartRowIndex,
+                endRowIndex,
+                startColumnIndex: dataStartColumnIndex,
+                endColumnIndex,
+              },
+            ]);
           }
 
           // B. Draw Frozen Side Area selection
-          const sideStartRow = Math.max(startRowIndex, frozenRows);
-          const sideEndRow = endRowIndex;
-          const sideStartColumn = startColumnIndex;
-          const sideEndColumn = Math.min(endColumnIndex, frozenColumns - 1);
+          const sideStartRowIndex = Math.max(startRowIndex, frozenRows);
+          const sideEndRowIndex = endRowIndex;
+          const sideStartColumnIndex = startColumnIndex;
+          const sideEndColumnIndex = Math.min(endColumnIndex, frozenColumns - 1);
 
-          if (sideStartRow <= sideEndRow && sideStartColumn <= sideEndColumn) {
-            regionInfo.sideList.push({
-              startRowIndex: sideStartRow,
-              endRowIndex: sideEndRow,
-              startColumnIndex: sideStartColumn,
-              endColumnIndex: sideEndColumn,
-            });
+          if (sideStartRowIndex <= sideEndRowIndex && sideStartColumnIndex <= sideEndColumnIndex) {
+            regionInfo.sideList.push([
+              `side-${suffix}`,
+              {
+                startRowIndex: sideStartRowIndex,
+                endRowIndex: sideEndRowIndex,
+                startColumnIndex: sideStartColumnIndex,
+                endColumnIndex: sideEndColumnIndex,
+              },
+            ]);
           }
 
           // C. Draw Frozen Header Area selection
-          const headerStartRow = startRowIndex;
-          const headerEndRow = Math.min(endRowIndex, frozenRows - 1);
-          const headerStartColumn = Math.max(startColumnIndex, frozenColumns);
-          const headerEndColumn = endColumnIndex;
+          const headerStartRowIndex = startRowIndex;
+          const headerEndRowIndex = Math.min(endRowIndex, frozenRows - 1);
+          const headerStartColumnIndex = Math.max(startColumnIndex, frozenColumns);
+          const headerEndColumnIndex = endColumnIndex;
 
-          if (headerStartRow <= headerEndRow && headerStartColumn <= headerEndColumn) {
-            regionInfo.headerList.push({
-              startRowIndex: headerStartRow,
-              endRowIndex: headerEndRow,
-              startColumnIndex: headerStartColumn,
-              endColumnIndex: headerEndColumn,
-            });
+          if (headerStartRowIndex <= headerEndRowIndex && headerStartColumnIndex <= headerEndColumnIndex) {
+            regionInfo.headerList.push([
+              `header-${suffix}`,
+              {
+                startRowIndex: headerStartRowIndex,
+                endRowIndex: headerEndRowIndex,
+                startColumnIndex: headerStartColumnIndex,
+                endColumnIndex: headerEndColumnIndex,
+              },
+            ]);
           }
 
           // D. Draw Frozen Corner Area selection
-          const cornerStartRow = startRowIndex;
-          const cornerEndRow = Math.min(endRowIndex, frozenRows - 1);
-          const cornerStartColumn = startColumnIndex;
-          const cornerEndColumn = Math.min(endColumnIndex, frozenColumns - 1);
+          const cornerStartRowIndex = startRowIndex;
+          const cornerEndRowIndex = Math.min(endRowIndex, frozenRows - 1);
+          const cornerStartColumnIndex = startColumnIndex;
+          const cornerEndColumnIndex = Math.min(endColumnIndex, frozenColumns - 1);
 
-          if (cornerStartRow <= cornerEndRow && cornerStartColumn <= cornerEndColumn) {
-            regionInfo.cornerList.push({
-              startRowIndex: cornerStartRow,
-              endRowIndex: cornerEndRow,
-              startColumnIndex: cornerStartColumn,
-              endColumnIndex: cornerEndColumn,
-            });
+          if (cornerStartRowIndex <= cornerEndRowIndex && cornerStartColumnIndex <= cornerEndColumnIndex) {
+            regionInfo.cornerList.push([
+              `corner-${suffix}`,
+              {
+                startRowIndex: cornerStartRowIndex,
+                endRowIndex: cornerEndRowIndex,
+                startColumnIndex: cornerStartColumnIndex,
+                endColumnIndex: cornerEndColumnIndex,
+              },
+            ]);
           }
         });
 
@@ -183,25 +205,34 @@ export class SelectionListener extends RenderListener<number> {
           const frozenColumnMaxIndex = frozenColumns - 1;
           for (const [start, end] of highlightedColumns.values) {
             if (frozenColumnMaxIndex < start || frozenColumnMaxIndex >= end) {
-              regionInfo.highlightedColumns.push({
-                startColumnIndex: start,
-                endColumnIndex: end,
-                startRowIndex: 0,
-                endRowIndex: 0,
-              });
+              regionInfo.highlightedColumns.push([
+                `highlightedColumns-${start}-${end}`,
+                {
+                  startColumnIndex: start,
+                  endColumnIndex: end,
+                  startRowIndex: 0,
+                  endRowIndex: 0,
+                },
+              ]);
             } else {
-              regionInfo.highlightedColumns.push({
-                startColumnIndex: start,
-                endColumnIndex: frozenColumnMaxIndex,
-                startRowIndex: 0,
-                endRowIndex: 0,
-              });
-              regionInfo.highlightedColumns.push({
-                startColumnIndex: frozenColumnMaxIndex + 1,
-                endColumnIndex: end,
-                startRowIndex: 0,
-                endRowIndex: 0,
-              });
+              regionInfo.highlightedColumns.push([
+                `highlightedColumns-${start}-${frozenColumnMaxIndex}`,
+                {
+                  startColumnIndex: start,
+                  endColumnIndex: frozenColumnMaxIndex,
+                  startRowIndex: 0,
+                  endRowIndex: 0,
+                },
+              ]);
+              regionInfo.highlightedColumns.push([
+                `highlightedColumns-${frozenColumnMaxIndex + 1}-${end}`,
+                {
+                  startColumnIndex: frozenColumnMaxIndex + 1,
+                  endColumnIndex: end,
+                  startRowIndex: 0,
+                  endRowIndex: 0,
+                },
+              ]);
             }
           }
         }
@@ -211,65 +242,95 @@ export class SelectionListener extends RenderListener<number> {
           const frozenRowMaxIndex = frozenRows - 1;
           for (const [start, end] of highlightedRows.values) {
             if (frozenRowMaxIndex < start || frozenRowMaxIndex >= end) {
-              regionInfo.highlightedRows.push({
-                startRowIndex: start,
-                endRowIndex: end,
-                startColumnIndex: 0,
-                endColumnIndex: 0,
-              });
+              regionInfo.highlightedRows.push([
+                `highlightedRows-${start}-${end}`,
+                {
+                  startRowIndex: start,
+                  endRowIndex: end,
+                  startColumnIndex: 0,
+                  endColumnIndex: 0,
+                },
+              ]);
             } else {
-              regionInfo.highlightedRows.push({
-                startRowIndex: start,
-                endRowIndex: frozenRowMaxIndex,
-                startColumnIndex: 0,
-                endColumnIndex: 0,
-              });
-              regionInfo.highlightedRows.push({
-                startRowIndex: frozenRowMaxIndex + 1,
-                endRowIndex: end,
-                startColumnIndex: 0,
-                endColumnIndex: 0,
-              });
+              regionInfo.highlightedRows.push([
+                `highlightedRows-${start}-${frozenRowMaxIndex}`,
+                {
+                  startRowIndex: start,
+                  endRowIndex: frozenRowMaxIndex,
+                  startColumnIndex: 0,
+                  endColumnIndex: 0,
+                },
+              ]);
+              regionInfo.highlightedRows.push([
+                `highlightedRows-${frozenRowMaxIndex + 1}-${end}`,
+                {
+                  startRowIndex: frozenRowMaxIndex + 1,
+                  endRowIndex: end,
+                  startColumnIndex: 0,
+                  endColumnIndex: 0,
+                },
+              ]);
             }
           }
         }
 
-        const filterPerdicate = (region: IRegionInfo) =>
-          region.startRowIndex <= region.endRowIndex && region.startColumnIndex <= region.endColumnIndex;
-        regionInfo.dataList = regionInfo.dataList.filter(filterPerdicate);
-        regionInfo.sideList = regionInfo.sideList.filter(filterPerdicate);
-        regionInfo.headerList = regionInfo.headerList.filter(filterPerdicate);
-        regionInfo.cornerList = regionInfo.cornerList.filter(filterPerdicate);
+        const items: [key: string, item: Observable<any>][] = [];
 
-        return regionInfo;
+        regionInfo.dataList.forEach(([key, region]) => {
+          items.push([key, this.renderSelectionRegion(this.scrollOffset.offset$, region)]);
+        });
+
+        regionInfo.sideList.forEach(([key, region]) => {
+          items.push([key, this.renderSelectionRegion(this.scrollOffset.top$, region)]);
+        });
+
+        regionInfo.headerList.forEach(([key, region]) => {
+          items.push([key, this.renderSelectionRegion(this.scrollOffset.left$, region)]);
+        });
+
+        regionInfo.cornerList.forEach(([key, region]) => {
+          items.push([key, this.renderSelectionRegion(of(1), region)]);
+        });
+
+        regionInfo.dataActiveCellList.forEach(([key, cell]) => {
+          items.push([key, this.renderActiveCellMarker(this.scrollOffset.offset$, cell)]);
+        });
+
+        regionInfo.sideActiveCellList.forEach(([key, cell]) => {
+          items.push([key, this.renderActiveCellMarker(this.scrollOffset.top$, cell)]);
+        });
+
+        regionInfo.headerActiveCellList.forEach(([key, cell]) => {
+          items.push([key, this.renderActiveCellMarker(this.scrollOffset.left$, cell)]);
+        });
+
+        regionInfo.cornerActiveCellList.forEach(([key, cell]) => {
+          items.push([key, this.renderActiveCellMarker(of(1), cell)]);
+        });
+
+        regionInfo.highlightedRows.forEach(([key, region]) => {
+          items.push([
+            key,
+            this.renderSelectionRegion(this.scrollOffset.top$, region, {
+              stroke: 'transparent',
+              strokeWidth: 0,
+            }),
+          ]);
+        });
+
+        regionInfo.highlightedColumns.forEach(([key, region]) => {
+          items.push([
+            key,
+            this.renderSelectionRegion(this.scrollOffset.left$, region, {
+              stroke: 'transparent',
+              strokeWidth: 0,
+            }),
+          ]);
+        });
+
+        this.subscriptions.update(items);
+        return items.length;
       }),
-      switchMap((regionInfo) =>
-        merge(
-          ...regionInfo.dataList.map((region) => this.renderSelectionRegion(this.scrollOffset$.offset$, region)),
-          ...regionInfo.sideList.map((region) => this.renderSelectionRegion(this.scrollOffset$.top$, region)),
-          ...regionInfo.headerList.map((region) => this.renderSelectionRegion(this.scrollOffset$.left$, region)),
-          ...regionInfo.cornerList.map((region) => this.renderSelectionRegion(of(1), region)),
-          ...regionInfo.dataActiveCellList.map((cell) => this.renderActiveCellMarker(this.scrollOffset$.offset$, cell)),
-          ...regionInfo.sideActiveCellList.map((cell) => this.renderActiveCellMarker(this.scrollOffset$.top$, cell)),
-          ...regionInfo.headerActiveCellList.map((cell) => this.renderActiveCellMarker(this.scrollOffset$.left$, cell)),
-          ...regionInfo.cornerActiveCellList.map((cell) => this.renderActiveCellMarker(of(1), cell)),
-          ...regionInfo.highlightedRows.map((region) =>
-            this.renderSelectionRegion(this.scrollOffset$.top$, region, {
-              stroke: 'transparent',
-              strokeWidth: 0,
-            }),
-          ),
-          ...regionInfo.highlightedColumns.map((region) =>
-            this.renderSelectionRegion(this.scrollOffset$.left$, region, {
-              stroke: 'transparent',
-              strokeWidth: 0,
-            }),
-          ),
-        ),
-      ),
-      concatMap(() => this.selectionStore.list$),
-      map((items) => items.length),
-      distinctUntilChanged(),
     );
   }
 
@@ -277,7 +338,7 @@ export class SelectionListener extends RenderListener<number> {
     offset$: Observable<T>,
     region: IRegionInfo,
     extraRectAttrs?: Partial<Konva.RectConfig>,
-  ) {
+  ): Observable<any> {
     return combineLatest([
       this.cellDimension.columnBoundary.accumulated.dimension.get$.pipe(
         map((get) => get(region.endColumnIndex)),
