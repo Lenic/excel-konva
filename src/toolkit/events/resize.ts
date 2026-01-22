@@ -46,8 +46,7 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
   }
 
   protected build() {
-    return this.dispositionSubject.pipe(
-      switchMap(() => this.events.typedMouseDownLeft$),
+    return this.events.typedMouseDownLeft$.pipe(
       switchMap((v) => (v.mousedownType === EMousedownTypes.ResizeBoundary ? of([v.data, v.event] as const) : EMPTY)),
       withLatestFrom(
         this.columnBoundary.accumulated.dimension.get$,

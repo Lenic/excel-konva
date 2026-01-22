@@ -43,13 +43,10 @@ export class StageDragListener extends EventListener implements IStageDragListen
   }
 
   protected build() {
-    return this.dispositionSubject.pipe(
-      switchMap(() =>
-        this.events.typedMouseDownLeft$.pipe(
-          switchMap((e) => (e.mousedownType === EMousedownTypes.SelectRegion ? of(e) : EMPTY)),
-          switchMap((e) => (e.data.activeCell.rowIndex === 0 && e.data.activeCell.columnIndex === 0 ? EMPTY : of(e))),
-        ),
-      ),
+    return this.events.typedMouseDownLeft$.pipe(
+      switchMap((e) => (e.mousedownType === EMousedownTypes.SelectRegion ? of(e) : EMPTY)),
+      switchMap((e) => (e.data.activeCell.rowIndex === 0 && e.data.activeCell.columnIndex === 0 ? EMPTY : of(e))),
+
       withLatestFrom(this.cellDimension.getCellLocation$),
       switchMap(([{ data }, getCellLocation]) => {
         const { activeCell, isMultiSelect, id } = data;

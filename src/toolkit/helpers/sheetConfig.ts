@@ -1,8 +1,7 @@
 import type { ISheetConfig, ISheetOptions } from './types';
 import type { Observable } from 'rxjs';
 
-import { finalize, switchMap } from 'rxjs';
-import { BehaviorSubject, distinctUntilChanged, map, shareReplay } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, finalize, map } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
 
@@ -147,12 +146,11 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
   get$<K extends keyof Required<ISheetOptions>>(key: K): Observable<Required<ISheetOptions>[K]> {
     let obs$ = this.getMap.get(key) as Observable<Required<ISheetOptions>[K]> | undefined;
     if (!obs$) {
-      obs$ = this.dispositionSubject.pipe(
-        switchMap(() => this.options$),
+      obs$ = this.options$.pipe(
         map((options) => options[key]),
         distinctUntilChanged(),
         finalize(() => void this.getMap.delete(key)),
-        shareReplay({ refCount: true, bufferSize: 1 }),
+        this.withPublish(),
       );
       this.getMap.set(key, obs$);
     }

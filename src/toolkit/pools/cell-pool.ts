@@ -2,7 +2,6 @@ import type { ICellPool } from './types';
 import type { Observable } from 'rxjs';
 
 import Konva from 'konva';
-import { shareReplay } from 'rxjs';
 
 import { Queue } from '../core';
 
@@ -33,7 +32,7 @@ export class CellPool extends RectPool implements ICellPool {
 
     this.texts = new Queue<Konva.Text>();
 
-    this.textAttrs$ = textAttrs$.pipe(shareReplay({ bufferSize: 1, refCount: true }));
+    this.textAttrs$ = textAttrs$.pipe(this.withPublish());
     this.disposeWithMe(this.textAttrs$.subscribe());
 
     this.getText$ = this.buildGetShape$(this.textAttrs$, this.texts, (attrs) => new Konva.Text(attrs));

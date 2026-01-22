@@ -1,4 +1,6 @@
-import { BehaviorSubject } from 'rxjs';
+import type { MonoTypeOperatorFunction, Observable } from 'rxjs';
+
+import { share, shareReplay, Subject, takeUntil } from 'rxjs';
 
 import { Disposable } from '../../container';
 
@@ -6,7 +8,7 @@ import { Disposable } from '../../container';
  * Observable disposable class
  */
 export class ObservableDisposable extends Disposable {
-  protected dispositionSubject: BehaviorSubject<number>;
+  private notificationSubject: Subject<void>;
 
   /**
    * Observable disposable constructor
@@ -14,9 +16,27 @@ export class ObservableDisposable extends Disposable {
   constructor() {
     super();
 
-    this.dispositionSubject = new BehaviorSubject(0);
+    this.notificationSubject = new Subject<void>();
     this.disposeWithMe(() => {
-      this.dispositionSubject.complete();
+      this.notificationSubject.next();
+      this.notificationSubject.complete();
     });
+  }
+
+  /**
+   * Observable disposable with publish
+   * @returns MonoTypeOperatorFunction<T>
+   */
+  protected withPublish<T>(): MonoTypeOperatorFunction<T> {
+    return (source$: Observable<T>) =>
+      source$.pipe(takeUntil(this.notificationSubject), shareReplay({ refCount: true, bufferSize: 1 }));
+  }
+
+  /**
+   * Observable disposable with share
+   * @returns MonoTypeOperatorFunction<T>
+   */
+  protected withShare<T>(): MonoTypeOperatorFunction<T> {
+    return (source$: Observable<T>) => source$.pipe(takeUntil(this.notificationSubject), share());
   }
 }

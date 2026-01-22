@@ -2,8 +2,7 @@ import type { ISheetConfig } from './helpers';
 import type { Observable } from 'rxjs';
 
 import Konva from 'konva';
-import { switchMap } from 'rxjs';
-import { combineLatest, fromEventPattern, map, shareReplay, tap } from 'rxjs';
+import { combineLatest, fromEventPattern, map, tap } from 'rxjs';
 
 import { Container, ServiceLocator } from '../container';
 
@@ -154,7 +153,7 @@ export class ExcelEntrance extends ObservableDisposable implements IExcelEntranc
     registerRenderers(container);
     ServiceLocator.setProvider(container);
 
-    this.getCellGroup$ = this.dispositionSubject.pipe(switchMap(() => this.buildGetCellGroup$(config)));
+    this.getCellGroup$ = this.buildGetCellGroup$(config);
     this.disposeWithMe(this.getCellGroup$.subscribe());
   }
 
@@ -199,7 +198,7 @@ export class ExcelEntrance extends ObservableDisposable implements IExcelEntranc
 
         return getCellGroup;
       }),
-      shareReplay({ refCount: true, bufferSize: 1 }),
+      this.withPublish(),
     );
   }
 }

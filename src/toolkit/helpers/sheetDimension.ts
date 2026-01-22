@@ -1,7 +1,7 @@
 import type { IDimension, IExcelEntrance } from '../types';
 import type { IAccumulatedDimension, ISheetConfig, ISheetDimension } from './types';
 
-import { animationFrameScheduler, auditTime, combineLatest, map, Observable, shareReplay, startWith } from 'rxjs';
+import { animationFrameScheduler, auditTime, combineLatest, map, Observable, startWith } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
 
@@ -62,7 +62,7 @@ export class SheetDimension extends ObservableDisposable implements ISheetDimens
       auditTime(16, animationFrameScheduler),
       startWith(this.excelEntrance.rootElement),
       map((el) => ({ width: el.clientWidth, height: el.clientHeight }) as IDimension),
-      shareReplay({ refCount: true, bufferSize: 1 }),
+      this.withPublish(),
     );
     this.disposeWithMe(
       this.visualSize$.subscribe((size) => {
@@ -86,7 +86,7 @@ export class SheetDimension extends ObservableDisposable implements ISheetDimens
 
     this.realSize$ = combineLatest([this.realWidth$, this.realHeight$]).pipe(
       map(([width, height]) => ({ width, height }) as IDimension),
-      shareReplay({ refCount: true, bufferSize: 1 }),
+      this.withPublish(),
     );
     this.disposeWithMe(
       this.realSize$.subscribe((size) => {
@@ -101,7 +101,7 @@ export class SheetDimension extends ObservableDisposable implements ISheetDimens
   ) {
     return combineLatest([count$, getPrecedingTotalDimension$]).pipe(
       map(([count, getPrecedingTotalDimension]) => getPrecedingTotalDimension(count)),
-      shareReplay({ refCount: true, bufferSize: 1 }),
+      this.withPublish(),
     );
   }
 }

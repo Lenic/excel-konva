@@ -53,9 +53,8 @@ export class StageEditListener extends EventListener implements IStageEditListen
   }
 
   protected build() {
-    return this.dispositionSubject.pipe(
+    return this.events.dblclick$.pipe(
       filter(() => this.status === EEditStatus.Normal),
-      switchMap(() => this.events.dblclick$),
       withLatestFrom(
         this.cellDimension.getCellLocation$,
         this.cellDimension.getCellData$,

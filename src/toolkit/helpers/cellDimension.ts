@@ -2,7 +2,7 @@ import type { ILocation, IPoint, IRectBox } from '../types';
 import type { ICellDimension, IItemBoundary } from './types';
 import type { Observable } from 'rxjs';
 
-import { combineLatest, map, scan, shareReplay, startWith, Subject, switchMap, take } from 'rxjs';
+import { combineLatest, map, scan, startWith, Subject, switchMap, take } from 'rxjs';
 
 import { getCellKey, getColumnLabel, ObservableDisposable } from '../core';
 
@@ -102,7 +102,7 @@ export class CellDimension extends ObservableDisposable implements ICellDimensio
           return typeof value !== 'undefined' ? value : key;
         };
       }),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
   }
 
@@ -141,7 +141,7 @@ export class CellDimension extends ObservableDisposable implements ICellDimensio
           };
         };
       }),
-      shareReplay({ refCount: true, bufferSize: 1 }),
+      this.withPublish(),
     );
   }
 
@@ -161,7 +161,7 @@ export class CellDimension extends ObservableDisposable implements ICellDimensio
           };
         };
       }),
-      shareReplay({ refCount: true, bufferSize: 1 }),
+      this.withPublish(),
     );
   }
 
@@ -181,7 +181,7 @@ export class CellDimension extends ObservableDisposable implements ICellDimensio
           };
         };
       }),
-      shareReplay({ refCount: true, bufferSize: 1 }),
+      this.withPublish(),
     );
   }
 }

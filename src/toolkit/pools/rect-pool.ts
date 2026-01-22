@@ -2,7 +2,7 @@ import type { IRectPool } from './types';
 import type { Observable } from 'rxjs';
 
 import Konva from 'konva';
-import { map, shareReplay } from 'rxjs';
+import { map } from 'rxjs';
 
 import { ObservableDisposable, Queue } from '../core';
 
@@ -28,7 +28,7 @@ export class RectPool extends ObservableDisposable implements IRectPool {
     this.layer = layer;
     this.rects = new Queue<Konva.Rect>();
 
-    this.rectAttrs$ = rectAttrs$.pipe(shareReplay({ bufferSize: 1, refCount: true }));
+    this.rectAttrs$ = rectAttrs$.pipe(this.withPublish());
     this.disposeWithMe(this.rectAttrs$.subscribe());
 
     this.getRect$ = this.buildGetShape$(this.rectAttrs$, this.rects, (attrs) => new Konva.Rect(attrs));
@@ -88,7 +88,7 @@ export class RectPool extends ObservableDisposable implements IRectPool {
 
         return getShape;
       }),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
   }
 }

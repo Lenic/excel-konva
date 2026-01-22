@@ -15,7 +15,6 @@ import {
   merge,
   Observable,
   of,
-  shareReplay,
   skip,
   startWith,
   switchMap,
@@ -106,7 +105,7 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
     this.defaultRectAttrs$ = this.config.options$.pipe(
       map((options) => options.defaultCellRectAttrs),
       distinctUntilChanged(),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.defaultRectAttrs$.subscribe());
 
@@ -118,7 +117,7 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
       ),
     ]).pipe(
       map(([defaultRectAttrs, oddRectAttrs]) => ({ ...defaultRectAttrs, ...oddRectAttrs })),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.defaultOddRectAttrs$.subscribe());
 
@@ -130,14 +129,14 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
       ),
     ]).pipe(
       map(([defaultRectAttrs, evenRectAttrs]) => ({ ...defaultRectAttrs, ...evenRectAttrs })),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.defaultEvenRectAttrs$.subscribe());
 
     this.frozenRectAttrs$ = this.config.options$.pipe(
       map((options) => options.frozenCellRectAttrs),
       distinctUntilChanged(),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.frozenRectAttrs$.subscribe());
 
@@ -154,7 +153,7 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
         ...frozenRectAttrs,
         ...oddRectAttrs,
       })),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.frozenOddRectAttrs$.subscribe());
 
@@ -171,14 +170,14 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
         ...frozenRectAttrs,
         ...evenRectAttrs,
       })),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.frozenEvenRectAttrs$.subscribe());
 
     this.headerRectAttrs$ = this.config.options$.pipe(
       map((options) => options.headerCellRectAttrs),
       distinctUntilChanged(),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.headerRectAttrs$.subscribe());
 
@@ -197,7 +196,7 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
         ...headerRectAttrs,
         ...columnHeaderRectAttrs,
       })),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.columnHeaderRectAttrs$.subscribe());
 
@@ -216,7 +215,7 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
         ...headerRectAttrs,
         ...rowHeaderRectAttrs,
       })),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.rowHeaderRectAttrs$.subscribe());
 
@@ -235,7 +234,7 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
         ...headerRectAttrs,
         ...cornerCellRectAttrs,
       })),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.cornerCellRectAttrs$.subscribe());
 
@@ -244,7 +243,7 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
     this.defaultTextAttrs$ = this.config.options$.pipe(
       map((options) => options.defaultCellTextAttrs),
       distinctUntilChanged(),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.defaultTextAttrs$.subscribe());
 
@@ -256,7 +255,7 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
       ),
     ]).pipe(
       map(([defaultTextAttrs, oddTextAttrs]) => ({ ...defaultTextAttrs, ...oddTextAttrs })),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.defaultOddTextAttrs$.subscribe());
 
@@ -268,14 +267,14 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
       ),
     ]).pipe(
       map(([defaultTextAttrs, evenTextAttrs]) => ({ ...defaultTextAttrs, ...evenTextAttrs })),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.defaultEvenTextAttrs$.subscribe());
 
     this.frozenTextAttrs$ = this.config.options$.pipe(
       map((options) => options.frozenCellTextAttrs),
       distinctUntilChanged(),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.frozenTextAttrs$.subscribe());
 
@@ -292,7 +291,7 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
         ...frozenTextAttrs,
         ...oddTextAttrs,
       })),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.frozenOddTextAttrs$.subscribe());
 
@@ -309,14 +308,14 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
         ...frozenTextAttrs,
         ...evenTextAttrs,
       })),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.frozenEvenTextAttrs$.subscribe());
 
     this.headerTextAttrs$ = this.config.options$.pipe(
       map((options) => options.headerCellTextAttrs),
       distinctUntilChanged(),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.headerTextAttrs$.subscribe());
 
@@ -330,7 +329,7 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
       ),
     ]).pipe(
       map(([headerTextAttrs, columnHeaderTextAttrs]) => ({ ...headerTextAttrs, ...columnHeaderTextAttrs })),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.columnHeaderTextAttrs$.subscribe());
 
@@ -344,7 +343,7 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
       ),
     ]).pipe(
       map(([headerTextAttrs, rowHeaderTextAttrs]) => ({ ...headerTextAttrs, ...rowHeaderTextAttrs })),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.rowHeaderTextAttrs$.subscribe());
   }

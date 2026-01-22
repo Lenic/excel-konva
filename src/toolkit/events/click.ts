@@ -1,6 +1,6 @@
 import type { ISelectionStore, IStageClickListener, IStageMouseEvent } from './types';
 
-import { filter, map, merge, switchMap } from 'rxjs';
+import { filter, map, merge } from 'rxjs';
 
 import { EventListener } from './listener';
 import { EMousedownTypes } from './types';
@@ -43,6 +43,6 @@ export class StageClickListener extends EventListener implements IStageClickList
       }),
     );
 
-    return this.dispositionSubject.pipe(switchMap(() => merge(wholeColumnOrRowSelection$, cellSelection$)));
+    return merge(wholeColumnOrRowSelection$, cellSelection$);
   }
 }

@@ -1,7 +1,7 @@
 import type { IAccumulatedDimension, IItemDimension } from './types';
 import type { Observable } from 'rxjs';
 
-import { combineLatest, map, shareReplay } from 'rxjs';
+import { combineLatest, map } from 'rxjs';
 
 import { binarySearch, ObservableDisposable } from '../core';
 
@@ -71,7 +71,7 @@ export class AccumulatedDimension extends ObservableDisposable implements IAccum
           return currentValue;
         };
       }),
-      shareReplay({ refCount: true, bufferSize: 1 }),
+      this.withPublish(),
     );
   }
 
@@ -157,7 +157,7 @@ export class AccumulatedDimension extends ObservableDisposable implements IAccum
           return index;
         };
       }),
-      shareReplay({ refCount: true, bufferSize: 1 }),
+      this.withPublish(),
     );
   }
 }

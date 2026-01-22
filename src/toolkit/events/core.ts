@@ -92,15 +92,10 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
   }
 
   private getMouseEvent$(key: keyof GlobalEventHandlersEventMap) {
-    return this.dispositionSubject.pipe(
-      switchMap(() =>
-        fromEventPattern<Konva.KonvaEventObject<MouseEvent>>(
-          (fn) => this.excelEntrance.stage.on(key, fn),
-          (fn) => this.excelEntrance.stage.off(key, fn),
-        ),
-      ),
-      share(),
-    );
+    return fromEventPattern<Konva.KonvaEventObject<MouseEvent>>(
+      (fn) => this.excelEntrance.stage.on(key, fn),
+      (fn) => this.excelEntrance.stage.off(key, fn),
+    ).pipe(this.withShare());
   }
 
   private buildTypedMouseDownLeft$(rootElement: HTMLDivElement) {

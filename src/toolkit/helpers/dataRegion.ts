@@ -2,7 +2,7 @@ import type { IRegionInfo } from '../types';
 import type { IDataRegion, IItemBoundary, ISheetConfig, ISheetDimension } from './types';
 import type { Observable } from 'rxjs';
 
-import { combineLatest, map, shareReplay, switchMap, take } from 'rxjs';
+import { combineLatest, map, switchMap, take } from 'rxjs';
 
 import { binarySearch, ObservableDisposable } from '../core';
 
@@ -110,7 +110,7 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
           return { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } as IRegionInfo;
         },
       ),
-      shareReplay({ refCount: true, bufferSize: 1 }),
+      this.withPublish(),
     );
   }
 

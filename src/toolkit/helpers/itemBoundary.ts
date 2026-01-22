@@ -1,7 +1,7 @@
 import type { IAccumulatedDimension, IItemBoundary, IItemBoundaryOptions } from './types';
 import type { Observable } from 'rxjs';
 
-import { combineLatest, map, shareReplay, switchMap, take } from 'rxjs';
+import { combineLatest, map, switchMap, take } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
 
@@ -48,7 +48,7 @@ export class ItemBoundary extends ObservableDisposable implements IItemBoundary 
           return index < frozenCount ? size : size - scrollOffset;
         };
       }),
-      shareReplay({ refCount: true, bufferSize: 1 }),
+      this.withPublish(),
     );
   }
 
@@ -77,6 +77,7 @@ export class ItemBoundary extends ObservableDisposable implements IItemBoundary 
             : getItemIndexByOffset(relOffset + scrollValue);
         };
       }),
+      this.withPublish(),
     );
   }
 }
