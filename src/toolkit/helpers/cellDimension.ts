@@ -34,7 +34,7 @@ export class CellDimension extends ObservableDisposable implements ICellDimensio
     this.columnBoundary = columnBoundary;
     this.rowBoundary = rowBoundary;
 
-    this.cellDataSubject = new Subject<[string, string | null]>();
+    this.cellDataSubject = new Subject<[string, unknown]>();
     this.disposeWithMe(() => {
       this.cellDataSubject.complete();
     });
