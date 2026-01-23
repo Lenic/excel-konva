@@ -319,7 +319,12 @@ export abstract class AbstractContentManager extends ObservableDisposable implem
         distinctUntilChanged(),
       ),
     ]).pipe(
-      map(([headerTextAttrs, columnHeaderTextAttrs]) => ({ ...headerTextAttrs, ...columnHeaderTextAttrs })),
+      map(([defaultTextAttrs, frozenTextAttrs, headerTextAttrs, columnHeaderTextAttrs]) => ({
+        ...defaultTextAttrs,
+        ...frozenTextAttrs,
+        ...headerTextAttrs,
+        ...columnHeaderTextAttrs,
+      })),
       this.withPublish(),
     );
     this.disposeWithMe(this.columnHeaderTextAttrs$.subscribe());
@@ -333,7 +338,12 @@ export abstract class AbstractContentManager extends ObservableDisposable implem
         distinctUntilChanged(),
       ),
     ]).pipe(
-      map(([headerTextAttrs, rowHeaderTextAttrs]) => ({ ...headerTextAttrs, ...rowHeaderTextAttrs })),
+      map(([defaultTextAttrs, frozenTextAttrs, headerTextAttrs, rowHeaderTextAttrs]) => ({
+        ...defaultTextAttrs,
+        ...frozenTextAttrs,
+        ...headerTextAttrs,
+        ...rowHeaderTextAttrs,
+      })),
       this.withPublish(),
     );
     this.disposeWithMe(this.rowHeaderTextAttrs$.subscribe());
