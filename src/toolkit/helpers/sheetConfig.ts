@@ -98,8 +98,6 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
   constructor(options: ISheetOptions) {
     super();
 
-    window.config = this;
-
     this.options = {
       ...defaultSheetConfig,
       ...options,
