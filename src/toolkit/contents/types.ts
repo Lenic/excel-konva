@@ -1,4 +1,6 @@
 import type { IDisposable, TIdentifier } from '../../container';
+import type { IRectBox } from '../types';
+import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
 /**
@@ -79,7 +81,7 @@ export interface IContentManager extends IDisposable {
    * @param content - Cell content
    * @param context - Content context
    */
-  render(content: unknown, context: IContentContext): Observable<void>;
+  render(content: unknown, context: IContentContext): Observable<any>;
   /**
    * Edit content
    *
@@ -92,3 +94,55 @@ export interface IContentManager extends IDisposable {
  * Content manager identifier
  */
 export const IContentManager: TIdentifier<IContentManager> = Symbol('IContentManager');
+
+/**
+ * Rendering context
+ */
+export interface IRenderingContext extends IContentContext {
+  /**
+   * Bounding box Observable
+   */
+  box$: Observable<IRectBox>;
+  /**
+   * Parent group Observable
+   */
+  group$: Observable<Konva.Group>;
+}
+
+/**
+ * Rect rendering context
+ */
+export interface IRectRenderingContext extends IRenderingContext {
+  /**
+   * Rectangle attributes Observable
+   */
+  rectAttrs$: Observable<Partial<Konva.RectConfig>>;
+}
+
+/**
+ * Text rendering context
+ */
+export interface ITextRenderingContext extends IRenderingContext {
+  /**
+   * Text content
+   */
+  content: unknown;
+  /**
+   * Text attributes Observable
+   */
+  textAttrs$: Observable<Partial<Konva.TextConfig>>;
+}
+
+/**
+ * Edit context
+ */
+export interface IEditContext extends IContentContext {
+  /**
+   * Bounding box
+   */
+  box: IRectBox;
+  /**
+   * Cell content
+   */
+  content: unknown;
+}
