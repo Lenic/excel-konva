@@ -29,9 +29,9 @@ export const ECellFrozenType = {
 export type ECellFrozenType = (typeof ECellFrozenType)[keyof typeof ECellFrozenType];
 
 /**
- * Content renderer context
+ * Content context
  */
-export interface IContentRendererContext {
+export interface IContentContext {
   /**
    * Row index
    */
@@ -77,16 +77,16 @@ export interface IContentManager extends IDisposable {
    * Render content
    *
    * @param content - Cell content
-   * @param context - Content renderer context
+   * @param context - Content context
    */
-  render(content: unknown, context: IContentRendererContext): Observable<void>;
+  render(content: unknown, context: IContentContext): Observable<void>;
   /**
    * Edit content
    *
    * @param content - Cell content
-   * @param context - Content renderer context
+   * @param context - Content context
    */
-  edit(content: unknown, context: IContentRendererContext): Observable<EEditStatus>;
+  edit(content: unknown, context: IContentContext): Observable<EEditStatus>;
 }
 /**
  * Content manager identifier

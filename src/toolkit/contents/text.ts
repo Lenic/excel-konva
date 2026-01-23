@@ -1,7 +1,7 @@
 import type { ICellDimension, IScrollOffset, ISheetConfig } from '../helpers';
 import type { ICellPool } from '../pools';
 import type { IExcelEntrance } from '../types';
-import type { IContentManager, IContentRendererContext } from './types';
+import type { IContentContext, IContentManager } from './types';
 import type Konva from 'konva';
 
 import {
@@ -348,7 +348,7 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
     this.disposeWithMe(this.rowHeaderTextAttrs$.subscribe());
   }
 
-  render(content: unknown, context: IContentRendererContext): Observable<void> {
+  render(content: unknown, context: IContentContext): Observable<void> {
     const { rowIndex, columnIndex } = context;
 
     return combineLatest([
@@ -408,7 +408,7 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
     );
   }
 
-  edit(content: unknown, context: IContentRendererContext): Observable<EEditStatus> {
+  edit(content: unknown, context: IContentContext): Observable<EEditStatus> {
     const { rowIndex, columnIndex } = context;
     return this.cellDimension.getCellRectBox$.pipe(
       map((getRectBox) => getRectBox(rowIndex, columnIndex)),
@@ -487,7 +487,7 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
    * @param context - Render options
    * @returns Observable of cell rect attributes
    */
-  protected getRectAttrs$(context: IContentRendererContext): Observable<Partial<Konva.RectConfig>> {
+  protected getRectAttrs$(context: IContentContext): Observable<Partial<Konva.RectConfig>> {
     switch (context.frozenType) {
       case ECellFrozenType.Corner:
         if (context.rowIndex === 0 && context.columnIndex === 0) {
@@ -542,7 +542,7 @@ export class TextContentRenderer extends ObservableDisposable implements IConten
    * @param context - Render options
    * @returns Observable of cell text attributes
    */
-  protected getTextAttrs$(context: IContentRendererContext): Observable<Partial<Konva.TextConfig>> {
+  protected getTextAttrs$(context: IContentContext): Observable<Partial<Konva.TextConfig>> {
     switch (context.frozenType) {
       case ECellFrozenType.Corner:
         if (context.rowIndex === 0 && context.columnIndex === 0) {

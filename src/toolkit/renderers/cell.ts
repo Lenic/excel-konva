@@ -1,4 +1,4 @@
-import type { IContentManager, IContentRendererContext } from '../contents';
+import type { IContentContext, IContentManager } from '../contents';
 import type { ICellDimension, IDataRegion, ISheetConfig } from '../helpers';
 import type { IRegionInfo } from '../types';
 import type { Observable } from 'rxjs';
@@ -55,7 +55,7 @@ export class CellListener extends RenderListener<IRegionInfo> {
       map(([dataRegion, frozenColumns, frozenRows]) => {
         const { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } = dataRegion;
 
-        const items: IContentRendererContext[] = [];
+        const items: IContentContext[] = [];
 
         // Render Scrollable Data
         for (let r = startRowIndex; r < endRowIndex; r++) {
