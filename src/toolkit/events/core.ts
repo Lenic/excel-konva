@@ -230,7 +230,6 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
             mousedownType: EMousedownTypes.CellClick,
             data: {
               id: Date.now(),
-              type: EHeaderClickType.ColumnHeader,
               region: {
                 startRowIndex: activeCell.rowIndex,
                 endRowIndex: activeCell.rowIndex,
