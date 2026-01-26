@@ -141,6 +141,7 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
 
                 this.excelEntrance.resizeLine.points([0, newY, sheetVisualSize.width, newY]);
               }
+              this.excelEntrance.resizeLine.moveToTop();
               this.excelEntrance.selectionLayer.batchDraw();
             }),
           );
