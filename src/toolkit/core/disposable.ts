@@ -24,8 +24,14 @@ export class ObservableDisposable extends Disposable {
   }
 
   /**
+   * Observable disposable with destroy
+   */
+  protected withDestroy<T>(): MonoTypeOperatorFunction<T> {
+    return (source$: Observable<T>) => source$.pipe(takeUntil(this.notificationSubject));
+  }
+
+  /**
    * Observable disposable with publish
-   * @returns MonoTypeOperatorFunction<T>
    */
   protected withPublish<T>(): MonoTypeOperatorFunction<T> {
     return (source$: Observable<T>) =>
@@ -34,7 +40,6 @@ export class ObservableDisposable extends Disposable {
 
   /**
    * Observable disposable with share
-   * @returns MonoTypeOperatorFunction<T>
    */
   protected withShare<T>(): MonoTypeOperatorFunction<T> {
     return (source$: Observable<T>) => source$.pipe(takeUntil(this.notificationSubject), share());

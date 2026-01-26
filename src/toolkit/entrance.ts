@@ -10,7 +10,6 @@ import { ObservableDisposable } from './core/disposable';
 import { registerContentManagers } from './contents';
 import {
   IBoundaryResizeListener,
-  ICursorListener,
   IStageClickListener,
   IStageDragListener,
   IStageEditListener,
@@ -170,7 +169,6 @@ export class ExcelEntrance extends ObservableDisposable implements IExcelEntranc
     ServiceLocator.current.get(ICellListener).start();
     ServiceLocator.current.get(ISelectionListener).start();
 
-    ServiceLocator.current.get(ICursorListener).startListening();
     ServiceLocator.current.get(IStageDragListener).startListening();
     ServiceLocator.current.get(IStageEditListener).startListening();
     ServiceLocator.current.get(IStageClickListener).startListening();

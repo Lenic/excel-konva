@@ -1,6 +1,6 @@
 import type { IDisposable, TIdentifier } from '../../container';
 import type { ICellDimension, IItemBoundary, IScrollOffset, ISheetConfig, ISheetDimension } from '../helpers';
-import type { IExcelEntrance, ILocation, IRegionInfo } from '../types';
+import type { IExcelEntrance, ILocation, IOffset, IRegionInfo } from '../types';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
@@ -284,6 +284,26 @@ export interface IStageMouseEvent extends IDisposable {
 export const IStageMouseEvent: TIdentifier<IStageMouseEvent> = Symbol('IStageMouseEvent');
 
 /**
+ * Cursor getter interface
+ */
+export interface ICursorGetter {
+  /**
+   * Cursor offset
+   */
+  offset: IOffset | null;
+  /**
+   * Observable of cursor offset
+   *
+   * - return the `null` if the cursor is not in the stage or the stage is scrolling
+   */
+  offset$: Observable<IOffset | null>;
+}
+/**
+ * Cursor getter interface identifier
+ */
+export const ICursorGetter: TIdentifier<ICursorGetter> = Symbol('ICursorGetter');
+
+/**
  * Selection store interface
  */
 export interface ISelectionStore extends IDisposable {
@@ -505,29 +525,3 @@ export interface IResizeBoundaryCursorEvent {
  * The cursor event
  */
 export type TCursorEvent = IEmptyCursorEvent | IResizeBoundaryCursorEvent;
-
-/**
- * Cursor listener interface
- */
-export interface ICursorListener extends IEventListener {
-  /**
-   * Stage mouse events
-   */
-  events: IStageMouseEvent;
-  /**
-   * Cell dimension
-   */
-  cell: ICellDimension;
-  /**
-   * Scroll offset
-   */
-  scrollOffset: IScrollOffset;
-  /**
-   * Excel entrance
-   */
-  excelEntrance: IExcelEntrance;
-}
-/**
- * Cursor listener interface identifier
- */
-export const ICursorListener: TIdentifier<ICursorListener> = Symbol('ICursorListener');

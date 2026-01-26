@@ -14,14 +14,14 @@ import { IExcelEntrance } from '../types';
 
 import { StageClickListener } from './click';
 import { StageMouseEvent } from './core';
-import { CursorListener } from './cursor';
+import { CursorGetter } from './cursor';
 import { StageDragListener } from './drag';
 import { StageEditListener } from './edit';
 import { BoundaryResizeListener } from './resize';
 import { SelectionStore } from './selection';
 import {
   IBoundaryResizeListener,
-  ICursorListener,
+  ICursorGetter,
   ISelectionStore,
   IStageClickListener,
   IStageDragListener,
@@ -54,6 +54,12 @@ export function registerEvents(container: IContainer) {
     );
 
   container
+    .register(ICursorGetter)
+    .set(
+      (c, ctx) => new CursorGetter(c.get(IStageMouseEvent, ctx), c.get(IScrollOffset, ctx), c.get(IExcelEntrance, ctx)),
+    );
+
+  container
     .register(IBoundaryResizeListener)
     .set(
       (c, ctx) =>
@@ -64,6 +70,8 @@ export function registerEvents(container: IContainer) {
           c.get(IItemBoundary, ROW_TAG, ctx),
           c.get(IStageMouseEvent, ctx),
           c.get(IExcelEntrance, ctx),
+          c.get(ICursorGetter, ctx),
+          c.get(ICellDimension, ctx),
         ),
     );
 
@@ -95,18 +103,6 @@ export function registerEvents(container: IContainer) {
           c.get(IExcelEntrance, ctx),
           c.getAll(IContentManager, ctx),
           c.get(ISheetConfig, ctx),
-        ),
-    );
-
-  container
-    .register(ICursorListener)
-    .set(
-      (c, ctx) =>
-        new CursorListener(
-          c.get(IStageMouseEvent, ctx),
-          c.get(ICellDimension, ctx),
-          c.get(IScrollOffset, ctx),
-          c.get(IExcelEntrance, ctx),
         ),
     );
 }

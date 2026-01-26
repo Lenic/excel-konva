@@ -1,8 +1,8 @@
-import type { IItemBoundary, ISheetConfig, ISheetDimension } from '../helpers';
+import type { ICellDimension, IItemBoundary, ISheetConfig, ISheetDimension } from '../helpers';
 import type { IExcelEntrance } from '../types';
-import type { IBoundaryResizeListener, IStageMouseEvent } from './types';
+import type { IBoundaryResizeListener, ICursorGetter, IStageMouseEvent } from './types';
 
-import { EMPTY, finalize, map, of, switchMap, takeUntil, tap, withLatestFrom } from 'rxjs';
+import { combineLatest, EMPTY, finalize, map, merge, of, switchMap, take, takeUntil, tap, withLatestFrom } from 'rxjs';
 
 import { EventListener } from './listener';
 import { EBoundaryTypes, EMousedownTypes } from './types';
@@ -17,6 +17,8 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
   rowBoundary: IItemBoundary;
   events: IStageMouseEvent;
   excelEntrance: IExcelEntrance;
+  cursorGetter: ICursorGetter;
+  cell: ICellDimension;
 
   /**
    * Constructor
@@ -26,6 +28,8 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
    * @param rowBoundary row boundary
    * @param events stage mouse events
    * @param excelEntrance excel entrance
+   * @param cursorGetter cursor getter
+   * @param cell cell dimension
    */
   constructor(
     config: ISheetConfig,
@@ -34,6 +38,8 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
     rowBoundary: IItemBoundary,
     events: IStageMouseEvent,
     excelEntrance: IExcelEntrance,
+    cursorGetter: ICursorGetter,
+    cell: ICellDimension,
   ) {
     super();
 
@@ -43,9 +49,15 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
     this.rowBoundary = rowBoundary;
     this.events = events;
     this.excelEntrance = excelEntrance;
+    this.cursorGetter = cursorGetter;
+    this.cell = cell;
   }
 
   protected build() {
+    return merge(this.buildResize(), this.buildCursor());
+  }
+
+  private buildResize() {
     return this.events.typedMouseDownLeft$.pipe(
       switchMap((v) => (v.mousedownType === EMousedownTypes.ResizeBoundary ? of([v.data, v.event] as const) : EMPTY)),
       withLatestFrom(
@@ -134,6 +146,53 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
           );
         },
       ),
+    );
+  }
+
+  private buildCursor() {
+    return combineLatest([
+      this.cursorGetter.offset$,
+      this.cell.getCellLocation$.pipe(
+        switchMap((v1) =>
+          this.cell.getCellRectBox$.pipe(
+            take(1),
+            map((v2) => [v1, v2] as const),
+          ),
+        ),
+      ),
+      this.events.config.get$('resizeTolerance'),
+    ]).pipe(
+      map(([offset, [getCellLocation, getCellRectBox], resizeTolerance]) => {
+        if (offset === null) return;
+
+        const { deltaX, deltaY } = offset;
+        const location = getCellLocation(deltaX, deltaY);
+
+        let cursor = 'default';
+        if (location.rowIndex === 0 && location.columnIndex === 0) {
+          // do nothing
+        } else if (location.rowIndex === 0) {
+          const rect = getCellRectBox(location.rowIndex, location.columnIndex);
+          const leftLeftX = rect.x - resizeTolerance;
+          const leftRightX = rect.x + resizeTolerance;
+          const rightLeftX = leftLeftX + rect.width;
+          const rightRightX = leftRightX + rect.width;
+          if ((leftLeftX <= deltaX && deltaX <= leftRightX) || (rightLeftX <= deltaX && deltaX <= rightRightX)) {
+            cursor = 'col-resize';
+          }
+        } else if (location.columnIndex === 0) {
+          const rect = getCellRectBox(location.rowIndex, location.columnIndex);
+          const topTopY = rect.y - resizeTolerance;
+          const topBottomY = rect.y + resizeTolerance;
+          const bottomTopY = topTopY + rect.height;
+          const bottomBottomY = topBottomY + rect.height;
+          if ((topTopY <= deltaY && deltaY <= topBottomY) || (bottomTopY <= deltaY && deltaY <= bottomBottomY)) {
+            cursor = 'row-resize';
+          }
+        }
+
+        this.excelEntrance.stage.container().style.cursor = cursor;
+      }),
     );
   }
 }
