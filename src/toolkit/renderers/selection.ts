@@ -86,18 +86,17 @@ export class SelectionListener extends RenderListener<number> {
           const cornerEndColumnIndex = Math.min(endColumnIndex, frozenColumns - 1);
 
           if (cornerStartRowIndex <= cornerEndRowIndex && cornerStartColumnIndex <= cornerEndColumnIndex) {
-            items.push([
-              `corner-${suffix}`,
-              this.renderSelectionRegion(of(1), {
-                startRowIndex: cornerStartRowIndex,
-                endRowIndex: cornerEndRowIndex,
-                startColumnIndex: cornerStartColumnIndex,
-                endColumnIndex: cornerEndColumnIndex,
-              }),
-            ]);
+            const renderRegion = this.renderSelectionRegion(of(1), {
+              startRowIndex: cornerStartRowIndex,
+              endRowIndex: cornerEndRowIndex,
+              startColumnIndex: cornerStartColumnIndex,
+              endColumnIndex: cornerEndColumnIndex,
+            });
 
             if (rowIndex < frozenRows && columnIndex < frozenColumns) {
-              items.push([`cornerActiveCell-${suffix}`, this.renderActiveCellMarker(of(1), activeCell)]);
+              items.push([`corner+cell-${suffix}`, this.renderActiveCellMarker(renderRegion, activeCell)]);
+            } else {
+              items.push([`corner-${suffix}`, renderRegion]);
             }
           }
 
@@ -108,18 +107,17 @@ export class SelectionListener extends RenderListener<number> {
           const sideEndColumnIndex = Math.min(endColumnIndex, frozenColumns - 1);
 
           if (sideStartRowIndex <= sideEndRowIndex && sideStartColumnIndex <= sideEndColumnIndex) {
-            items.push([
-              `side-${suffix}`,
-              this.renderSelectionRegion(this.scrollOffset.top$, {
-                startRowIndex: sideStartRowIndex,
-                endRowIndex: sideEndRowIndex,
-                startColumnIndex: sideStartColumnIndex,
-                endColumnIndex: sideEndColumnIndex,
-              }),
-            ]);
+            const renderRegion = this.renderSelectionRegion(this.scrollOffset.top$, {
+              startRowIndex: sideStartRowIndex,
+              endRowIndex: sideEndRowIndex,
+              startColumnIndex: sideStartColumnIndex,
+              endColumnIndex: sideEndColumnIndex,
+            });
 
             if (columnIndex < frozenColumns && rowIndex >= frozenRows) {
-              items.push([`sideActiveCell-${suffix}`, this.renderActiveCellMarker(this.scrollOffset.top$, activeCell)]);
+              items.push([`side+cell-${suffix}`, this.renderActiveCellMarker(renderRegion, activeCell)]);
+            } else {
+              items.push([`side-${suffix}`, renderRegion]);
             }
           }
 
@@ -130,21 +128,17 @@ export class SelectionListener extends RenderListener<number> {
           const headerEndColumnIndex = endColumnIndex;
 
           if (headerStartRowIndex <= headerEndRowIndex && headerStartColumnIndex <= headerEndColumnIndex) {
-            items.push([
-              `header-${suffix}`,
-              this.renderSelectionRegion(this.scrollOffset.left$, {
-                startRowIndex: headerStartRowIndex,
-                endRowIndex: headerEndRowIndex,
-                startColumnIndex: headerStartColumnIndex,
-                endColumnIndex: headerEndColumnIndex,
-              }),
-            ]);
+            const renderRegion = this.renderSelectionRegion(this.scrollOffset.left$, {
+              startRowIndex: headerStartRowIndex,
+              endRowIndex: headerEndRowIndex,
+              startColumnIndex: headerStartColumnIndex,
+              endColumnIndex: headerEndColumnIndex,
+            });
 
             if (rowIndex < frozenRows && columnIndex >= frozenColumns) {
-              items.push([
-                `headerActiveCell-${suffix}`,
-                this.renderActiveCellMarker(this.scrollOffset.left$, activeCell),
-              ]);
+              items.push([`header+cell-${suffix}`, this.renderActiveCellMarker(renderRegion, activeCell)]);
+            } else {
+              items.push([`header-${suffix}`, renderRegion]);
             }
           }
 
@@ -153,21 +147,17 @@ export class SelectionListener extends RenderListener<number> {
           const dataStartColumnIndex = Math.max(startColumnIndex, frozenColumns);
 
           if (dataStartRowIndex <= endRowIndex && dataStartColumnIndex <= endColumnIndex) {
-            items.push([
-              `data-${suffix}`,
-              this.renderSelectionRegion(this.scrollOffset.offset$, {
-                startRowIndex: dataStartRowIndex,
-                endRowIndex,
-                startColumnIndex: dataStartColumnIndex,
-                endColumnIndex,
-              }),
-            ]);
+            const renderRegion = this.renderSelectionRegion(this.scrollOffset.offset$, {
+              startRowIndex: dataStartRowIndex,
+              endRowIndex,
+              startColumnIndex: dataStartColumnIndex,
+              endColumnIndex,
+            });
 
             if (rowIndex >= frozenRows && columnIndex >= frozenColumns) {
-              items.push([
-                `dataActiveCell-${suffix}`,
-                this.renderActiveCellMarker(this.scrollOffset.offset$, activeCell),
-              ]);
+              items.push([`data+cell-${suffix}`, this.renderActiveCellMarker(renderRegion, activeCell)]);
+            } else {
+              items.push([`data-${suffix}`, renderRegion]);
             }
           }
 
@@ -294,7 +284,6 @@ export class SelectionListener extends RenderListener<number> {
       offset$.pipe(
         switchMap(() =>
           this.cellDimension.getCellPoint$.pipe(
-            take(1),
             map((getCellPoint) => {
               const leftTop = getCellPoint(region.startRowIndex, region.startColumnIndex);
               const rightBottom = getCellPoint(region.endRowIndex, region.endColumnIndex);
@@ -346,9 +335,9 @@ export class SelectionListener extends RenderListener<number> {
     );
   }
 
-  private renderActiveCellMarker<T>(offset$: Observable<T>, activeCell: ILocation) {
+  private renderActiveCellMarker<T>(selection$: Observable<T>, activeCell: ILocation) {
     const { rowIndex, columnIndex } = activeCell;
-    return offset$.pipe(
+    return selection$.pipe(
       switchMap(() =>
         this.cellDimension.getCellRectBox$.pipe(
           take(1),
@@ -358,9 +347,6 @@ export class SelectionListener extends RenderListener<number> {
           }),
         ),
       ),
-      distinctUntilChanged((x, y) => {
-        return x.top === y.top && x.left === y.left && x.bottom === y.bottom && x.right === y.right;
-      }),
       combineLatestWith(this.sheetDimension.visualSize$),
       switchMap(([{ top, left, bottom, right }, visual]) => {
         // Check if the selection is visible in the viewport (simple viewport clipping)
