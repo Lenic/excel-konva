@@ -2,7 +2,7 @@ import type { IRectPool } from './types';
 import type { Observable } from 'rxjs';
 
 import Konva from 'konva';
-import { map } from 'rxjs';
+import { map, of } from 'rxjs';
 
 import { ObservableDisposable, Queue } from '../core';
 
@@ -12,10 +12,12 @@ import { ObservableDisposable, Queue } from '../core';
 export class RectPool extends ObservableDisposable implements IRectPool {
   private layer: Konva.Layer;
   private rects: Queue<Konva.Rect>;
+  private lines: Queue<Konva.Line>;
 
   rectAttrs$: Observable<Partial<Konva.RectConfig>>;
 
   getRect$: Observable<() => Konva.Rect>;
+  getLine$: Observable<() => Konva.Line>;
 
   /**
    * Create a new rectangle pool
@@ -26,7 +28,20 @@ export class RectPool extends ObservableDisposable implements IRectPool {
     super();
 
     this.layer = layer;
+
     this.rects = new Queue<Konva.Rect>();
+    this.disposeWithMe(() => {
+      while (this.rects.length > 0) {
+        this.rects.dequeue()!.destroy();
+      }
+    });
+
+    this.lines = new Queue<Konva.Line>();
+    this.disposeWithMe(() => {
+      while (this.lines.length > 0) {
+        this.lines.dequeue()!.destroy();
+      }
+    });
 
     this.rectAttrs$ = rectAttrs$.pipe(this.withPublish());
     this.disposeWithMe(this.rectAttrs$.subscribe());
@@ -34,11 +49,12 @@ export class RectPool extends ObservableDisposable implements IRectPool {
     this.getRect$ = this.buildGetShape$(this.rectAttrs$, this.rects, (attrs) => new Konva.Rect(attrs));
     this.disposeWithMe(this.getRect$.subscribe());
 
-    this.disposeWithMe(() => {
-      while (this.rects.length > 0) {
-        this.rects.dequeue()!.destroy();
-      }
-    });
+    this.getLine$ = this.buildGetShape$(of({}), this.lines, (attrs) => new Konva.Line(attrs));
+    this.disposeWithMe(this.getLine$.subscribe());
+  }
+
+  disposeLine(line: Konva.Line): void {
+    this.disposeShape(line, this.lines);
   }
 
   disposeRect(rect: Konva.Rect): void {

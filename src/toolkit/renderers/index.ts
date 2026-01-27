@@ -2,8 +2,9 @@ import type { IContainer } from '../../container';
 
 import { IContentManager } from '../contents';
 import { ISelectionStore } from '../events';
-import { ICellDimension, IDataRegion, IScrollOffset, ISheetConfig, ISheetDimension } from '../helpers';
-import { IActiveCellMarkerPool, ISelectionPool } from '../pools';
+import { COLUMN_TAG, IAccumulatedDimension, ICellDimension, IDataRegion, ISheetConfig, ROW_TAG } from '../helpers';
+import { IActiveCellMarkerPool, ISelectionLinePool, ISelectionPool } from '../pools';
+import { IExcelEntrance } from '../types';
 
 import { CellListener } from './cell';
 import { RangeCollection } from './range';
@@ -26,12 +27,14 @@ export function registerRenderers(container: IContainer) {
       (c, ctx) =>
         new SelectionListener(
           c.get(ISheetConfig, ctx),
-          c.get(ISheetDimension, ctx),
+          c.get(IAccumulatedDimension, ROW_TAG, ctx),
+          c.get(IAccumulatedDimension, COLUMN_TAG, ctx),
           c.get(ICellDimension, ctx),
-          c.get(ISelectionStore, ctx),
           c.get(ISelectionPool, ctx),
+          c.get(ISelectionStore, ctx),
+          c.get(IExcelEntrance, ctx),
+          c.get(ISelectionLinePool, ctx),
           c.get(IActiveCellMarkerPool, ctx),
-          c.get(IScrollOffset, ctx),
         ),
     );
 
