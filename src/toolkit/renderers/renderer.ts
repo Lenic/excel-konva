@@ -38,6 +38,8 @@ export abstract class RenderListener<T> extends ObservableDisposable implements 
         this.data = data;
       }),
     );
+
+    this.disposeWithMe(this.destroySubscription);
   }
 
   start(): () => void {
