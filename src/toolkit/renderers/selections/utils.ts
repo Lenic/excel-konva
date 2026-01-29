@@ -19,118 +19,6 @@ export function getSelectionRegionKey(region: ISelectionRegion): string {
   return `SelectionRegion:${region.region.startRowIndex}-${region.region.startColumnIndex}-${region.region.endRowIndex}-${region.region.endColumnIndex}-${region.activeCell.rowIndex}-${region.activeCell.columnIndex}`;
 }
 
-export function different<T>(original: Set<T>, updated: Set<T>): [added: Set<T>, removed: Set<T>] {
-  const added = new Set<T>();
-  const removed = new Set<T>();
-
-  updated.forEach((item) => {
-    if (!original.has(item)) {
-      added.add(item);
-    }
-  });
-
-  original.forEach((item) => {
-    if (!updated.has(item)) {
-      removed.add(item);
-    }
-  });
-
-  return [added, removed];
-}
-
-export function intersectionArea(x: IRectArea, y: IRectArea): IRectArea | undefined {
-  const maxLeft = Math.max(x.left, y.left);
-  const minRight = Math.min(x.right, y.right);
-  const maxTop = Math.max(x.top, y.top);
-  const minBottom = Math.min(x.bottom, y.bottom);
-
-  if (maxLeft <= minRight && maxTop <= minBottom) {
-    return { left: maxLeft, top: maxTop, right: minRight, bottom: minBottom };
-  }
-}
-
-export function intersectionRegion(x: IRegionInfo, y: IRegionInfo): IRegionInfo | undefined {
-  const maxStartColumnIndex = Math.max(x.startColumnIndex, y.startColumnIndex);
-  const minEndColumnIndex = Math.min(x.endColumnIndex, y.endColumnIndex);
-  const maxStartRowIndex = Math.max(x.startRowIndex, y.startRowIndex);
-  const minEndRowIndex = Math.min(x.endRowIndex, y.endRowIndex);
-
-  if (maxStartColumnIndex <= minEndColumnIndex && maxStartRowIndex <= minEndRowIndex) {
-    return {
-      startColumnIndex: maxStartColumnIndex,
-      startRowIndex: maxStartRowIndex,
-      endColumnIndex: minEndColumnIndex,
-      endRowIndex: minEndRowIndex,
-    };
-  }
-}
-
-export function splitIntoQuadrants(
-  limit: Record<EQuadrantType, IRegionInfo>,
-  region: IRegionInfo,
-  activeCell?: ILocation,
-): Map<EQuadrantType, TSelectionInfo<IRegionInfo>> {
-  const originalActiveCellRegion: IRegionInfo | undefined = !activeCell
-    ? undefined
-    : {
-        startRowIndex: activeCell.rowIndex,
-        startColumnIndex: activeCell.columnIndex,
-        endRowIndex: activeCell.rowIndex,
-        endColumnIndex: activeCell.columnIndex,
-      };
-
-  const selectionRegion = new Map<EQuadrantType, TSelectionInfo<IRegionInfo>>();
-
-  const cornerRegion = intersectionRegion(region, limit[EQuadrantType.CORNER]);
-  if (cornerRegion) {
-    selectionRegion.set(EQuadrantType.CORNER, [
-      cornerRegion,
-      originalActiveCellRegion ? intersectionRegion(originalActiveCellRegion, limit[EQuadrantType.CORNER]) : undefined,
-    ]);
-  }
-
-  const topRegion = intersectionRegion(region, limit[EQuadrantType.TOP]);
-  if (topRegion) {
-    selectionRegion.set(EQuadrantType.TOP, [
-      topRegion,
-      originalActiveCellRegion ? intersectionRegion(originalActiveCellRegion, limit[EQuadrantType.TOP]) : undefined,
-    ]);
-  }
-
-  const leftRegion = intersectionRegion(region, limit[EQuadrantType.LEFT]);
-  if (leftRegion) {
-    selectionRegion.set(EQuadrantType.LEFT, [
-      leftRegion,
-      originalActiveCellRegion ? intersectionRegion(originalActiveCellRegion, limit[EQuadrantType.LEFT]) : undefined,
-    ]);
-  }
-
-  const mainRegion = intersectionRegion(region, limit[EQuadrantType.MAIN]);
-  if (mainRegion) {
-    selectionRegion.set(EQuadrantType.MAIN, [
-      mainRegion,
-      originalActiveCellRegion ? intersectionRegion(originalActiveCellRegion, limit[EQuadrantType.MAIN]) : undefined,
-    ]);
-  }
-
-  return selectionRegion;
-}
-
-export function getIntersectionQuadrantRegion(
-  container: IRegionInfo,
-  selection: TSelectionInfo<IRegionInfo>,
-): TSelectionInfo<IRegionInfo> | undefined {
-  const [region, activeCell] = selection;
-
-  const selectionRegion = intersectionRegion(container, region);
-  if (!selectionRegion) return;
-
-  if (!activeCell) return [selectionRegion, undefined];
-
-  const activeCellRegion = intersectionRegion(container, activeCell);
-  return [selectionRegion, activeCellRegion];
-}
-
 export function addLines(
   rect: IRectArea,
   lineType: TLineTypeMask,
@@ -208,7 +96,190 @@ export function addLines(
   }
 }
 
-export function generateSelectionRenderInfo(
+export function correctRenderInfo(
+  renderInfo: TRectRenderInfo<IRectArea>,
+  wrapperArea: IRectArea,
+): TRectRenderInfo<IRectArea> | undefined {
+  const { left: oLeft, top: oTop, right: oRight, bottom: oBottom } = renderInfo[0];
+  const { left: wLeft, top: wTop, right: wRight, bottom: wBottom } = wrapperArea;
+
+  const left = oLeft >= wLeft ? oLeft : wLeft;
+  const top = oTop >= wTop ? oTop : wTop;
+  const right = oRight <= wRight ? oRight : wRight;
+  const bottom = oBottom <= wBottom ? oBottom : wBottom;
+
+  if (left > right || top > bottom) return;
+
+  let localLineType: TLineTypeMask = renderInfo[1];
+  if (oTop < wTop) {
+    localLineType &= ~ELineType.TOP;
+  }
+
+  if (oBottom > wBottom) {
+    localLineType &= ~ELineType.BOTTOM;
+  }
+
+  if (oLeft < wLeft) {
+    localLineType &= ~ELineType.LEFT;
+  }
+
+  if (oRight > wRight) {
+    localLineType &= ~ELineType.RIGHT;
+  }
+
+  return [{ left, top, right, bottom }, localLineType, renderInfo[2]];
+}
+
+export function findLineType(
+  quadrantType: EQuadrantType,
+  existedCallback: (type: EQuadrantType) => boolean,
+): TLineTypeMask {
+  let lineType: TLineTypeMask = ELineType.EMPTY;
+
+  switch (quadrantType) {
+    case EQuadrantType.CORNER:
+      lineType = ELineType.TOP | ELineType.LEFT;
+      if (!existedCallback(EQuadrantType.TOP)) {
+        lineType |= ELineType.RIGHT;
+      }
+      if (!existedCallback(EQuadrantType.LEFT)) {
+        lineType |= ELineType.BOTTOM;
+      }
+      break;
+    case EQuadrantType.TOP:
+      lineType = ELineType.TOP | ELineType.RIGHT;
+      if (!existedCallback(EQuadrantType.CORNER)) {
+        lineType |= ELineType.LEFT;
+      }
+      if (!existedCallback(EQuadrantType.MAIN)) {
+        lineType |= ELineType.BOTTOM;
+      }
+      break;
+    case EQuadrantType.LEFT:
+      lineType = ELineType.LEFT | ELineType.BOTTOM;
+      if (!existedCallback(EQuadrantType.CORNER)) {
+        lineType |= ELineType.TOP;
+      }
+      if (!existedCallback(EQuadrantType.MAIN)) {
+        lineType |= ELineType.RIGHT;
+      }
+      break;
+    case EQuadrantType.MAIN:
+      lineType = ELineType.BOTTOM | ELineType.RIGHT;
+      if (!existedCallback(EQuadrantType.TOP)) {
+        lineType |= ELineType.TOP;
+      }
+      if (!existedCallback(EQuadrantType.LEFT)) {
+        lineType |= ELineType.LEFT;
+      }
+      break;
+    default:
+      throw new Error(`Invalid quadrant type: ${quadrantType}`);
+  }
+
+  return lineType;
+}
+
+export function splitIntoQuadrants(
+  limit: Record<EQuadrantType, IRegionInfo>,
+  region: IRegionInfo,
+  activeCell?: ILocation,
+): Map<EQuadrantType, TSelectionInfo<IRegionInfo>> {
+  const originalActiveCellRegion: IRegionInfo | undefined = !activeCell
+    ? undefined
+    : {
+        startRowIndex: activeCell.rowIndex,
+        startColumnIndex: activeCell.columnIndex,
+        endRowIndex: activeCell.rowIndex,
+        endColumnIndex: activeCell.columnIndex,
+      };
+
+  const selectionRegion = new Map<EQuadrantType, TSelectionInfo<IRegionInfo>>();
+
+  const cornerRegion = intersectionRegion(region, limit[EQuadrantType.CORNER]);
+  if (cornerRegion) {
+    selectionRegion.set(EQuadrantType.CORNER, [
+      cornerRegion,
+      originalActiveCellRegion ? intersectionRegion(originalActiveCellRegion, limit[EQuadrantType.CORNER]) : undefined,
+    ]);
+  }
+
+  const topRegion = intersectionRegion(region, limit[EQuadrantType.TOP]);
+  if (topRegion) {
+    selectionRegion.set(EQuadrantType.TOP, [
+      topRegion,
+      originalActiveCellRegion ? intersectionRegion(originalActiveCellRegion, limit[EQuadrantType.TOP]) : undefined,
+    ]);
+  }
+
+  const leftRegion = intersectionRegion(region, limit[EQuadrantType.LEFT]);
+  if (leftRegion) {
+    selectionRegion.set(EQuadrantType.LEFT, [
+      leftRegion,
+      originalActiveCellRegion ? intersectionRegion(originalActiveCellRegion, limit[EQuadrantType.LEFT]) : undefined,
+    ]);
+  }
+
+  const mainRegion = intersectionRegion(region, limit[EQuadrantType.MAIN]);
+  if (mainRegion) {
+    selectionRegion.set(EQuadrantType.MAIN, [
+      mainRegion,
+      originalActiveCellRegion ? intersectionRegion(originalActiveCellRegion, limit[EQuadrantType.MAIN]) : undefined,
+    ]);
+  }
+
+  return selectionRegion;
+}
+
+export function generateSubregionRenderInfo(
+  selection: TRectRenderInfo<IRectArea>,
+  activeCell: TRectRenderInfo<IRectArea> | undefined,
+  limit: IRectArea,
+  addCallback: (info: TRectRenderInfo<IRectArea>) => void,
+): void {
+  const selectionArea = intersectionArea(selection[0], limit);
+  if (!selectionArea) return;
+
+  const activeCellArea = activeCell ? intersectionArea(activeCell[0], limit) : undefined;
+
+  const intersection: TSelectionInfo<IRectArea> = [selectionArea, activeCellArea];
+  if (!(activeCellArea && isSameArea(selectionArea, activeCellArea))) {
+    generateSelectionRenderInfo(intersection, selection[1], addCallback);
+  }
+
+  if (activeCell) {
+    generateActiveCellRenderInfo(intersection, activeCell[1], addCallback);
+  }
+}
+
+function intersectionArea(x: IRectArea, y: IRectArea): IRectArea | undefined {
+  const maxLeft = Math.max(x.left, y.left);
+  const minRight = Math.min(x.right, y.right);
+  const maxTop = Math.max(x.top, y.top);
+  const minBottom = Math.min(x.bottom, y.bottom);
+
+  if (maxLeft <= minRight && maxTop <= minBottom) {
+    return { left: maxLeft, top: maxTop, right: minRight, bottom: minBottom };
+  }
+}
+
+function intersectionRegion(x: IRegionInfo, y: IRegionInfo): IRegionInfo | undefined {
+  const maxStartColumnIndex = Math.max(x.startColumnIndex, y.startColumnIndex);
+  const minEndColumnIndex = Math.min(x.endColumnIndex, y.endColumnIndex);
+  const maxStartRowIndex = Math.max(x.startRowIndex, y.startRowIndex);
+  const minEndRowIndex = Math.min(x.endRowIndex, y.endRowIndex);
+
+  if (maxStartColumnIndex <= minEndColumnIndex && maxStartRowIndex <= minEndRowIndex) {
+    return {
+      startColumnIndex: maxStartColumnIndex,
+      startRowIndex: maxStartRowIndex,
+      endColumnIndex: minEndColumnIndex,
+      endRowIndex: minEndRowIndex,
+    };
+  }
+}
+
+function generateSelectionRenderInfo(
   area: TSelectionInfo<IRectArea>,
   lineType: TLineTypeMask,
   addCallback: (info: TRectRenderInfo<IRectArea>) => void,
@@ -288,7 +359,7 @@ export function generateSelectionRenderInfo(
   }
 }
 
-export function generateActiveCellRenderInfo(
+function generateActiveCellRenderInfo(
   region: TSelectionInfo<IRectArea>,
   lineType: TLineTypeMask,
   addCallback: (info: TRectRenderInfo<IRectArea>) => void,
@@ -337,109 +408,4 @@ export function generateActiveCellRenderInfo(
   }
 
   addCallback([activeCell, localLineType, ERenderType.CELL]);
-}
-
-export function generateSubregionRenderInfo(
-  selection: TRectRenderInfo<IRectArea>,
-  activeCell: TRectRenderInfo<IRectArea> | undefined,
-  limit: IRectArea,
-  addCallback: (info: TRectRenderInfo<IRectArea>) => void,
-): void {
-  const selectionArea = intersectionArea(selection[0], limit);
-  if (!selectionArea) return;
-
-  const activeCellArea = activeCell ? intersectionArea(activeCell[0], limit) : undefined;
-
-  const intersection: TSelectionInfo<IRectArea> = [selectionArea, activeCellArea];
-  if (!(activeCellArea && isSameArea(selectionArea, activeCellArea))) {
-    generateSelectionRenderInfo(intersection, selection[1], addCallback);
-  }
-
-  if (activeCell) {
-    generateActiveCellRenderInfo(intersection, activeCell[1], addCallback);
-  }
-}
-
-export function findLineType(
-  quadrantType: EQuadrantType,
-  existedCallback: (type: EQuadrantType) => boolean,
-): TLineTypeMask {
-  let lineType: TLineTypeMask = ELineType.EMPTY;
-
-  switch (quadrantType) {
-    case EQuadrantType.CORNER:
-      lineType = ELineType.TOP | ELineType.LEFT;
-      if (!existedCallback(EQuadrantType.TOP)) {
-        lineType |= ELineType.RIGHT;
-      }
-      if (!existedCallback(EQuadrantType.LEFT)) {
-        lineType |= ELineType.BOTTOM;
-      }
-      break;
-    case EQuadrantType.TOP:
-      lineType = ELineType.TOP | ELineType.RIGHT;
-      if (!existedCallback(EQuadrantType.CORNER)) {
-        lineType |= ELineType.LEFT;
-      }
-      if (!existedCallback(EQuadrantType.MAIN)) {
-        lineType |= ELineType.BOTTOM;
-      }
-      break;
-    case EQuadrantType.LEFT:
-      lineType = ELineType.LEFT | ELineType.BOTTOM;
-      if (!existedCallback(EQuadrantType.CORNER)) {
-        lineType |= ELineType.TOP;
-      }
-      if (!existedCallback(EQuadrantType.MAIN)) {
-        lineType |= ELineType.RIGHT;
-      }
-      break;
-    case EQuadrantType.MAIN:
-      lineType = ELineType.BOTTOM | ELineType.RIGHT;
-      if (!existedCallback(EQuadrantType.TOP)) {
-        lineType |= ELineType.TOP;
-      }
-      if (!existedCallback(EQuadrantType.LEFT)) {
-        lineType |= ELineType.LEFT;
-      }
-      break;
-    default:
-      throw new Error(`Invalid quadrant type: ${quadrantType}`);
-  }
-
-  return lineType;
-}
-
-export function correctRenderInfo(
-  renderInfo: TRectRenderInfo<IRectArea>,
-  wrapperArea: IRectArea,
-): TRectRenderInfo<IRectArea> | undefined {
-  const { left: oLeft, top: oTop, right: oRight, bottom: oBottom } = renderInfo[0];
-  const { left: wLeft, top: wTop, right: wRight, bottom: wBottom } = wrapperArea;
-
-  const left = oLeft >= wLeft ? oLeft : wLeft;
-  const top = oTop >= wTop ? oTop : wTop;
-  const right = oRight <= wRight ? oRight : wRight;
-  const bottom = oBottom <= wBottom ? oBottom : wBottom;
-
-  if (left > right || top > bottom) return;
-
-  let localLineType: TLineTypeMask = renderInfo[1];
-  if (oTop < wTop) {
-    localLineType &= ~ELineType.TOP;
-  }
-
-  if (oBottom > wBottom) {
-    localLineType &= ~ELineType.BOTTOM;
-  }
-
-  if (oLeft < wLeft) {
-    localLineType &= ~ELineType.LEFT;
-  }
-
-  if (oRight > wRight) {
-    localLineType &= ~ELineType.RIGHT;
-  }
-
-  return [{ left, top, right, bottom }, localLineType, renderInfo[2]];
 }

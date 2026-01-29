@@ -127,14 +127,11 @@ export class SelectionListener extends RenderListener<number> {
         for (const [key, item] of addedItems) {
           const subject = new Subject<void>();
           store.set(key, subject);
-          list$.push(this.buildSelectionRegion(item).pipe(takeUntil(subject)));
+          list$.push(this.buildSelectionRegion$(item).pipe(takeUntil(subject)));
         }
         return from(list$);
       }),
       mergeAll(),
-      map(() => {
-        this.excelEntrance.selectionLayer.batchDraw();
-      }),
       distinctUntilChanged(),
       switchMap(() => this.selectionStore.list$),
       map((list) => list.length),
@@ -142,7 +139,7 @@ export class SelectionListener extends RenderListener<number> {
     );
   }
 
-  private buildSelectionRegion(selectionRegion: ISelectionRegion) {
+  private buildSelectionRegion$(selectionRegion: ISelectionRegion) {
     return this.buildLimit$().pipe(
       switchMap((limitInfo) => {
         const quadrants = splitIntoQuadrants(limitInfo.limitRegion, selectionRegion.region, selectionRegion.activeCell);
@@ -150,7 +147,7 @@ export class SelectionListener extends RenderListener<number> {
         const selection$List: Observable<Konva.Shape[]>[] = [];
         for (const [key, selectionInfo] of quadrants) {
           const lineType = findLineType(key, (current) => quadrants.has(current));
-          const selection$ = this.renderSelection(selectionInfo, limitInfo.limitArea[key], lineType);
+          const selection$ = this.renderSelection$(selectionInfo, limitInfo.limitArea[key], lineType);
           selection$List.push(selection$);
         }
         return combineLatest(selection$List);
@@ -158,7 +155,7 @@ export class SelectionListener extends RenderListener<number> {
     );
   }
 
-  private renderSelection(renderInfo: TSelectionInfo<IRegionInfo>, limit: IRectArea, lineType: TLineTypeMask) {
+  private renderSelection$(renderInfo: TSelectionInfo<IRegionInfo>, limit: IRectArea, lineType: TLineTypeMask) {
     const [selection, activeCell] = renderInfo;
     const { startColumnIndex, startRowIndex, endColumnIndex, endRowIndex } = selection;
     return this.cellDimension.getCellRectBox$.pipe(
@@ -263,6 +260,7 @@ export class SelectionListener extends RenderListener<number> {
             const rect = getRect({ x: left, y: top, width, height });
 
             observer.next(rect);
+            this.excelEntrance.selectionLayer.batchDraw();
             return () => {
               this.rectPool.reuse(rect);
             };
@@ -290,6 +288,7 @@ export class SelectionListener extends RenderListener<number> {
             const rect = getRect({ x: left, y: top, width, height });
 
             observer.next(rect);
+            this.excelEntrance.selectionLayer.batchDraw();
             return () => {
               this.activeCellPool.reuse(rect);
             };
