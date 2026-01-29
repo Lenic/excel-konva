@@ -1,5 +1,5 @@
 import type { ICellDimension, IScrollOffset, ISheetConfig } from '../helpers';
-import type { ICellPool } from '../pools';
+import type { IShapePool } from '../pools';
 import type { IExcelEntrance } from '../types';
 import type {
   IContentContext,
@@ -29,7 +29,12 @@ export abstract class AbstractContentManager extends ObservableDisposable implem
   /**
    * Cell pool
    */
-  protected cellPool: ICellPool;
+  protected cellPool: IShapePool<Konva.RectConfig, Konva.Rect>;
+
+  /**
+   * Text pool
+   */
+  protected textPool: IShapePool<Konva.TextConfig, Konva.Text>;
 
   /**
    * Excel entrance
@@ -72,13 +77,15 @@ export abstract class AbstractContentManager extends ObservableDisposable implem
    *
    * @param cellDimension - Cell dimension
    * @param cellPool - Cell pool
+   * @param textPool - Text pool
    * @param excelEntrance - Excel entrance
    * @param config - Sheet config
    * @param offset - Scroll offset
    */
   constructor(
     cellDimension: ICellDimension,
-    cellPool: ICellPool,
+    cellPool: IShapePool<Konva.RectConfig, Konva.Rect>,
+    textPool: IShapePool<Konva.TextConfig, Konva.Text>,
     excelEntrance: IExcelEntrance,
     config: ISheetConfig,
     offset: IScrollOffset,
@@ -87,6 +94,7 @@ export abstract class AbstractContentManager extends ObservableDisposable implem
 
     this.cellDimension = cellDimension;
     this.cellPool = cellPool;
+    this.textPool = textPool;
     this.excelEntrance = excelEntrance;
     this.config = config;
     this.offset = offset;
@@ -377,7 +385,7 @@ export abstract class AbstractContentManager extends ObservableDisposable implem
       return of([]);
     }
 
-    return this.cellPool.getRect$.pipe(
+    return this.cellPool.get$.pipe(
       switchMap(
         (getRect) =>
           new Observable<Konva.Rect[]>((observer) => {
@@ -387,7 +395,7 @@ export abstract class AbstractContentManager extends ObservableDisposable implem
 
             return () => {
               rects.forEach((rect) => {
-                this.cellPool.disposeRect(rect);
+                this.cellPool.reuse(rect);
               });
             };
           }),
@@ -406,7 +414,7 @@ export abstract class AbstractContentManager extends ObservableDisposable implem
       return of([]);
     }
 
-    return this.cellPool.getText$.pipe(
+    return this.textPool.get$.pipe(
       switchMap(
         (getText) =>
           new Observable<Konva.Text[]>((observer) => {
@@ -416,7 +424,7 @@ export abstract class AbstractContentManager extends ObservableDisposable implem
 
             return () => {
               texts.forEach((text) => {
-                this.cellPool.disposeText(text);
+                this.textPool.reuse(text);
               });
             };
           }),

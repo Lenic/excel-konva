@@ -1,7 +1,7 @@
 import type { IContainer } from '../../container';
 
 import { ICellDimension, IScrollOffset, ISheetConfig } from '../helpers';
-import { ICellPool } from '../pools';
+import { ICellTextPool, IShapePool } from '../pools';
 import { IExcelEntrance } from '../types';
 
 import { TextContentRenderer } from './text';
@@ -21,7 +21,8 @@ export function registerContentManagers(container: IContainer) {
       (c, ctx) =>
         new TextContentRenderer(
           c.get(ICellDimension, ctx),
-          c.get(ICellPool, ctx),
+          c.get(IShapePool, ctx),
+          c.get(ICellTextPool, ctx),
           c.get(IExcelEntrance, ctx),
           c.get(ISheetConfig, ctx),
           c.get(IScrollOffset, ctx),
