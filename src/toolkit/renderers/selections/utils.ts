@@ -1,6 +1,6 @@
 import type { ISelectionRegion } from '../../events';
 import type { IShapePool } from '../../pools';
-import type { ILocation, IRegionInfo } from '../../types';
+import type { ILocation, IRectBox, IRegionInfo } from '../../types';
 import type { IRectArea, TLineTypeMask, TRectRenderInfo, TSelectionInfo } from './types';
 import type Konva from 'konva';
 
@@ -19,6 +19,16 @@ export function isSameArea(x?: IRectArea, y?: IRectArea): boolean {
   if (!x && !y) return true;
   if (!x || !y) return false;
   return x.top === y.top && x.left === y.left && x.bottom === y.bottom && x.right === y.right;
+}
+
+/**
+ * Checks if two rect boxes are the same.
+ * @param x The first rect box.
+ * @param y The second rect box.
+ * @returns True if they are the same, false otherwise.
+ */
+export function isSameRectBox(x: IRectBox, y: IRectBox): boolean {
+  return x.x === y.x && x.y === y.y && x.width === y.width && x.height === y.height;
 }
 
 /**

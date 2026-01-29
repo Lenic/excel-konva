@@ -1,7 +1,7 @@
 import type { ISelectionRegion, ISelectionStore } from '../../events';
 import type { IAccumulatedDimension, ICellDimension, ISheetConfig } from '../../helpers';
 import type { IShapePool } from '../../pools';
-import type { IExcelEntrance, IRegionInfo } from '../../types';
+import type { IExcelEntrance, IRectBox, IRegionInfo } from '../../types';
 import type { IRectArea, IRectLimitInfo, TLineTypeMask, TRectRenderInfo, TSelectionInfo } from './types';
 import type Konva from 'konva';
 
@@ -29,7 +29,7 @@ import {
   findLineType,
   generateSubregionRenderInfo,
   getSelectionRegionKey,
-  isSameArea,
+  isSameRectBox,
   splitIntoQuadrants,
 } from './utils';
 
@@ -159,10 +159,26 @@ export class SelectionListener extends RenderListener<number> {
     const [selection, activeCell] = renderInfo;
     const { startColumnIndex, startRowIndex, endColumnIndex, endRowIndex } = selection;
     return this.cellDimension.getCellRectBox$.pipe(
-      map((getBox): TSelectionInfo<IRectArea> => {
+      map((getBox): [startCell: IRectBox, endCell: IRectBox, activeCell: IRectBox | undefined] => {
         const startCell = getBox(startRowIndex, startColumnIndex);
         const endCell = getBox(endRowIndex, endColumnIndex);
 
+        if (!activeCell) return [startCell, endCell, undefined];
+
+        const { startColumnIndex: columnIndex, startRowIndex: rowIndex } = activeCell;
+
+        if (startColumnIndex === columnIndex && startRowIndex === rowIndex) {
+          return [startCell, endCell, startCell];
+        }
+
+        if (endColumnIndex === columnIndex && endRowIndex === rowIndex) {
+          return [startCell, endCell, endCell];
+        }
+
+        return [startCell, endCell, getBox(rowIndex, columnIndex)];
+      }),
+      distinctUntilChanged(([x, a], [y, b]) => isSameRectBox(x, y) && isSameRectBox(a, b)),
+      switchMap(([startCell, endCell, cell]) => {
         const rectArea: IRectArea = {
           top: startCell.y,
           left: startCell.x,
@@ -170,46 +186,15 @@ export class SelectionListener extends RenderListener<number> {
           bottom: endCell.y + endCell.height,
         };
 
-        if (!activeCell) return [rectArea, undefined] as TSelectionInfo<IRectArea>;
+        const cellArea: IRectArea | undefined = !cell
+          ? undefined
+          : {
+              top: cell.y,
+              left: cell.x,
+              right: cell.x + cell.width,
+              bottom: cell.y + cell.height,
+            };
 
-        const { startColumnIndex: columnIndex, startRowIndex: rowIndex } = activeCell;
-
-        if (startColumnIndex === columnIndex && startRowIndex === rowIndex) {
-          return [
-            rectArea,
-            {
-              top: startCell.y,
-              left: startCell.x,
-              right: startCell.x + startCell.width,
-              bottom: startCell.y + startCell.height,
-            },
-          ];
-        }
-
-        if (endColumnIndex === columnIndex && endRowIndex === rowIndex) {
-          return [
-            rectArea,
-            {
-              top: endCell.y,
-              left: endCell.x,
-              right: endCell.x + endCell.width,
-              bottom: endCell.y + endCell.height,
-            },
-          ];
-        }
-
-        const cell = getBox(rowIndex, columnIndex);
-        const cellArea: IRectArea = {
-          top: cell.y,
-          left: cell.x,
-          right: cell.x + cell.width,
-          bottom: cell.y + cell.height,
-        };
-
-        return [rectArea, cellArea];
-      }),
-      distinctUntilChanged((x, y) => isSameArea(x[0], y[0]) && isSameArea(x[1], y[1])),
-      switchMap(([rectArea, cellArea]) => {
         const selection = correctRenderInfo([rectArea, lineType, ERenderType.RECT], limit);
         if (!selection) return of([]);
 
