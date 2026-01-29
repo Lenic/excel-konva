@@ -340,22 +340,24 @@ export function generateActiveCellRenderInfo(
 }
 
 export function generateSubregionRenderInfo(
-  [selection, activeCell]: TSelectionInfo<IRectArea>,
-  lineType: TLineTypeMask,
+  selection: TRectRenderInfo<IRectArea>,
+  activeCell: TRectRenderInfo<IRectArea> | undefined,
   limit: IRectArea,
   addCallback: (info: TRectRenderInfo<IRectArea>) => void,
 ): void {
-  const selectionArea = intersectionArea(selection, limit);
+  const selectionArea = intersectionArea(selection[0], limit);
   if (!selectionArea) return;
 
-  const activeCellArea = activeCell ? intersectionArea(activeCell, limit) : undefined;
+  const activeCellArea = activeCell ? intersectionArea(activeCell[0], limit) : undefined;
 
   const intersection: TSelectionInfo<IRectArea> = [selectionArea, activeCellArea];
   if (!(activeCellArea && isSameArea(selectionArea, activeCellArea))) {
-    generateSelectionRenderInfo(intersection, lineType, addCallback);
+    generateSelectionRenderInfo(intersection, selection[1], addCallback);
   }
 
-  generateActiveCellRenderInfo(intersection, ELineType.ALL, addCallback);
+  if (activeCell) {
+    generateActiveCellRenderInfo(intersection, activeCell[1], addCallback);
+  }
 }
 
 export function findLineType(
@@ -411,7 +413,7 @@ export function findLineType(
 export function correctRenderInfo(
   renderInfo: TRectRenderInfo<IRectArea>,
   wrapperArea: IRectArea,
-): TRectRenderInfo<IRectArea> {
+): TRectRenderInfo<IRectArea> | undefined {
   const { left: oLeft, top: oTop, right: oRight, bottom: oBottom } = renderInfo[0];
   const { left: wLeft, top: wTop, right: wRight, bottom: wBottom } = wrapperArea;
 
@@ -419,6 +421,8 @@ export function correctRenderInfo(
   const top = oTop >= wTop ? oTop : wTop;
   const right = oRight <= wRight ? oRight : wRight;
   const bottom = oBottom <= wBottom ? oBottom : wBottom;
+
+  if (left > right || top > bottom) return;
 
   let localLineType: TLineTypeMask = renderInfo[1];
   if (oTop < wTop) {

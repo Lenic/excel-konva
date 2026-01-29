@@ -12,6 +12,7 @@ import {
   map,
   mergeAll,
   Observable,
+  of,
   pairwise,
   startWith,
   Subject,
@@ -21,14 +22,13 @@ import {
 
 import { RenderListener } from '../renderer';
 
-import { EQuadrantType, ERenderType } from './types';
+import { ELineType, EQuadrantType, ERenderType } from './types';
 import {
   addLines,
   correctRenderInfo,
   findLineType,
   generateSubregionRenderInfo,
   getSelectionRegionKey,
-  intersectionArea,
   isSameArea,
   splitIntoQuadrants,
 } from './utils';
@@ -213,11 +213,13 @@ export class SelectionListener extends RenderListener<number> {
       }),
       distinctUntilChanged((x, y) => isSameArea(x[0], y[0]) && isSameArea(x[1], y[1])),
       switchMap(([rectArea, cellArea]) => {
-        const [selection, correctedLineType] = correctRenderInfo([rectArea, lineType, ERenderType.RECT], limit);
-        const intersection = cellArea ? intersectionArea(cellArea, selection) : undefined;
+        const selection = correctRenderInfo([rectArea, lineType, ERenderType.RECT], limit);
+        if (!selection) return of([]);
+
+        const activeCell = cellArea ? correctRenderInfo([cellArea, ELineType.ALL, ERenderType.CELL], limit) : undefined;
 
         const shapes: TRectRenderInfo<IRectArea>[] = [];
-        generateSubregionRenderInfo([selection, intersection], correctedLineType, limit, (shape) => shapes.push(shape));
+        generateSubregionRenderInfo(selection, activeCell, limit, (shape) => shapes.push(shape));
 
         const line$List: Observable<Konva.Shape>[] = [];
         const rect$List: Observable<Konva.Shape>[] = [];
