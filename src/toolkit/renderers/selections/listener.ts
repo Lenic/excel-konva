@@ -311,13 +311,11 @@ export class SelectionListener extends RenderListener<number> {
 
     return combineLatest([frozenWidth$, frozenHeight$]).pipe(
       map(([[frozenWidth, frozenColumns], [frozenHeight, frozenRows]]) => {
-        const mainTop = frozenHeight + 1;
-        const mainLeft = frozenWidth + 1;
         const limitArea: Record<EQuadrantType, IRectArea> = {
           [EQuadrantType.CORNER]: { top: 0, left: 0, right: frozenWidth, bottom: frozenHeight },
-          [EQuadrantType.TOP]: { top: 0, left: mainLeft, right: max, bottom: frozenHeight },
-          [EQuadrantType.LEFT]: { top: mainTop, left: 0, right: frozenWidth, bottom: max },
-          [EQuadrantType.MAIN]: { top: mainTop, left: mainLeft, right: max, bottom: max },
+          [EQuadrantType.TOP]: { top: 0, left: frozenWidth, right: max, bottom: frozenHeight },
+          [EQuadrantType.LEFT]: { top: frozenHeight, left: 0, right: frozenWidth, bottom: max },
+          [EQuadrantType.MAIN]: { top: frozenHeight, left: frozenWidth, right: max, bottom: max },
         };
 
         const frozenRowIndex = frozenRows - 1;
