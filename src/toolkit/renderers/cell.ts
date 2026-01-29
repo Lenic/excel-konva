@@ -58,22 +58,22 @@ export class CellListener extends RenderListener<IRegionInfo> {
         const items: IContentContext[] = [];
 
         // Render Scrollable Data
-        for (let r = startRowIndex; r < endRowIndex; r++) {
-          for (let c = startColumnIndex; c < endColumnIndex; c++) {
+        for (let r = startRowIndex; r <= endRowIndex; r++) {
+          for (let c = startColumnIndex; c <= endColumnIndex; c++) {
             items.push({ rowIndex: r, columnIndex: c, frozenType: ECellFrozenType.None });
           }
         }
 
         // Render Frozen Header
         for (let r = 0; r < frozenRows; r++) {
-          for (let c = startColumnIndex; c < endColumnIndex; c++) {
+          for (let c = startColumnIndex; c <= endColumnIndex; c++) {
             items.push({ rowIndex: r, columnIndex: c, frozenType: ECellFrozenType.Header });
           }
         }
 
         // Render Frozen Side
         for (let c = 0; c < frozenColumns; c++) {
-          for (let r = startRowIndex; r < endRowIndex; r++) {
+          for (let r = startRowIndex; r <= endRowIndex; r++) {
             items.push({ rowIndex: r, columnIndex: c, frozenType: ECellFrozenType.Side });
           }
         }

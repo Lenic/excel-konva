@@ -75,7 +75,6 @@ export const defaultSheetConfig: Required<ISheetOptions> = {
   rowHeaderCellTextAttrs: {
     padding: 0,
   },
-  bufferCellCount: 1,
   resizeTolerance: 5,
 };
 

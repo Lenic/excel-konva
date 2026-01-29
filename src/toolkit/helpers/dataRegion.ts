@@ -78,7 +78,6 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
       this.config.get$('columnCount'),
       this.config.get$('rowCount'),
       this.sheetDimension.visualSize$,
-      this.config.get$('bufferCellCount'),
     ]).pipe(
       map(
         ([
@@ -87,7 +86,6 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
           columnCount,
           rowCount,
           sheetVisualSize,
-          bufferCellCount,
         ]) => {
           const [startColumnIndex, endColumnIndex] = this.findVisibleRange(
             getColumnLeft,
@@ -95,7 +93,6 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
             columnCount,
             getPrecedingTotalColumnWidth(frozenColumns),
             sheetVisualSize.width,
-            bufferCellCount,
           );
 
           const [startRowIndex, endRowIndex] = this.findVisibleRange(
@@ -104,7 +101,6 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
             rowCount,
             getPrecedingTotalRowHeight(frozenRows),
             sheetVisualSize.height,
-            bufferCellCount,
           );
 
           return { startRowIndex, endRowIndex, startColumnIndex, endColumnIndex } as IRegionInfo;
@@ -122,7 +118,6 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
    * @param totalCount - Total number of rows (columns)
    * @param viewportMin - Minimum coordinate value of the visible area
    * @param viewportMax - Maximum coordinate value of the visible area
-   * @param bufferCellCount - Number of buffer cells
    */
   private findVisibleRange(
     getBoundaryValue: (value: number) => number,
@@ -130,7 +125,6 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
     totalCount: number,
     viewportMin: number,
     viewportMax: number,
-    bufferCellCount: number,
   ) {
     /**
      * Binary search: Find the first element that becomes visible due to scrolling
@@ -142,10 +136,17 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
     let start = binarySearch(
       frozenCount,
       totalCount,
-      (mid) =>
-        // Determine if the boundary of the current row (column) is greater than the viewport start value.
-        // We need the right (bottom) boundary, so +1 is used to get the boundary of the next row (column).
-        getBoundaryValue(mid + 1) - viewportMin,
+      (mid) => {
+        const endValue = getBoundaryValue(mid + 1);
+        const beginValue = getBoundaryValue(mid);
+        if (endValue < viewportMin) {
+          return -1;
+        } else if (beginValue > viewportMin) {
+          return 1;
+        } else {
+          return 0;
+        }
+      },
       1,
     );
 
@@ -158,16 +159,23 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
     let end = binarySearch(
       start,
       totalCount,
-      (mid) =>
-        // Determine if the boundary of the current row (column) is less than the viewport end value.
-        // We need the left (top) boundary, so no +1 is needed, use the element's own boundary directly.
-        getBoundaryValue(mid) - viewportMax,
+      (mid) => {
+        const endValue = getBoundaryValue(mid + 1);
+        const beginValue = getBoundaryValue(mid);
+        if (endValue < viewportMax) {
+          return -1;
+        } else if (beginValue > viewportMax) {
+          return 1;
+        } else {
+          return 0;
+        }
+      },
       -1,
     );
 
     // Apply buffer
-    start = Math.max(frozenCount, start - bufferCellCount);
-    end = Math.min(totalCount, end + bufferCellCount);
+    start = Math.max(frozenCount, start);
+    end = Math.min(totalCount, end);
 
     return [start, end] as const;
   }

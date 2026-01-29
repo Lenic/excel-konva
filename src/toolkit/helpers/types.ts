@@ -338,10 +338,6 @@ export interface ISheetOptions {
    */
   rowHeaderCellTextAttrs?: Partial<TTextAttrs>;
   /**
-   * Number of buffer cells: default is 1
-   */
-  bufferCellCount?: number;
-  /**
    * The tolerance of mouse detection boundary (pixels): default is 5
    */
   resizeTolerance?: number;
