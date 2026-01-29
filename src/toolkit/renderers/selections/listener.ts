@@ -5,30 +5,20 @@ import type { IExcelEntrance, IRectBox, IRegionInfo } from '../../types';
 import type { IRectArea, IRectLimitInfo, TLineTypeMask, TRectRenderInfo, TSelectionInfo } from './types';
 import type Konva from 'konva';
 
-import {
-  combineLatest,
-  distinctUntilChanged,
-  from,
-  map,
-  mergeAll,
-  Observable,
-  of,
-  pairwise,
-  startWith,
-  Subject,
-  switchMap,
-  takeUntil,
-} from 'rxjs';
+import { combineLatest, distinctUntilChanged, map, merge, mergeAll, Observable, of, switchMap } from 'rxjs';
 
 import { RenderListener } from '../renderer';
 
 import { ELineType, EQuadrantType, ERenderType } from './types';
 import {
   addLines,
+  buildDeltaSelectionRegions,
+  buildHighlightRegions,
+  buildSelectionRegions,
   correctRenderInfo,
   findLineType,
   generateSubregionRenderInfo,
-  getSelectionRegionKey,
+  intersectionArea,
   isSameRectBox,
   splitIntoQuadrants,
 } from './utils';
@@ -75,67 +65,62 @@ export class SelectionListener extends RenderListener<number> {
   }
 
   protected build(): Observable<number> {
-    const store$ = new Observable<Map<string, Subject<void>>>((observer) => {
-      const signalMap = new Map<string, Subject<void>>();
-      observer.next(signalMap);
+    const delta$ = buildDeltaSelectionRegions(this.selectionStore.list$).pipe(this.withPublish());
+    const highlightRegions$ = buildHighlightRegions(delta$, (item) => this.buildHighlightRegion$(item));
+    const selectionRegions$ = buildSelectionRegions(delta$, (item) => this.buildSelectionRegion$(item));
 
-      return () => {
-        signalMap.forEach((subject) => {
-          subject.next();
-          subject.complete();
-        });
-        signalMap.clear();
-      };
-    });
-
-    const delta$ = this.selectionStore.list$.pipe(
-      map((list) => new Map<string, ISelectionRegion>(list.map((region) => [getSelectionRegionKey(region), region]))),
-      startWith(new Map<string, ISelectionRegion>()),
-      pairwise(),
-      map(([prev, curr]) => {
-        const addedItems = new Map<string, ISelectionRegion>();
-        const deletedIds = new Set<string>();
-
-        for (const [key, currVal] of curr) {
-          if (!prev.has(key)) {
-            addedItems.set(key, currVal);
-          }
-        }
-
-        for (const [key] of prev) {
-          if (!curr.has(key)) {
-            deletedIds.add(key);
-          }
-        }
-
-        return { addedItems, deletedIds };
-      }),
-    );
-
-    return combineLatest([delta$, store$]).pipe(
-      switchMap(([{ addedItems, deletedIds }, store]) => {
-        for (const key of deletedIds) {
-          const subject = store.get(key);
-          if (subject) {
-            subject.next();
-            subject.complete();
-          }
-          store.delete(key);
-        }
-
-        const list$: Observable<Konva.Shape[][]>[] = [];
-        for (const [key, item] of addedItems) {
-          const subject = new Subject<void>();
-          store.set(key, subject);
-          list$.push(this.buildSelectionRegion$(item).pipe(takeUntil(subject)));
-        }
-        return from(list$);
-      }),
+    return merge(highlightRegions$, selectionRegions$).pipe(
       mergeAll(),
       distinctUntilChanged(),
       switchMap(() => this.selectionStore.list$),
       map((list) => list.length),
       distinctUntilChanged(),
+    );
+  }
+
+  private buildHighlightRegion$(region: IRegionInfo) {
+    return this.buildLimit$().pipe(
+      switchMap((limitInfo) => {
+        const quadrants = splitIntoQuadrants(limitInfo.limitRegion, region);
+
+        const highlight$List: Observable<Konva.Shape[]>[] = [];
+        for (const [key, selectionInfo] of quadrants) {
+          highlight$List.push(this.renderHighlight$(selectionInfo[0], limitInfo.limitArea[key]));
+        }
+        return combineLatest(highlight$List);
+      }),
+    );
+  }
+
+  private renderHighlight$(region: IRegionInfo, limit: IRectArea) {
+    const { startColumnIndex, startRowIndex, endColumnIndex, endRowIndex } = region;
+    return this.cellDimension.getCellRectBox$.pipe(
+      map((getBox) => [getBox(startRowIndex, startColumnIndex), getBox(endRowIndex, endColumnIndex)]),
+      distinctUntilChanged(([x, a], [y, b]) => isSameRectBox(x, y) && isSameRectBox(a, b)),
+      switchMap(([startCell, endCell]) => {
+        const rectArea: IRectArea = {
+          top: startCell.y,
+          left: startCell.x,
+          right: endCell.x + endCell.width,
+          bottom: endCell.y + endCell.height,
+        };
+        const selection = intersectionArea(rectArea, limit);
+        if (!selection) return of([]);
+
+        const shapes: TRectRenderInfo[] = [];
+        generateSubregionRenderInfo([selection, ELineType.EMPTY, ERenderType.RECT], undefined, limit, (shape) =>
+          shapes.push(shape),
+        );
+
+        const rect$List: Observable<Konva.Shape>[] = [];
+        shapes.forEach((shape) => {
+          if (shape[2] === ERenderType.RECT) {
+            this.renderRect(shape[0], shape[1], (rect$) => rect$List.push(rect$));
+          }
+        });
+
+        return combineLatest(rect$List);
+      }),
     );
   }
 
@@ -232,7 +217,7 @@ export class SelectionListener extends RenderListener<number> {
     rect: IRectArea,
     lineType: TLineTypeMask,
     addRect: (rect$: Observable<Konva.Rect>) => void,
-    addLine: (line$: Observable<Konva.Line>) => void,
+    addLine?: (line$: Observable<Konva.Line>) => void,
   ) {
     const { top, left, right, bottom } = rect;
     const width = right - left;
@@ -253,7 +238,9 @@ export class SelectionListener extends RenderListener<number> {
       ),
     );
     addRect(rect$);
-    addLines(rect, lineType, this.linePool, addLine);
+    if (addLine) {
+      addLines(rect, lineType, this.linePool, addLine);
+    }
   }
 
   private renderActiveCell(

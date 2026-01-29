@@ -1,10 +1,13 @@
 import type { ISelectionRegion } from '../../events';
 import type { IShapePool } from '../../pools';
 import type { ILocation, IRectBox, IRegionInfo } from '../../types';
-import type { IRectArea, TLineTypeMask, TRectRenderInfo, TSelectionInfo } from './types';
+import type { IDeltaSelectionRegions, IRectArea, TLineTypeMask, TRectRenderInfo, TSelectionInfo } from './types';
 import type Konva from 'konva';
 
-import { Observable, switchMap } from 'rxjs';
+import { combineLatest, from, map, Observable, pairwise, startWith, Subject, switchMap, takeUntil } from 'rxjs';
+
+import { ServiceLocator } from '../../../container';
+import { IRangeCollection } from '../types';
 
 import { EQuadrantType, ERenderType } from './types';
 import { ELineType } from './types';
@@ -38,6 +41,45 @@ export function isSameRectBox(x: IRectBox, y: IRectBox): boolean {
  */
 export function getSelectionRegionKey(region: ISelectionRegion): string {
   return `SelectionRegion:${region.region.startRowIndex}-${region.region.startColumnIndex}-${region.region.endRowIndex}-${region.region.endColumnIndex}-${region.activeCell.rowIndex}-${region.activeCell.columnIndex}`;
+}
+
+/**
+ * Calculates the intersection of two pixel-based rect areas.
+ * @param x First rect area.
+ * @param y Second rect area.
+ * @returns The overlapping area, or undefined if they don't intersect.
+ */
+export function intersectionArea(x: IRectArea, y: IRectArea): IRectArea | undefined {
+  const maxLeft = Math.max(x.left, y.left);
+  const minRight = Math.min(x.right, y.right);
+  const maxTop = Math.max(x.top, y.top);
+  const minBottom = Math.min(x.bottom, y.bottom);
+
+  if (maxLeft <= minRight && maxTop <= minBottom) {
+    return { left: maxLeft, top: maxTop, right: minRight, bottom: minBottom };
+  }
+}
+
+/**
+ * Calculates the intersection of two index-based regions.
+ * @param x First region.
+ * @param y Second region.
+ * @returns The overlapping region info, or undefined if they don't intersect.
+ */
+export function intersectionRegion(x: IRegionInfo, y: IRegionInfo): IRegionInfo | undefined {
+  const maxStartColumnIndex = Math.max(x.startColumnIndex, y.startColumnIndex);
+  const minEndColumnIndex = Math.min(x.endColumnIndex, y.endColumnIndex);
+  const maxStartRowIndex = Math.max(x.startRowIndex, y.startRowIndex);
+  const minEndRowIndex = Math.min(x.endRowIndex, y.endRowIndex);
+
+  if (maxStartColumnIndex <= minEndColumnIndex && maxStartRowIndex <= minEndRowIndex) {
+    return {
+      startColumnIndex: maxStartColumnIndex,
+      startRowIndex: maxStartRowIndex,
+      endColumnIndex: minEndColumnIndex,
+      endRowIndex: minEndRowIndex,
+    };
+  }
 }
 
 /**
@@ -306,43 +348,131 @@ export function generateSubregionRenderInfo(
   }
 }
 
-/**
- * Calculates the intersection of two pixel-based rect areas.
- * @param x First rect area.
- * @param y Second rect area.
- * @returns The overlapping area, or undefined if they don't intersect.
- */
-function intersectionArea(x: IRectArea, y: IRectArea): IRectArea | undefined {
-  const maxLeft = Math.max(x.left, y.left);
-  const minRight = Math.min(x.right, y.right);
-  const maxTop = Math.max(x.top, y.top);
-  const minBottom = Math.min(x.bottom, y.bottom);
+export function buildDeltaSelectionRegions(list$: Observable<ISelectionRegion[]>) {
+  return list$.pipe(
+    map((list) => new Map<string, ISelectionRegion>(list.map((region) => [getSelectionRegionKey(region), region]))),
+    startWith(new Map<string, ISelectionRegion>()),
+    pairwise(),
+    map(([prev, curr]): IDeltaSelectionRegions => {
+      const addedItems = new Map<string, ISelectionRegion>();
+      const deletedIds = new Set<string>();
 
-  if (maxLeft <= minRight && maxTop <= minBottom) {
-    return { left: maxLeft, top: maxTop, right: minRight, bottom: minBottom };
-  }
+      for (const [key, currVal] of curr) {
+        if (!prev.has(key)) {
+          addedItems.set(key, currVal);
+        }
+      }
+
+      for (const [key] of prev) {
+        if (!curr.has(key)) {
+          deletedIds.add(key);
+        }
+      }
+
+      return { addedItems, deletedIds };
+    }),
+  );
 }
 
-/**
- * Calculates the intersection of two index-based regions.
- * @param x First region.
- * @param y Second region.
- * @returns The overlapping region info, or undefined if they don't intersect.
- */
-function intersectionRegion(x: IRegionInfo, y: IRegionInfo): IRegionInfo | undefined {
-  const maxStartColumnIndex = Math.max(x.startColumnIndex, y.startColumnIndex);
-  const minEndColumnIndex = Math.min(x.endColumnIndex, y.endColumnIndex);
-  const maxStartRowIndex = Math.max(x.startRowIndex, y.startRowIndex);
-  const minEndRowIndex = Math.min(x.endRowIndex, y.endRowIndex);
+export function buildHighlightRegions(
+  delta$: Observable<IDeltaSelectionRegions>,
+  buildSingle$: (region: IRegionInfo) => Observable<Konva.Shape[][]>,
+) {
+  const update$ = new Observable<(addedItems: Map<string, ISelectionRegion>, deletedIds: Set<string>) => IRegionInfo[]>(
+    (observer) => {
+      const highlightedRows = ServiceLocator.current.get(IRangeCollection);
+      const highlightedColumns = ServiceLocator.current.get(IRangeCollection);
 
-  if (maxStartColumnIndex <= minEndColumnIndex && maxStartRowIndex <= minEndRowIndex) {
-    return {
-      startColumnIndex: maxStartColumnIndex,
-      startRowIndex: maxStartRowIndex,
-      endColumnIndex: minEndColumnIndex,
-      endRowIndex: minEndRowIndex,
+      function update(addedItems: Map<string, ISelectionRegion>, deletedIds: Set<string>) {
+        deletedIds.forEach((key) => {
+          highlightedRows.remove(key);
+          highlightedColumns.remove(key);
+        });
+
+        addedItems.forEach(({ region }, key) => {
+          highlightedRows.push(key, [region.startRowIndex, region.endRowIndex]);
+          highlightedColumns.push(key, [region.startColumnIndex, region.endColumnIndex]);
+        });
+
+        highlightedRows.merge();
+        highlightedColumns.merge();
+
+        const items: IRegionInfo[] = [];
+
+        highlightedColumns.values.forEach(([start, end]) => {
+          items.push({ startColumnIndex: start, endColumnIndex: end, startRowIndex: 0, endRowIndex: 0 });
+        });
+        highlightedRows.values.forEach(([start, end]) => {
+          items.push({ startRowIndex: start, endRowIndex: end, startColumnIndex: 0, endColumnIndex: 0 });
+        });
+
+        return items;
+      }
+      observer.next(update);
+
+      return () => {
+        highlightedRows.clear();
+        highlightedColumns.clear();
+      };
+    },
+  );
+
+  return combineLatest([delta$, update$]).pipe(
+    switchMap(
+      ([{ addedItems, deletedIds }, update]) =>
+        new Observable<Observable<Konva.Shape[][]>>((observer) => {
+          const subject = new Subject<void>();
+
+          update(addedItems, deletedIds).forEach((item) => {
+            observer.next(buildSingle$(item).pipe(takeUntil(subject)));
+          });
+
+          return () => {
+            subject.next();
+            subject.complete();
+          };
+        }),
+    ),
+  );
+}
+
+export function buildSelectionRegions(
+  delta$: Observable<IDeltaSelectionRegions>,
+  buildSingle$: (selectionRegion: ISelectionRegion) => Observable<Konva.Shape[][]>,
+) {
+  const store$ = new Observable<Map<string, Subject<void>>>((observer) => {
+    const signalMap = new Map<string, Subject<void>>();
+    observer.next(signalMap);
+
+    return () => {
+      signalMap.forEach((subject) => {
+        subject.next();
+        subject.complete();
+      });
+      signalMap.clear();
     };
-  }
+  });
+
+  return combineLatest([delta$, store$]).pipe(
+    switchMap(([{ addedItems, deletedIds }, store]) => {
+      for (const key of deletedIds) {
+        const subject = store.get(key);
+        if (subject) {
+          subject.next();
+          subject.complete();
+        }
+        store.delete(key);
+      }
+
+      const list$: Observable<Konva.Shape[][]>[] = [];
+      for (const [key, item] of addedItems) {
+        const subject = new Subject<void>();
+        store.set(key, subject);
+        list$.push(buildSingle$(item).pipe(takeUntil(subject)));
+      }
+      return from(list$);
+    }),
+  );
 }
 
 /**

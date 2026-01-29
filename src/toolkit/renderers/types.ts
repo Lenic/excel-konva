@@ -52,9 +52,22 @@ export interface IRangeCollection {
   /**
    * Add a range
    *
+   * @param key - range key
    * @param range - range to add
    */
-  push(range: TRange): void;
+  push(key: string, range: TRange): void;
+
+  /**
+   * Remove a range
+   *
+   * @param key - range key to remove
+   */
+  remove(key: string): void;
+
+  /**
+   * Clear all ranges
+   */
+  clear(): void;
 
   /**
    * Merge ranges

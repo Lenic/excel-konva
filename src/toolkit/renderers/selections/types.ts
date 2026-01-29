@@ -1,3 +1,4 @@
+import type { ISelectionRegion } from '../../events';
 import type { IRegionInfo } from '../../types';
 
 /**
@@ -135,4 +136,9 @@ export interface IRectLimitInfo {
    * Number of frozen rows.
    */
   frozenRows: number;
+}
+
+export interface IDeltaSelectionRegions {
+  addedItems: Map<string, ISelectionRegion>;
+  deletedIds: Set<string>;
 }
