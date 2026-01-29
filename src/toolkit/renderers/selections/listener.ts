@@ -283,6 +283,7 @@ export class SelectionListener extends RenderListener<number> {
     addRect: (rect$: Observable<Konva.Rect>) => void,
     addLine: (line$: Observable<Konva.Line>) => void,
   ) {
+    console.log('renderActiveCell', rect, lineType);
     const { top, left, right, bottom } = rect;
     const width = right - left;
     const height = bottom - top;

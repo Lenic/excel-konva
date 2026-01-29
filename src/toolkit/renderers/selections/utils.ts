@@ -297,36 +297,54 @@ export function generateActiveCellRenderInfo(
   if (!activeCell) return;
 
   let localLineType = ELineType.EMPTY;
-  const { left, top } = activeCell;
+  const { left, top, right, bottom } = activeCell;
   const { left: cLeft, top: cTop, right: cRight, bottom: cBottom } = container;
 
   // ---- all directions ----
 
   if (top === cTop && lineType & ELineType.TOP) {
     localLineType |= ELineType.TOP;
+    console.log('active cell top');
   }
 
   if (left === cLeft && lineType & ELineType.LEFT) {
     localLineType |= ELineType.LEFT;
+    console.log('active cell left');
   }
 
-  if (left === cRight && lineType & ELineType.RIGHT) {
+  if (right === cRight && lineType & ELineType.RIGHT) {
     localLineType |= ELineType.RIGHT;
+    console.log('active cell right');
   }
 
-  if (top === cBottom && lineType & ELineType.BOTTOM) {
+  if (bottom === cBottom && lineType & ELineType.BOTTOM) {
     localLineType |= ELineType.BOTTOM;
+    console.log('active cell bottom');
   }
 
   // ---- inner ----
 
   if (cTop < top && top < cBottom) {
-    localLineType |= ELineType.TOP | ELineType.BOTTOM;
+    localLineType |= ELineType.TOP;
+    console.log('active cell inner top bottom');
+  }
+
+  if (cTop < bottom && bottom < cBottom) {
+    localLineType |= ELineType.BOTTOM;
+    console.log('active cell inner bottom');
   }
 
   if (cLeft < left && left < cRight) {
-    localLineType |= ELineType.LEFT | ELineType.RIGHT;
+    localLineType |= ELineType.LEFT;
+    console.log('active cell inner left right');
   }
+
+  if (cLeft < right && right < cRight) {
+    localLineType |= ELineType.RIGHT;
+    console.log('active cell inner left right');
+  }
+
+  console.log('active cell line type', localLineType, lineType);
 
   addCallback([activeCell, localLineType, ERenderType.CELL]);
 }
