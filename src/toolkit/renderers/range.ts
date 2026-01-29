@@ -1,4 +1,10 @@
-import type { TRange } from './types';
+/**
+ * Range type
+ *
+ * - begin: start index
+ * - end: end index
+ */
+export type TRange = [begin: number, end: number];
 
 /**
  * Range collection

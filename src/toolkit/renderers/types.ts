@@ -31,11 +31,3 @@ export const ISelectionListener: TIdentifier<IRenderListener<number>> = Symbol('
  * Cell listener interface identifier
  */
 export const ICellListener: TIdentifier<IRenderListener<IRegionInfo>> = Symbol('ICellListener');
-
-/**
- * Range type
- *
- * - begin: start index
- * - end: end index
- */
-export type TRange = [begin: number, end: number];
