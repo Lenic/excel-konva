@@ -1,9 +1,9 @@
-import type { IRangeCollection, TRange } from './types';
+import type { TRange } from './types';
 
 /**
  * Range collection
  */
-export class RangeCollection implements IRangeCollection {
+export class RangeCollection {
   private map: Map<string, TRange>;
 
   values: TRange[];
@@ -17,18 +17,35 @@ export class RangeCollection implements IRangeCollection {
     this.values = [];
   }
 
+  /**
+   * Push a range
+   *
+   * @param key - the range key
+   * @param range - the range
+   */
   push(key: string, range: TRange): void {
     this.map.set(key, range);
   }
 
+  /**
+   * Remove a range
+   *
+   * @param key - the range key
+   */
   remove(key: string): void {
     this.map.delete(key);
   }
 
+  /**
+   * Clear all ranges
+   */
   clear(): void {
     this.map.clear();
   }
 
+  /**
+   * Merge ranges
+   */
   merge(): void {
     if (this.map.size === 0) return;
 

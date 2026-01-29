@@ -7,9 +7,8 @@ import { ACTIVE_CELL_LINE_POOL, ACTIVE_CELL_POOL, ILinePool, IShapePool, SELECTI
 import { IExcelEntrance } from '../types';
 
 import { CellListener } from './cell';
-import { RangeCollection } from './range';
 import { SelectionListener } from './selections';
-import { ICellListener, IRangeCollection, ISelectionListener } from './types';
+import { ICellListener, ISelectionListener } from './types';
 
 export * from './types';
 
@@ -19,8 +18,6 @@ export * from './types';
  * @param container - the target IOC container
  */
 export function registerRenderers(container: IContainer) {
-  container.register(IRangeCollection, 'transient').set(() => new RangeCollection());
-
   container
     .register(ISelectionListener)
     .set(

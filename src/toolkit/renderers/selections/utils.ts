@@ -6,8 +6,7 @@ import type Konva from 'konva';
 
 import { combineLatest, from, map, Observable, pairwise, startWith, Subject, switchMap, takeUntil } from 'rxjs';
 
-import { ServiceLocator } from '../../../container';
-import { IRangeCollection } from '../types';
+import { RangeCollection } from '../range';
 
 import { EQuadrantType, ERenderType } from './types';
 import { ELineType } from './types';
@@ -380,8 +379,8 @@ export function buildHighlightRegions(
 ) {
   const update$ = new Observable<(addedItems: Map<string, ISelectionRegion>, deletedIds: Set<string>) => IRegionInfo[]>(
     (observer) => {
-      const highlightedRows = ServiceLocator.current.get(IRangeCollection);
-      const highlightedColumns = ServiceLocator.current.get(IRangeCollection);
+      const highlightedRows = new RangeCollection();
+      const highlightedColumns = new RangeCollection();
 
       function update(addedItems: Map<string, ISelectionRegion>, deletedIds: Set<string>) {
         deletedIds.forEach((key) => {
