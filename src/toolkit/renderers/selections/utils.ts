@@ -304,47 +304,37 @@ export function generateActiveCellRenderInfo(
 
   if (top === cTop && lineType & ELineType.TOP) {
     localLineType |= ELineType.TOP;
-    console.log('active cell top');
   }
 
   if (left === cLeft && lineType & ELineType.LEFT) {
     localLineType |= ELineType.LEFT;
-    console.log('active cell left');
   }
 
   if (right === cRight && lineType & ELineType.RIGHT) {
     localLineType |= ELineType.RIGHT;
-    console.log('active cell right');
   }
 
   if (bottom === cBottom && lineType & ELineType.BOTTOM) {
     localLineType |= ELineType.BOTTOM;
-    console.log('active cell bottom');
   }
 
   // ---- inner ----
 
   if (cTop < top && top < cBottom) {
     localLineType |= ELineType.TOP;
-    console.log('active cell inner top bottom');
   }
 
   if (cTop < bottom && bottom < cBottom) {
     localLineType |= ELineType.BOTTOM;
-    console.log('active cell inner bottom');
   }
 
   if (cLeft < left && left < cRight) {
     localLineType |= ELineType.LEFT;
-    console.log('active cell inner left right');
   }
 
   if (cLeft < right && right < cRight) {
     localLineType |= ELineType.RIGHT;
-    console.log('active cell inner left right');
   }
-
-  console.log('active cell line type', localLineType, lineType);
 
   addCallback([activeCell, localLineType, ERenderType.CELL]);
 }
@@ -446,8 +436,6 @@ export function correctRenderInfo(
   if (oRight > wRight) {
     localLineType &= ~ELineType.RIGHT;
   }
-
-  console.log('correctRenderInfo', renderInfo[1], localLineType);
 
   return [{ left, top, right, bottom }, localLineType, renderInfo[2]];
 }

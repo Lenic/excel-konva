@@ -213,13 +213,7 @@ export class SelectionListener extends RenderListener<number> {
       }),
       distinctUntilChanged((x, y) => isSameArea(x[0], y[0]) && isSameArea(x[1], y[1])),
       switchMap(([rectArea, cellArea]) => {
-        console.log('rectArea', rectArea);
-        console.log('cellArea', cellArea);
-        console.log('lineType', lineType);
-        console.log('limit', limit);
         const [selection, correctedLineType] = correctRenderInfo([rectArea, lineType, ERenderType.RECT], limit);
-        console.log('selection', selection);
-        console.log('correctedLineType', correctedLineType);
         const intersection = cellArea ? intersectionArea(cellArea, selection) : undefined;
 
         const shapes: TRectRenderInfo<IRectArea>[] = [];
@@ -283,7 +277,6 @@ export class SelectionListener extends RenderListener<number> {
     addRect: (rect$: Observable<Konva.Rect>) => void,
     addLine: (line$: Observable<Konva.Line>) => void,
   ) {
-    console.log('renderActiveCell', rect, lineType);
     const { top, left, right, bottom } = rect;
     const width = right - left;
     const height = bottom - top;
