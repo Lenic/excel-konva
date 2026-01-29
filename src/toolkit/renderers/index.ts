@@ -3,12 +3,12 @@ import type { IContainer } from '../../container';
 import { IContentManager } from '../contents';
 import { ISelectionStore } from '../events';
 import { COLUMN_TAG, IAccumulatedDimension, ICellDimension, IDataRegion, ISheetConfig, ROW_TAG } from '../helpers';
-import { ACTIVE_CELL_POOL, ISelectionLinePool, IShapePool, SELECTION_RECT_POOL } from '../pools';
+import { ACTIVE_CELL_LINE_POOL, ACTIVE_CELL_POOL, ILinePool, IShapePool, SELECTION_RECT_POOL } from '../pools';
 import { IExcelEntrance } from '../types';
 
 import { CellListener } from './cell';
 import { RangeCollection } from './range';
-import { SelectionListener } from './selection';
+import { SelectionListener } from './selections';
 import { ICellListener, IRangeCollection, ISelectionListener } from './types';
 
 export * from './types';
@@ -33,8 +33,9 @@ export function registerRenderers(container: IContainer) {
           c.get(IShapePool, SELECTION_RECT_POOL, ctx),
           c.get(ISelectionStore, ctx),
           c.get(IExcelEntrance, ctx),
-          c.get(ISelectionLinePool, ctx),
+          c.get(ILinePool, ctx),
           c.get(IShapePool, ACTIVE_CELL_POOL, ctx),
+          c.get(ILinePool, ACTIVE_CELL_LINE_POOL, ctx),
         ),
     );
 

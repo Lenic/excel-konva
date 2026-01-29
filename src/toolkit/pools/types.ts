@@ -30,9 +30,9 @@ export interface IShapePool<TConfig extends Konva.ShapeConfig, TShape extends Ko
 export const IShapePool: TIdentifier<IShapePool<Konva.RectConfig, Konva.Rect>> = Symbol('IShapePool');
 
 /**
- * Selection line pool interface identifier
+ * Line pool interface identifier
  */
-export const ISelectionLinePool: TIdentifier<IShapePool<Konva.LineConfig, Konva.Line>> = Symbol('ISelectionLinePool');
+export const ILinePool: TIdentifier<IShapePool<Konva.LineConfig, Konva.Line>> = Symbol('ILinePool');
 
 /**
  * Cell text pool interface identifier
