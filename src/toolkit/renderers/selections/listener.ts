@@ -215,7 +215,7 @@ export class SelectionListener extends RenderListener<number> {
 
         const activeCell = cellArea ? correctRenderInfo([cellArea, ELineType.ALL, ERenderType.CELL], limit) : undefined;
 
-        const shapes: TRectRenderInfo<IRectArea>[] = [];
+        const shapes: TRectRenderInfo[] = [];
         generateSubregionRenderInfo(selection, activeCell, limit, (shape) => shapes.push(shape));
 
         const line$List: Observable<Konva.Shape>[] = [];

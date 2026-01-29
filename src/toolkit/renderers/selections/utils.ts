@@ -9,16 +9,34 @@ import { Observable, switchMap } from 'rxjs';
 import { EQuadrantType, ERenderType } from './types';
 import { ELineType } from './types';
 
+/**
+ * Checks if two rect areas are the same.
+ * @param x The first rect area.
+ * @param y The second rect area.
+ * @returns True if they are the same, false otherwise.
+ */
 export function isSameArea(x?: IRectArea, y?: IRectArea): boolean {
   if (!x && !y) return true;
   if (!x || !y) return false;
   return x.top === y.top && x.left === y.left && x.bottom === y.bottom && x.right === y.right;
 }
 
+/**
+ * Generates a unique key for a selection region based on its coordinates and active cell.
+ * @param region The selection region.
+ * @returns A string key representing the selection region.
+ */
 export function getSelectionRegionKey(region: ISelectionRegion): string {
   return `SelectionRegion:${region.region.startRowIndex}-${region.region.startColumnIndex}-${region.region.endRowIndex}-${region.region.endColumnIndex}-${region.activeCell.rowIndex}-${region.activeCell.columnIndex}`;
 }
 
+/**
+ * Adds selection border lines to the drawing callback based on the specified rect and line types.
+ * @param rect The bounding box of the area to draw lines for.
+ * @param lineType A bitmask indicating which edges (top, left, right, bottom) should be drawn.
+ * @param linePool A pool for reusing Konva Line objects.
+ * @param addCallback A callback function to handle the generated line observables.
+ */
 export function addLines(
   rect: IRectArea,
   lineType: TLineTypeMask,
@@ -96,10 +114,13 @@ export function addLines(
   }
 }
 
-export function correctRenderInfo(
-  renderInfo: TRectRenderInfo<IRectArea>,
-  wrapperArea: IRectArea,
-): TRectRenderInfo<IRectArea> | undefined {
+/**
+ * Clips the render information against a wrapper area and updates the line types accordingly.
+ * @param renderInfo The original rendering information (area, line mask, render type).
+ * @param wrapperArea The boundary area to clip against.
+ * @returns The corrected rendering information, or undefined if the area is completely outside the boundary.
+ */
+export function correctRenderInfo(renderInfo: TRectRenderInfo, wrapperArea: IRectArea): TRectRenderInfo | undefined {
   const { left: oLeft, top: oTop, right: oRight, bottom: oBottom } = renderInfo[0];
   const { left: wLeft, top: wTop, right: wRight, bottom: wBottom } = wrapperArea;
 
@@ -130,6 +151,13 @@ export function correctRenderInfo(
   return [{ left, top, right, bottom }, localLineType, renderInfo[2]];
 }
 
+/**
+ * Calculates which border lines should be rendered for a specific quadrant.
+ * It ensures that inner borders between adjacent quadrants are not drawn twice or incorrectly.
+ * @param quadrantType The type of the current quadrant (Corner, Top, Left, or Main).
+ * @param existedCallback A function to check if a specific quadrant exists in the current view.
+ * @returns A bitmask of the lines to be rendered.
+ */
 export function findLineType(
   quadrantType: EQuadrantType,
   existedCallback: (type: EQuadrantType) => boolean,
@@ -180,6 +208,14 @@ export function findLineType(
   return lineType;
 }
 
+/**
+ * Splits a large selection region into up to four quadrants based on viewport limits.
+ * This is typically used for handling frozen rows and columns.
+ * @param limit A map defining the row/column index boundaries for each quadrant.
+ * @param region The selection region to be split.
+ * @param activeCell The active cell location within the selection.
+ * @returns A map of quadrants and their corresponding selection/active cell info.
+ */
 export function splitIntoQuadrants(
   limit: Record<EQuadrantType, IRegionInfo>,
   region: IRegionInfo,
@@ -231,11 +267,19 @@ export function splitIntoQuadrants(
   return selectionRegion;
 }
 
+/**
+ * Generates rendering information for a selection subregion within a specific boundary.
+ * It handles splitting the selection area around the active cell to avoid overlap.
+ * @param selection The base selection rendering info.
+ * @param activeCell The active cell rendering info, if any.
+ * @param limit The boundary area (usually a quadrant's pixel area).
+ * @param addCallback A callback to receive the generated rendering information chunks.
+ */
 export function generateSubregionRenderInfo(
-  selection: TRectRenderInfo<IRectArea>,
-  activeCell: TRectRenderInfo<IRectArea> | undefined,
+  selection: TRectRenderInfo,
+  activeCell: TRectRenderInfo | undefined,
   limit: IRectArea,
-  addCallback: (info: TRectRenderInfo<IRectArea>) => void,
+  addCallback: (info: TRectRenderInfo) => void,
 ): void {
   const selectionArea = intersectionArea(selection[0], limit);
   if (!selectionArea) return;
@@ -252,6 +296,12 @@ export function generateSubregionRenderInfo(
   }
 }
 
+/**
+ * Calculates the intersection of two pixel-based rect areas.
+ * @param x First rect area.
+ * @param y Second rect area.
+ * @returns The overlapping area, or undefined if they don't intersect.
+ */
 function intersectionArea(x: IRectArea, y: IRectArea): IRectArea | undefined {
   const maxLeft = Math.max(x.left, y.left);
   const minRight = Math.min(x.right, y.right);
@@ -263,6 +313,12 @@ function intersectionArea(x: IRectArea, y: IRectArea): IRectArea | undefined {
   }
 }
 
+/**
+ * Calculates the intersection of two index-based regions.
+ * @param x First region.
+ * @param y Second region.
+ * @returns The overlapping region info, or undefined if they don't intersect.
+ */
 function intersectionRegion(x: IRegionInfo, y: IRegionInfo): IRegionInfo | undefined {
   const maxStartColumnIndex = Math.max(x.startColumnIndex, y.startColumnIndex);
   const minEndColumnIndex = Math.min(x.endColumnIndex, y.endColumnIndex);
@@ -279,10 +335,17 @@ function intersectionRegion(x: IRegionInfo, y: IRegionInfo): IRegionInfo | undef
   }
 }
 
+/**
+ * Generates rendering information for the selection area.
+ * If an active cell is present, it splits the selection into up to 4 rectangles surrounding the cell.
+ * @param area A tuple containing the selection area and the active cell area.
+ * @param lineType The bitmask of lines to draw for the outer border.
+ * @param addCallback A callback to receive the generated rect areas for rendering.
+ */
 function generateSelectionRenderInfo(
   area: TSelectionInfo<IRectArea>,
   lineType: TLineTypeMask,
-  addCallback: (info: TRectRenderInfo<IRectArea>) => void,
+  addCallback: (info: TRectRenderInfo) => void,
 ): void {
   const [selection, activeCell] = area;
 
@@ -359,10 +422,17 @@ function generateSelectionRenderInfo(
   }
 }
 
+/**
+ * Generates rendering information for the active cell area.
+ * It determines which borders of the active cell should be drawn based on its position relative to the selection container.
+ * @param region A tuple containing the container area and the active cell area.
+ * @param lineType The bitmask of lines assigned to the active cell.
+ * @param addCallback A callback to receive the generated cell rendering info.
+ */
 function generateActiveCellRenderInfo(
   region: TSelectionInfo<IRectArea>,
   lineType: TLineTypeMask,
-  addCallback: (info: TRectRenderInfo<IRectArea>) => void,
+  addCallback: (info: TRectRenderInfo) => void,
 ): void {
   const [container, activeCell] = region;
   if (!activeCell) return;
