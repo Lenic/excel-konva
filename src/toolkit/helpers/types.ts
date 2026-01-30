@@ -565,10 +565,6 @@ export interface IItemBoundary extends IDisposable {
    */
   options: IItemBoundaryOptions;
   /**
-   * Accumulated dimension
-   */
-  accumulated: IAccumulatedDimension;
-  /**
    * An Observable that emits a function to retrieve the preceding boundary for a specific index.
    *
    * The emitted function signature is: `(index: number) => number`

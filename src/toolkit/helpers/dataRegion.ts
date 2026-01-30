@@ -1,5 +1,5 @@
 import type { IRegionInfo } from '../types';
-import type { IDataRegion, IItemBoundary, ISheetConfig, ISheetDimension } from './types';
+import type { IAccumulatedDimension, IDataRegion, IItemBoundary, ISheetConfig, ISheetDimension } from './types';
 import type { Observable } from 'rxjs';
 
 import { combineLatest, map, switchMap, take } from 'rxjs';
@@ -10,6 +10,9 @@ import { binarySearch, ObservableDisposable } from '../core';
  * Data region manager
  */
 export class DataRegion extends ObservableDisposable implements IDataRegion {
+  private rowAccumulated: IAccumulatedDimension;
+  private columnAccumulated: IAccumulatedDimension;
+
   config: ISheetConfig;
   columnBoundary: IItemBoundary;
   rowBoundary: IItemBoundary;
@@ -19,23 +22,30 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
   region$: Observable<IRegionInfo>;
 
   /**
-   * Constructor
+   * DataRegion constructor
    *
-   * @param config - Sheet configuration
-   * @param columnBoundary - Column boundary manager
-   * @param rowBoundary - Row boundary manager
-   * @param sheetDimension - Sheet dimension
+   * @param rowAccumulated - The accumulated dimension manager for rows
+   * @param columnAccumulated - The accumulated dimension manager for columns
+   * @param rowBoundary - The boundary manager for rows
+   * @param columnBoundary - The boundary manager for columns
+   * @param config - The sheet configuration
+   * @param sheetDimension - The overall sheet dimension manager
    */
   constructor(
-    config: ISheetConfig,
-    columnBoundary: IItemBoundary,
+    rowAccumulated: IAccumulatedDimension,
+    columnAccumulated: IAccumulatedDimension,
     rowBoundary: IItemBoundary,
+    columnBoundary: IItemBoundary,
+    config: ISheetConfig,
     sheetDimension: ISheetDimension,
   ) {
     super();
-    this.config = config;
-    this.columnBoundary = columnBoundary;
+
+    this.rowAccumulated = rowAccumulated;
+    this.columnAccumulated = columnAccumulated;
     this.rowBoundary = rowBoundary;
+    this.columnBoundary = columnBoundary;
+    this.config = config;
     this.sheetDimension = sheetDimension;
 
     this.region = { startRowIndex: 0, endRowIndex: 0, startColumnIndex: 0, endColumnIndex: 0 };
@@ -51,7 +61,7 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
   private buildDataRegion() {
     const column$ = this.columnBoundary.getBoundary$.pipe(
       switchMap((getColumnLeft) =>
-        combineLatest([this.columnBoundary.accumulated.get$, this.config.get$('frozenColumns')]).pipe(
+        combineLatest([this.columnAccumulated.get$, this.config.get$('frozenColumns')]).pipe(
           take(1),
           map(
             ([getPrecedingTotalColumnWidth, frozenColumns]) =>
@@ -63,7 +73,7 @@ export class DataRegion extends ObservableDisposable implements IDataRegion {
 
     const row$ = this.rowBoundary.getBoundary$.pipe(
       switchMap((getRowTop) =>
-        combineLatest([this.rowBoundary.accumulated.get$, this.config.get$('frozenRows')]).pipe(
+        combineLatest([this.rowAccumulated.get$, this.config.get$('frozenRows')]).pipe(
           take(1),
           map(
             ([getPrecedingTotalRowHeight, frozenRows]) => [getRowTop, getPrecedingTotalRowHeight, frozenRows] as const,

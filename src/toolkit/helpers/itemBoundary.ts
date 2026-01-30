@@ -9,22 +9,24 @@ import { ObservableDisposable } from '../core';
  * Item boundary
  */
 export class ItemBoundary extends ObservableDisposable implements IItemBoundary {
+  private itemAccumulated: IAccumulatedDimension;
+
   options: IItemBoundaryOptions;
-  accumulated: IAccumulatedDimension;
+
   getBoundary$: Observable<(index: number) => number>;
   getItemIndex$: Observable<(clientCoordinate: number) => number>;
 
   /**
-   * Constructor
+   * ItemBoundary constructor
    *
-   * @param accumulated - Accumulated dimension
-   * @param options - Item boundary options
+   * @param itemAccumulated - The accumulated dimension manager used to calculate boundary positions
+   * @param options - The item boundary options containing scroll and frozen information
    */
-  constructor(accumulated: IAccumulatedDimension, options: IItemBoundaryOptions) {
+  constructor(itemAccumulated: IAccumulatedDimension, options: IItemBoundaryOptions) {
     super();
 
+    this.itemAccumulated = itemAccumulated;
     this.options = options;
-    this.accumulated = accumulated;
 
     this.getBoundary$ = this.buildGetBoundary$();
     this.disposeWithMe(this.getBoundary$.subscribe());
@@ -34,7 +36,7 @@ export class ItemBoundary extends ObservableDisposable implements IItemBoundary 
   }
 
   private buildGetBoundary$() {
-    return combineLatest([this.accumulated.get$, this.options.scrollValue$, this.options.frozenCount$]).pipe(
+    return combineLatest([this.itemAccumulated.get$, this.options.scrollValue$, this.options.frozenCount$]).pipe(
       map(([getPrecedingTotalDimension, scrollOffset, frozenCount]) => {
         /**
          * Get the preceding boundary for a specific index.
@@ -54,9 +56,9 @@ export class ItemBoundary extends ObservableDisposable implements IItemBoundary 
 
   private buildGetItemIndex() {
     return combineLatest([
-      this.accumulated.findIndex$.pipe(
+      this.itemAccumulated.findIndex$.pipe(
         switchMap((getItemIndex) =>
-          combineLatest([this.accumulated.get$.pipe(take(1)), this.options.frozenCount$]).pipe(
+          combineLatest([this.itemAccumulated.get$.pipe(take(1)), this.options.frozenCount$]).pipe(
             map(
               ([getAccumulatedDimension, frozenCount]) => [getItemIndex, getAccumulatedDimension(frozenCount)] as const,
             ),

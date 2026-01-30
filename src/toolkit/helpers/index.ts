@@ -128,9 +128,11 @@ export function registerHelpers(container: IContainer, sheetConfigFactory: TFact
     .set(
       (c, ctx) =>
         new DataRegion(
-          c.get(ISheetConfig, ctx),
-          c.get(IItemBoundary, COLUMN_TAG, ctx),
+          c.get(IAccumulatedDimension, ROW_TAG, ctx),
+          c.get(IAccumulatedDimension, COLUMN_TAG, ctx),
           c.get(IItemBoundary, ROW_TAG, ctx),
+          c.get(IItemBoundary, COLUMN_TAG, ctx),
+          c.get(ISheetConfig, ctx),
           c.get(ISheetDimension, ctx),
         ),
     );
