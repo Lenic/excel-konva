@@ -18,22 +18,22 @@ import { ObservableDisposable } from '../core';
  * Scroll offset
  */
 export class ScrollOffset extends ObservableDisposable implements IScrollOffset {
-  sheetDimension: ISheetDimension;
+  private excelEntrance: IExcelEntrance;
+  private sheetDimension: ISheetDimension;
 
   top: number;
   left: number;
   offset: IOffset;
-  excelEntrance: IExcelEntrance;
 
   top$: Observable<number>;
   left$: Observable<number>;
   offset$: Observable<IOffset>;
 
   /**
-   * Constructor
+   * ScrollOffset constructor
    *
-   * @param sheetDimension - Sheet dimension
-   * @param excelEntrance - Excel entrance
+   * @param sheetDimension - The sheet dimension manager used to calculate scroll boundaries
+   * @param excelEntrance - The main entry point for the Excel component to access the UI elements
    */
   constructor(sheetDimension: ISheetDimension, excelEntrance: IExcelEntrance) {
     super();

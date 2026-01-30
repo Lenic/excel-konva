@@ -1,5 +1,5 @@
 import type { IDisposable, TIdentifier } from '../../container';
-import type { IDimension, IExcelEntrance, ILocation, IOffset, IPoint, IRectBox, IRegionInfo } from '../types';
+import type { IDimension, ILocation, IOffset, IPoint, IRectBox, IRegionInfo } from '../types';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
@@ -512,10 +512,6 @@ export const ISheetDimension: TIdentifier<ISheetDimension> = Symbol('ISheetDimen
  */
 export interface IScrollOffset extends IDisposable {
   /**
-   * Sheet dimension
-   */
-  sheetDimension: ISheetDimension;
-  /**
    * Scroll top
    */
   top: number;
@@ -527,10 +523,6 @@ export interface IScrollOffset extends IDisposable {
    * Scroll offset
    */
   offset: IOffset;
-  /**
-   * Excel entrance
-   */
-  excelEntrance: IExcelEntrance;
 
   /**
    * Observable scroll top
