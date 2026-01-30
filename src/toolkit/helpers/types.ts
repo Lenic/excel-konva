@@ -469,19 +469,6 @@ export const IAccumulatedDimension: TIdentifier<IAccumulatedDimension> = Symbol(
  */
 export interface ISheetDimension extends IDisposable {
   /**
-   * Sheet
-   */
-  config: ISheetConfig;
-  /**
-   * Accumulated column dimension
-   */
-  column: IAccumulatedDimension;
-  /**
-   * Accumulated row dimension
-   */
-  row: IAccumulatedDimension;
-
-  /**
    * Visual size
    */
   visualSize: IDimension;
@@ -497,10 +484,6 @@ export interface ISheetDimension extends IDisposable {
    * Real size
    */
   realSize: IDimension;
-  /**
-   * Excel entrance
-   */
-  excelEntrance: IExcelEntrance;
 
   /**
    * Observable visual size

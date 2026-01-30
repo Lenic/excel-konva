@@ -9,15 +9,15 @@ import { ObservableDisposable } from '../core';
  * Sheet dimension
  */
 export class SheetDimension extends ObservableDisposable implements ISheetDimension {
-  config: ISheetConfig;
-  column: IAccumulatedDimension;
-  row: IAccumulatedDimension;
+  private sheetConfig: ISheetConfig;
+  private excelEntrance: IExcelEntrance;
+  private rowAccumulated: IAccumulatedDimension;
+  private columnAccumulated: IAccumulatedDimension;
 
   visualSize: IDimension;
   realWidth: number;
   realHeight: number;
   realSize: IDimension;
-  excelEntrance: IExcelEntrance;
 
   visualSize$: Observable<IDimension>;
   realWidth$: Observable<number>;
@@ -25,24 +25,24 @@ export class SheetDimension extends ObservableDisposable implements ISheetDimens
   realSize$: Observable<IDimension>;
 
   /**
-   * Constructor
+   * SheetDimension constructor
    *
-   * @param config - Sheet
-   * @param column - Accumulated column dimension
-   * @param row - Accumulated row dimension
-   * @param excelEntrance - Excel entrance
+   * @param rowAccumulated - The accumulated dimension manager for rows
+   * @param columnAccumulated - The accumulated dimension manager for columns
+   * @param sheetConfig - The sheet configuration
+   * @param excelEntrance - The main entry point for the Excel component
    */
   constructor(
-    config: ISheetConfig,
-    column: IAccumulatedDimension,
-    row: IAccumulatedDimension,
+    rowAccumulated: IAccumulatedDimension,
+    columnAccumulated: IAccumulatedDimension,
+    sheetConfig: ISheetConfig,
     excelEntrance: IExcelEntrance,
   ) {
     super();
 
-    this.config = config;
-    this.column = column;
-    this.row = row;
+    this.rowAccumulated = rowAccumulated;
+    this.columnAccumulated = columnAccumulated;
+    this.sheetConfig = sheetConfig;
     this.excelEntrance = excelEntrance;
 
     this.visualSize = { width: 0, height: 0 };
@@ -70,14 +70,14 @@ export class SheetDimension extends ObservableDisposable implements ISheetDimens
       }),
     );
 
-    this.realWidth$ = this.buildRealDimension(this.config.get$('columnCount'), this.column.get$);
+    this.realWidth$ = this.buildRealDimension(this.sheetConfig.get$('columnCount'), this.columnAccumulated.get$);
     this.disposeWithMe(
       this.realWidth$.subscribe((width) => {
         this.realWidth = width;
       }),
     );
 
-    this.realHeight$ = this.buildRealDimension(this.config.get$('rowCount'), this.row.get$);
+    this.realHeight$ = this.buildRealDimension(this.sheetConfig.get$('rowCount'), this.rowAccumulated.get$);
     this.disposeWithMe(
       this.realHeight$.subscribe((height) => {
         this.realHeight = height;

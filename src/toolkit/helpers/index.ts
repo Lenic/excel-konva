@@ -81,9 +81,9 @@ export function registerHelpers(container: IContainer, sheetConfigFactory: TFact
     .set(
       (c, ctx) =>
         new SheetDimension(
-          c.get(ISheetConfig, ctx),
-          c.get(IAccumulatedDimension, COLUMN_TAG, ctx),
           c.get(IAccumulatedDimension, ROW_TAG, ctx),
+          c.get(IAccumulatedDimension, COLUMN_TAG, ctx),
+          c.get(ISheetConfig, ctx),
           c.get(IExcelEntrance, ctx),
         ),
     );
