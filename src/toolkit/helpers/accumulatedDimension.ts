@@ -9,17 +9,18 @@ import { binarySearch, ObservableDisposable } from '../core';
  * Accumulated dimension
  */
 export class AccumulatedDimension extends ObservableDisposable implements IAccumulatedDimension {
+  private dimension: IItemDimension;
+
   store: Map<number, number>;
-  dimension: IItemDimension;
 
   get$: Observable<(index: number) => number>;
   findIndex$: Observable<(offset: number) => number>;
 
   /**
-   * Constructor
+   * AccumulatedDimension constructor
    *
-   * @param dimension - Item dimension manager
-   * @param count$ - Observable count
+   * @param dimension - The item dimension manager used to retrieve individual item sizes
+   * @param count$ - An Observable that emits the total count of items
    */
   constructor(dimension: IItemDimension, count$: Observable<number>) {
     super();

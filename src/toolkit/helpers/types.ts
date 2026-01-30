@@ -441,10 +441,6 @@ export interface IAccumulatedDimension extends IDisposable {
    * Accumulated store
    */
   store: Map<number, number>;
-  /**
-   * Item dimension manager
-   */
-  dimension: IItemDimension;
 
   /**
    * An Observable that emits a function to retrieve the preceding total dimension for a specific index.

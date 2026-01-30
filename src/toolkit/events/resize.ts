@@ -1,4 +1,4 @@
-import type { ICellDimension, IItemBoundary, ISheetConfig, ISheetDimension } from '../helpers';
+import type { ICellDimension, IItemBoundary, IItemDimension, ISheetConfig, ISheetDimension } from '../helpers';
 import type { IExcelEntrance } from '../types';
 import type { IBoundaryResizeListener, ICursorGetter, IStageMouseEvent } from './types';
 
@@ -11,6 +11,9 @@ import { EBoundaryTypes, EMousedownTypes } from './types';
  * Boundary resize listener
  */
 export class BoundaryResizeListener extends EventListener implements IBoundaryResizeListener {
+  private rowDimension: IItemDimension;
+  private columnDimension: IItemDimension;
+
   config: ISheetConfig;
   sheetDimension: ISheetDimension;
   columnBoundary: IItemBoundary;
@@ -21,21 +24,26 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
   cell: ICellDimension;
 
   /**
-   * Constructor
-   * @param config sheet config
-   * @param sheetDimension sheet dimension
-   * @param columnBoundary column boundary
-   * @param rowBoundary row boundary
-   * @param events stage mouse events
-   * @param excelEntrance excel entrance
-   * @param cursorGetter cursor getter
-   * @param cell cell dimension
+   * BoundaryResizeListener constructor
+   *
+   * @param rowDimension - The item dimension manager for rows
+   * @param columnDimension - The item dimension manager for columns
+   * @param config - The sheet configuration
+   * @param sheetDimension - The overall sheet dimension manager
+   * @param rowBoundary - The boundary manager for rows
+   * @param columnBoundary - The boundary manager for columns
+   * @param events - The stage mouse event handler
+   * @param excelEntrance - The main entry point for the Excel component
+   * @param cursorGetter - The helper to get current cursor style
+   * @param cell - The cell dimension manager
    */
   constructor(
+    rowDimension: IItemDimension,
+    columnDimension: IItemDimension,
     config: ISheetConfig,
     sheetDimension: ISheetDimension,
-    columnBoundary: IItemBoundary,
     rowBoundary: IItemBoundary,
+    columnBoundary: IItemBoundary,
     events: IStageMouseEvent,
     excelEntrance: IExcelEntrance,
     cursorGetter: ICursorGetter,
@@ -43,10 +51,12 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
   ) {
     super();
 
+    this.rowDimension = rowDimension;
+    this.columnDimension = columnDimension;
     this.config = config;
     this.sheetDimension = sheetDimension;
-    this.columnBoundary = columnBoundary;
     this.rowBoundary = rowBoundary;
+    this.columnBoundary = columnBoundary;
     this.events = events;
     this.excelEntrance = excelEntrance;
     this.cursorGetter = cursorGetter;
@@ -61,8 +71,8 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
     return this.events.typedMouseDownLeft$.pipe(
       switchMap((v) => (v.mousedownType === EMousedownTypes.ResizeBoundary ? of([v.data, v.event] as const) : EMPTY)),
       withLatestFrom(
-        this.columnBoundary.accumulated.dimension.get$,
-        this.rowBoundary.accumulated.dimension.get$,
+        this.columnDimension.get$,
+        this.rowDimension.get$,
         this.sheetDimension.visualSize$,
         this.columnBoundary.getBoundary$,
         this.rowBoundary.getBoundary$,
@@ -105,11 +115,11 @@ export class BoundaryResizeListener extends EventListener implements IBoundaryRe
               if (info.type === EBoundaryTypes.Column) {
                 const dx = ue.evt.clientX - e.evt.clientX;
                 const newWidth = Math.max(initialDimension + dx, minColumnWidth);
-                this.columnBoundary.accumulated.dimension.set(info.index, Math.round(newWidth));
+                this.columnDimension.set(info.index, Math.round(newWidth));
               } else {
                 const dy = ue.evt.clientY - e.evt.clientY;
                 const newHeight = Math.max(initialDimension + dy, minRowHeight);
-                this.rowBoundary.accumulated.dimension.set(info.index, newHeight);
+                this.rowDimension.set(info.index, newHeight);
               }
             }),
             finalize(() => {

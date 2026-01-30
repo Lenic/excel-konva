@@ -5,6 +5,7 @@ import {
   COLUMN_TAG,
   ICellDimension,
   IItemBoundary,
+  IItemDimension,
   IScrollOffset,
   ISheetConfig,
   ISheetDimension,
@@ -44,6 +45,8 @@ export function registerEvents(container: IContainer) {
     .set(
       (c, ctx) =>
         new StageMouseEvent(
+          c.get(IItemDimension, ROW_TAG, ctx),
+          c.get(IItemDimension, COLUMN_TAG, ctx),
           c.get(ICellDimension, ctx),
           c.get(IItemBoundary, COLUMN_TAG, ctx),
           c.get(ISheetConfig, ctx),
@@ -64,10 +67,12 @@ export function registerEvents(container: IContainer) {
     .set(
       (c, ctx) =>
         new BoundaryResizeListener(
+          c.get(IItemDimension, ROW_TAG, ctx),
+          c.get(IItemDimension, COLUMN_TAG, ctx),
           c.get(ISheetConfig, ctx),
           c.get(ISheetDimension, ctx),
-          c.get(IItemBoundary, COLUMN_TAG, ctx),
           c.get(IItemBoundary, ROW_TAG, ctx),
+          c.get(IItemBoundary, COLUMN_TAG, ctx),
           c.get(IStageMouseEvent, ctx),
           c.get(IExcelEntrance, ctx),
           c.get(ICursorGetter, ctx),

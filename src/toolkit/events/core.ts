@@ -1,4 +1,4 @@
-import type { ICellDimension, IItemBoundary, ISheetConfig, ISheetDimension } from '../helpers';
+import type { ICellDimension, IItemBoundary, IItemDimension, ISheetConfig, ISheetDimension } from '../helpers';
 import type { IExcelEntrance } from '../types';
 import type { IBoundaryInfo, IStageMouseEvent, TMousedownEvent } from './types';
 import type Konva from 'konva';
@@ -27,6 +27,8 @@ import { EHeaderClickType, EMousedownTypes } from './types';
  * Stage mouse events
  */
 export class StageMouseEvent extends ObservableDisposable implements IStageMouseEvent {
+  private rowDimension: IItemDimension;
+  private columnDimension: IItemDimension;
   private checkResizeBoundary$: Observable<(relX: number, relY: number) => IBoundaryInfo | null>;
 
   cellDimension: ICellDimension;
@@ -45,16 +47,20 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
   dblclick$: Observable<Konva.KonvaEventObject<MouseEvent>>;
 
   /**
-   * Constructor
+   * StageMouseEvent constructor
    *
-   * @param cellDimension - Cell dimension
-   * @param columnBoundary - Column boundary
-   * @param config - Sheet config
-   * @param rowBoundary - Row boundary
-   * @param sheetDimension - Sheet dimension
-   * @param excelEntrance - Excel entrance
+   * @param rowDimension - The item dimension manager for rows
+   * @param columnDimension - The item dimension manager for columns
+   * @param cellDimension - The cell dimension manager
+   * @param columnBoundary - The boundary manager for columns
+   * @param config - The sheet configuration
+   * @param rowBoundary - The boundary manager for rows
+   * @param sheetDimension - The overall sheet dimension manager
+   * @param excelEntrance - The main entry point for the Excel component
    */
   constructor(
+    rowDimension: IItemDimension,
+    columnDimension: IItemDimension,
     cellDimension: ICellDimension,
     columnBoundary: IItemBoundary,
     config: ISheetConfig,
@@ -64,6 +70,8 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
   ) {
     super();
 
+    this.rowDimension = rowDimension;
+    this.columnDimension = columnDimension;
     this.cellDimension = cellDimension;
     this.columnBoundary = columnBoundary;
     this.config = config;
@@ -251,7 +259,7 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
     return combineLatest([
       this.columnBoundary.getBoundary$.pipe(
         switchMap((getColumnLeft) =>
-          this.columnBoundary.accumulated.dimension.get$.pipe(
+          this.columnDimension.get$.pipe(
             take(1),
             map((getColumnWidth) => [getColumnLeft, getColumnWidth] as const),
           ),
@@ -259,7 +267,7 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
       ),
       this.rowBoundary.getBoundary$.pipe(
         switchMap((getRowTop) =>
-          this.rowBoundary.accumulated.dimension.get$.pipe(
+          this.rowDimension.get$.pipe(
             take(1),
             map((getRowHeight) => [getRowTop, getRowHeight] as const),
           ),

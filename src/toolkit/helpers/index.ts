@@ -113,7 +113,15 @@ export function registerHelpers(container: IContainer, sheetConfigFactory: TFact
 
   container
     .register(ICellDimension)
-    .set((c, ctx) => new CellDimension(c.get(IItemBoundary, COLUMN_TAG, ctx), c.get(IItemBoundary, ROW_TAG, ctx)));
+    .set(
+      (c, ctx) =>
+        new CellDimension(
+          c.get(IItemDimension, ROW_TAG, ctx),
+          c.get(IItemDimension, COLUMN_TAG, ctx),
+          c.get(IItemBoundary, ROW_TAG, ctx),
+          c.get(IItemBoundary, COLUMN_TAG, ctx),
+        ),
+    );
 
   container
     .register(IDataRegion)
