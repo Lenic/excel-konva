@@ -5,16 +5,15 @@ import type { IExcelEntrance, IRectBox, IRegionInfo } from '../../types';
 import type { IRectArea, IRectLimitInfo, TLineTypeMask, TRectRenderInfo, TSelectionInfo } from './types';
 import type Konva from 'konva';
 
-import { combineLatest, distinctUntilChanged, map, merge, mergeAll, Observable, of, switchMap } from 'rxjs';
+import { combineLatest, distinctUntilChanged, map, Observable, of, switchMap } from 'rxjs';
 
+import { RangeCollection } from '../range';
 import { RenderListener } from '../renderer';
+import { CollectionSubscription } from '../subscription';
 
 import { ELineType, EQuadrantType, ERenderType } from './types';
 import {
   addLines,
-  buildDeltaSelectionRegions,
-  buildHighlightRegions,
-  buildSelectionRegions,
   correctRenderInfo,
   findLineType,
   generateSubregionRenderInfo,
@@ -37,6 +36,9 @@ export class SelectionListener extends RenderListener<number> {
   private linePool: IShapePool<Konva.LineConfig, Konva.Line>;
   private activeCellPool: IShapePool<Konva.RectConfig, Konva.Rect>;
   private activeCellLinePool: IShapePool<Konva.LineConfig, Konva.Line>;
+
+  private limit$: Observable<IRectLimitInfo>;
+  private subscriptions: CollectionSubscription;
 
   constructor(
     config: ISheetConfig,
@@ -62,24 +64,77 @@ export class SelectionListener extends RenderListener<number> {
     this.linePool = linePool;
     this.activeCellPool = activeCellPool;
     this.activeCellLinePool = activeCellLinePool;
+
+    this.limit$ = this.buildLimit$();
+    this.disposeWithMe(this.limit$.subscribe());
+
+    this.subscriptions = new CollectionSubscription();
+    this.disposeWithMe(this.subscriptions);
   }
 
   protected build(): Observable<number> {
-    const delta$ = buildDeltaSelectionRegions(this.selectionStore.list$).pipe(this.withPublish());
-    const highlightRegions$ = buildHighlightRegions(delta$, (item) => this.buildHighlightRegion$(item));
-    const selectionRegions$ = buildSelectionRegions(delta$, (item) => this.buildSelectionRegion$(item));
+    return this.selectionStore.list$.pipe(
+      map((list) => {
+        const items: [key: string, getter: () => Observable<any>][] = [];
 
-    return merge(highlightRegions$, selectionRegions$).pipe(
-      mergeAll(),
-      distinctUntilChanged(),
-      switchMap(() => this.selectionStore.list$),
-      map((list) => list.length),
-      distinctUntilChanged(),
+        list.forEach((region) => {
+          const key = `SelectionRegion:${region.region.startRowIndex}-${region.region.startColumnIndex}-${region.region.endRowIndex}-${region.region.endColumnIndex}-${region.activeCell.rowIndex}-${region.activeCell.columnIndex}`;
+          items.push([key, () => this.buildSelectionRegion$(region)] as const);
+        });
+
+        this.buildHighlightRegions(list, (key, getter) => {
+          items.push([key, getter] as const);
+        });
+
+        this.subscriptions.update(items);
+
+        return list.length;
+      }),
     );
   }
 
+  private buildHighlightRegions(
+    list: ISelectionRegion[],
+    addCallback: (key: string, getter: () => Observable<any>) => void,
+  ) {
+    const highlightedRows = new RangeCollection();
+    const highlightedColumns = new RangeCollection();
+
+    list.forEach(({ region }) => {
+      highlightedRows.push([region.startRowIndex, region.endRowIndex]);
+      highlightedColumns.push([region.startColumnIndex, region.endColumnIndex]);
+    });
+
+    highlightedRows.merge();
+    highlightedColumns.merge();
+
+    highlightedColumns.values.forEach(([start, end]) => {
+      const key = `highlight-column-${start}-${end}`;
+      const region: IRegionInfo = {
+        startColumnIndex: start,
+        endColumnIndex: end,
+        startRowIndex: 0,
+        endRowIndex: 0,
+      };
+      addCallback(key, () => this.buildHighlightRegion$(region));
+    });
+    highlightedRows.values.forEach(([start, end]) => {
+      const key = `highlight-row-${start}-${end}`;
+      const region: IRegionInfo = {
+        startRowIndex: start,
+        endRowIndex: end,
+        startColumnIndex: 0,
+        endColumnIndex: 0,
+      };
+      addCallback(key, () => this.buildHighlightRegion$(region));
+    });
+
+    highlightedRows.clear();
+    highlightedColumns.clear();
+  }
+
   private buildHighlightRegion$(region: IRegionInfo) {
-    return this.buildLimit$().pipe(
+    return this.limit$.pipe(
       switchMap((limitInfo) => {
         const quadrants = splitIntoQuadrants(limitInfo.limitRegion, region);
 
@@ -125,7 +180,7 @@ export class SelectionListener extends RenderListener<number> {
   }
 
   private buildSelectionRegion$(selectionRegion: ISelectionRegion) {
-    return this.buildLimit$().pipe(
+    return this.limit$.pipe(
       switchMap((limitInfo) => {
         const quadrants = splitIntoQuadrants(limitInfo.limitRegion, selectionRegion.region, selectionRegion.activeCell);
 
@@ -272,56 +327,81 @@ export class SelectionListener extends RenderListener<number> {
   }
 
   private buildLimit$(): Observable<IRectLimitInfo> {
-    const frozenWidth$ = combineLatest([this.config.get$('frozenColumns'), this.columnAccumulatedDimension.get$]).pipe(
-      map(([frozenColumns, getWidth]) => [getWidth(frozenColumns), frozenColumns] as const),
+    const width$ = combineLatest([
+      this.config.get$('frozenColumns'),
+      this.config.get$('columnCount'),
+      this.columnAccumulatedDimension.get$,
+    ]).pipe(
+      map(
+        ([frozenColumns, columnCount, getWidth]) =>
+          [
+            getWidth(frozenColumns),
+            getWidth(columnCount) - getWidth(frozenColumns),
+            frozenColumns,
+            columnCount,
+          ] as const,
+      ),
     );
 
-    const frozenHeight$ = combineLatest([this.config.get$('frozenRows'), this.rowAccumulatedDimension.get$]).pipe(
-      map(([frozenRows, getHeight]) => [getHeight(frozenRows), frozenRows] as const),
+    const height$ = combineLatest([
+      this.config.get$('frozenRows'),
+      this.config.get$('rowCount'),
+      this.rowAccumulatedDimension.get$,
+    ]).pipe(
+      map(
+        ([frozenRows, rowCount, getHeight]) =>
+          [getHeight(frozenRows), getHeight(rowCount) - getHeight(frozenRows), frozenRows, rowCount] as const,
+      ),
     );
 
-    const max = 999999999999999;
+    return combineLatest([width$, height$]).pipe(
+      map(
+        ([
+          [frozenWidth, totalWidth, frozenColumns, columnCount],
+          [frozenHeight, totalHeight, frozenRows, rowCount],
+        ]) => {
+          const limitArea: Record<EQuadrantType, IRectArea> = {
+            [EQuadrantType.CORNER]: { top: 0, left: 0, right: frozenWidth, bottom: frozenHeight },
+            [EQuadrantType.TOP]: { top: 0, left: frozenWidth, right: totalWidth, bottom: frozenHeight },
+            [EQuadrantType.LEFT]: { top: frozenHeight, left: 0, right: frozenWidth, bottom: totalHeight },
+            [EQuadrantType.MAIN]: { top: frozenHeight, left: frozenWidth, right: totalWidth, bottom: totalHeight },
+          };
 
-    return combineLatest([frozenWidth$, frozenHeight$]).pipe(
-      map(([[frozenWidth, frozenColumns], [frozenHeight, frozenRows]]) => {
-        const limitArea: Record<EQuadrantType, IRectArea> = {
-          [EQuadrantType.CORNER]: { top: 0, left: 0, right: frozenWidth, bottom: frozenHeight },
-          [EQuadrantType.TOP]: { top: 0, left: frozenWidth, right: max, bottom: frozenHeight },
-          [EQuadrantType.LEFT]: { top: frozenHeight, left: 0, right: frozenWidth, bottom: max },
-          [EQuadrantType.MAIN]: { top: frozenHeight, left: frozenWidth, right: max, bottom: max },
-        };
+          const frozenRowIndex = frozenRows - 1;
+          const frozenColumnIndex = frozenColumns - 1;
+          const maxRowIndex = rowCount - 1;
+          const maxColumnIndex = columnCount - 1;
+          const limitRegion: Record<EQuadrantType, IRegionInfo> = {
+            [EQuadrantType.CORNER]: {
+              startRowIndex: 0,
+              startColumnIndex: 0,
+              endRowIndex: frozenRowIndex,
+              endColumnIndex: frozenColumnIndex,
+            },
+            [EQuadrantType.TOP]: {
+              startRowIndex: 0,
+              startColumnIndex: frozenColumns,
+              endRowIndex: frozenRowIndex,
+              endColumnIndex: maxColumnIndex,
+            },
+            [EQuadrantType.LEFT]: {
+              startRowIndex: frozenRows,
+              startColumnIndex: 0,
+              endRowIndex: maxRowIndex,
+              endColumnIndex: frozenColumnIndex,
+            },
+            [EQuadrantType.MAIN]: {
+              startRowIndex: frozenRows,
+              startColumnIndex: frozenColumns,
+              endRowIndex: maxRowIndex,
+              endColumnIndex: maxColumnIndex,
+            },
+          };
 
-        const frozenRowIndex = frozenRows - 1;
-        const frozenColumnIndex = frozenColumns - 1;
-        const limitRegion: Record<EQuadrantType, IRegionInfo> = {
-          [EQuadrantType.CORNER]: {
-            startRowIndex: 0,
-            startColumnIndex: 0,
-            endRowIndex: frozenRowIndex,
-            endColumnIndex: frozenColumnIndex,
-          },
-          [EQuadrantType.TOP]: {
-            startRowIndex: 0,
-            startColumnIndex: frozenColumns,
-            endRowIndex: frozenRowIndex,
-            endColumnIndex: max,
-          },
-          [EQuadrantType.LEFT]: {
-            startRowIndex: frozenRows,
-            startColumnIndex: 0,
-            endRowIndex: max,
-            endColumnIndex: frozenColumnIndex,
-          },
-          [EQuadrantType.MAIN]: {
-            startRowIndex: frozenRows,
-            startColumnIndex: frozenColumns,
-            endRowIndex: max,
-            endColumnIndex: max,
-          },
-        };
-
-        return { limitArea, limitRegion, frozenColumns, frozenRows };
-      }),
+          return { limitArea, limitRegion, frozenColumns, frozenRows };
+        },
+      ),
+      this.withPublish(),
     );
   }
 }

@@ -88,11 +88,12 @@ export class CellListener extends RenderListener<IRegionInfo> {
         this.subscriptions.update(
           items.map((item) => [
             `${item.rowIndex}:${item.columnIndex}:${item.frozenType}`,
-            this.cellDimension.getCellData$.pipe(
-              map((getData) => getData(item.rowIndex, item.columnIndex)),
-              distinctUntilChanged(),
-              switchMap((cellContent) => this.getRenderer(cellContent).render(cellContent, item)),
-            ),
+            () =>
+              this.cellDimension.getCellData$.pipe(
+                map((getData) => getData(item.rowIndex, item.columnIndex)),
+                distinctUntilChanged(),
+                switchMap((cellContent) => this.getRenderer(cellContent).render(cellContent, item)),
+              ),
           ]),
         );
         return dataRegion;

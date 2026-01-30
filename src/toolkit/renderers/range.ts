@@ -10,7 +10,7 @@ export type TRange = [begin: number, end: number];
  * Range collection
  */
 export class RangeCollection {
-  private map: Map<string, TRange>;
+  private list: TRange[];
 
   values: TRange[];
 
@@ -18,7 +18,7 @@ export class RangeCollection {
    * Constructor
    */
   constructor() {
-    this.map = new Map<string, TRange>();
+    this.list = [];
 
     this.values = [];
   }
@@ -26,37 +26,28 @@ export class RangeCollection {
   /**
    * Push a range
    *
-   * @param key - the range key
    * @param range - the range
    */
-  push(key: string, range: TRange): void {
-    this.map.set(key, range);
-  }
-
-  /**
-   * Remove a range
-   *
-   * @param key - the range key
-   */
-  remove(key: string): void {
-    this.map.delete(key);
+  push(range: TRange): void {
+    this.list.push(range);
   }
 
   /**
    * Clear all ranges
    */
   clear(): void {
-    this.map.clear();
+    this.list = [];
+    this.values = [];
   }
 
   /**
    * Merge ranges
    */
   merge(): void {
-    if (this.map.size === 0) return;
+    if (this.list.length === 0) return;
 
     const result: TRange[] = [];
-    const sorted = Array.from(this.map.values()).sort((a, b) => a[0] - b[0]);
+    const sorted = this.list.sort((a, b) => a[0] - b[0]);
 
     let [currentStart, currentEnd] = sorted[0];
     for (let i = 1; i < sorted.length; i++) {

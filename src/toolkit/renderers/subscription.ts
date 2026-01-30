@@ -18,18 +18,18 @@ export class CollectionSubscription extends ObservableDisposable {
     });
   }
 
-  update(items: readonly [key: string, item: Observable<any>][]) {
+  update(items: readonly [key: string, getter: () => Observable<any>][]) {
     this.checkDisposed();
 
     const currentKeys = new Set<string>();
 
     // 1. Add new subscriptions
-    for (const [key, item] of items) {
+    for (const [key, getter] of items) {
       currentKeys.add(key);
 
       // New → create subscription
       if (!this.subscriptions.has(key)) {
-        this.subscriptions.set(key, item.subscribe());
+        this.subscriptions.set(key, getter().subscribe());
       }
     }
 
