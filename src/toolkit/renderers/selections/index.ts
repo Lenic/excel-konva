@@ -7,11 +7,12 @@ import type Konva from 'konva';
 
 import { combineLatest, distinctUntilChanged, map, Observable, of, switchMap } from 'rxjs';
 
+import { EFreezeMode } from '../../types';
 import { RangeCollection } from '../range';
 import { RenderListener } from '../renderer';
 import { CollectionSubscription } from '../subscription';
 
-import { ELineType, EQuadrantType, ERenderType } from './types';
+import { ELineType, ERenderType } from './types';
 import {
   addLines,
   correctRenderInfo,
@@ -19,7 +20,7 @@ import {
   generateSubregionRenderInfo,
   intersectionArea,
   isSameRectBox,
-  splitIntoQuadrants,
+  splitByFreezeMode,
 } from './utils';
 
 /**
@@ -136,7 +137,7 @@ export class SelectionListener extends RenderListener<number> {
   private buildHighlightRegion$(region: IRegionInfo) {
     return this.limit$.pipe(
       switchMap((limitInfo) => {
-        const quadrants = splitIntoQuadrants(limitInfo.limitRegion, region);
+        const quadrants = splitByFreezeMode(limitInfo.limitRegion, region);
 
         const highlight$List: Observable<Konva.Shape[]>[] = [];
         for (const [key, selectionInfo] of quadrants) {
@@ -182,7 +183,7 @@ export class SelectionListener extends RenderListener<number> {
   private buildSelectionRegion$(selectionRegion: ISelectionRegion) {
     return this.limit$.pipe(
       switchMap((limitInfo) => {
-        const quadrants = splitIntoQuadrants(limitInfo.limitRegion, selectionRegion.region, selectionRegion.activeCell);
+        const quadrants = splitByFreezeMode(limitInfo.limitRegion, selectionRegion.region, selectionRegion.activeCell);
 
         const selection$List: Observable<Konva.Shape[]>[] = [];
         for (const [key, selectionInfo] of quadrants) {
@@ -360,37 +361,37 @@ export class SelectionListener extends RenderListener<number> {
           [frozenWidth, totalWidth, frozenColumns, columnCount],
           [frozenHeight, totalHeight, frozenRows, rowCount],
         ]) => {
-          const limitArea: Record<EQuadrantType, IRectArea> = {
-            [EQuadrantType.CORNER]: { top: 0, left: 0, right: frozenWidth, bottom: frozenHeight },
-            [EQuadrantType.TOP]: { top: 0, left: frozenWidth, right: totalWidth, bottom: frozenHeight },
-            [EQuadrantType.LEFT]: { top: frozenHeight, left: 0, right: frozenWidth, bottom: totalHeight },
-            [EQuadrantType.MAIN]: { top: frozenHeight, left: frozenWidth, right: totalWidth, bottom: totalHeight },
+          const limitArea: Record<EFreezeMode, IRectArea> = {
+            [EFreezeMode.BOTH]: { top: 0, left: 0, right: frozenWidth, bottom: frozenHeight },
+            [EFreezeMode.ROW]: { top: 0, left: frozenWidth, right: totalWidth, bottom: frozenHeight },
+            [EFreezeMode.COLUMN]: { top: frozenHeight, left: 0, right: frozenWidth, bottom: totalHeight },
+            [EFreezeMode.NONE]: { top: frozenHeight, left: frozenWidth, right: totalWidth, bottom: totalHeight },
           };
 
           const frozenRowIndex = frozenRows - 1;
           const frozenColumnIndex = frozenColumns - 1;
           const maxRowIndex = rowCount - 1;
           const maxColumnIndex = columnCount - 1;
-          const limitRegion: Record<EQuadrantType, IRegionInfo> = {
-            [EQuadrantType.CORNER]: {
+          const limitRegion: Record<EFreezeMode, IRegionInfo> = {
+            [EFreezeMode.BOTH]: {
               startRowIndex: 0,
               startColumnIndex: 0,
               endRowIndex: frozenRowIndex,
               endColumnIndex: frozenColumnIndex,
             },
-            [EQuadrantType.TOP]: {
+            [EFreezeMode.ROW]: {
               startRowIndex: 0,
               startColumnIndex: frozenColumns,
               endRowIndex: frozenRowIndex,
               endColumnIndex: maxColumnIndex,
             },
-            [EQuadrantType.LEFT]: {
+            [EFreezeMode.COLUMN]: {
               startRowIndex: frozenRows,
               startColumnIndex: 0,
               endRowIndex: maxRowIndex,
               endColumnIndex: frozenColumnIndex,
             },
-            [EQuadrantType.MAIN]: {
+            [EFreezeMode.NONE]: {
               startRowIndex: frozenRows,
               startColumnIndex: frozenColumns,
               endRowIndex: maxRowIndex,

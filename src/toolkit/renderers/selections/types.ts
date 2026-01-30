@@ -1,4 +1,4 @@
-import type { IRegionInfo } from '../../types';
+import type { EFreezeMode, IRegionInfo } from '../../types';
 
 /**
  * Represents a rectangular area defined by its boundaries.
@@ -21,32 +21,6 @@ export interface IRectArea {
    */
   left: number;
 }
-
-/**
- * Defines the quadrants for rendering, usually corresponding to frozen regions.
- */
-export const EQuadrantType = {
-  /**
-   * The corner quadrant (intersection of frozen rows and columns).
-   */
-  CORNER: 'corner',
-  /**
-   * The top frozen quadrant.
-   */
-  TOP: 'top',
-  /**
-   * The left frozen quadrant.
-   */
-  LEFT: 'left',
-  /**
-   * The main scrollable quadrant.
-   */
-  MAIN: 'main',
-} as const;
-/**
- * Type alias for EQuadrantType.
- */
-export type EQuadrantType = (typeof EQuadrantType)[keyof typeof EQuadrantType];
 
 /**
  * Bitmask enum for selection border lines.
@@ -122,11 +96,11 @@ export interface IRectLimitInfo {
   /**
    * The physical area limits for each quadrant.
    */
-  limitArea: Record<EQuadrantType, IRectArea>;
+  limitArea: Record<EFreezeMode, IRectArea>;
   /**
    * The logical region (index-based) limits for each quadrant.
    */
-  limitRegion: Record<EQuadrantType, IRegionInfo>;
+  limitRegion: Record<EFreezeMode, IRegionInfo>;
   /**
    * Number of frozen columns.
    */

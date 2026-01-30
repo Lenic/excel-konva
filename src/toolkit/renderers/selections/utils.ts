@@ -5,7 +5,9 @@ import type Konva from 'konva';
 
 import { Observable, switchMap } from 'rxjs';
 
-import { EQuadrantType, ERenderType } from './types';
+import { EFreezeMode } from '../../types';
+
+import { ERenderType } from './types';
 import { ELineType } from './types';
 
 /**
@@ -169,75 +171,72 @@ export function correctRenderInfo(renderInfo: TRectRenderInfo, wrapperArea: IRec
 }
 
 /**
- * Calculates which border lines should be rendered for a specific quadrant.
- * It ensures that inner borders between adjacent quadrants are not drawn twice or incorrectly.
- * @param quadrantType The type of the current quadrant (Corner, Top, Left, or Main).
- * @param existedCallback A function to check if a specific quadrant exists in the current view.
- * @returns A bitmask of the lines to be rendered.
+ * Determines which border lines should be rendered for a specific freeze area.
+ * It checks adjacent areas to avoid drawing redundant lines or missing required ones.
+ * @param freezeMode The current freeze area being processed (BOTH, ROW, COLUMN, NONE).
+ * @param existedCallback A callback to check if other freeze areas are present/rendered.
+ * @returns A bitmask representing which edges (top, bottom, left, right) should be drawn.
  */
-export function findLineType(
-  quadrantType: EQuadrantType,
-  existedCallback: (type: EQuadrantType) => boolean,
-): TLineTypeMask {
+export function findLineType(freezeMode: EFreezeMode, existedCallback: (mode: EFreezeMode) => boolean): TLineTypeMask {
   let lineType: TLineTypeMask = ELineType.EMPTY;
 
-  switch (quadrantType) {
-    case EQuadrantType.CORNER:
+  switch (freezeMode) {
+    case EFreezeMode.BOTH:
       lineType = ELineType.TOP | ELineType.LEFT;
-      if (!existedCallback(EQuadrantType.TOP)) {
+      if (!existedCallback(EFreezeMode.ROW)) {
         lineType |= ELineType.RIGHT;
       }
-      if (!existedCallback(EQuadrantType.LEFT)) {
+      if (!existedCallback(EFreezeMode.COLUMN)) {
         lineType |= ELineType.BOTTOM;
       }
       break;
-    case EQuadrantType.TOP:
+    case EFreezeMode.ROW:
       lineType = ELineType.TOP | ELineType.RIGHT;
-      if (!existedCallback(EQuadrantType.CORNER)) {
+      if (!existedCallback(EFreezeMode.BOTH)) {
         lineType |= ELineType.LEFT;
       }
-      if (!existedCallback(EQuadrantType.MAIN)) {
+      if (!existedCallback(EFreezeMode.NONE)) {
         lineType |= ELineType.BOTTOM;
       }
       break;
-    case EQuadrantType.LEFT:
+    case EFreezeMode.COLUMN:
       lineType = ELineType.LEFT | ELineType.BOTTOM;
-      if (!existedCallback(EQuadrantType.CORNER)) {
+      if (!existedCallback(EFreezeMode.BOTH)) {
         lineType |= ELineType.TOP;
       }
-      if (!existedCallback(EQuadrantType.MAIN)) {
+      if (!existedCallback(EFreezeMode.NONE)) {
         lineType |= ELineType.RIGHT;
       }
       break;
-    case EQuadrantType.MAIN:
+    case EFreezeMode.NONE:
       lineType = ELineType.BOTTOM | ELineType.RIGHT;
-      if (!existedCallback(EQuadrantType.TOP)) {
+      if (!existedCallback(EFreezeMode.ROW)) {
         lineType |= ELineType.TOP;
       }
-      if (!existedCallback(EQuadrantType.LEFT)) {
+      if (!existedCallback(EFreezeMode.COLUMN)) {
         lineType |= ELineType.LEFT;
       }
       break;
     default:
-      throw new Error(`Invalid quadrant type: ${quadrantType}`);
+      throw new Error(`Invalid freeze mode: ${freezeMode}`);
   }
 
   return lineType;
 }
 
 /**
- * Splits a large selection region into up to four quadrants based on viewport limits.
- * This is typically used for handling frozen rows and columns.
- * @param limit A map defining the row/column index boundaries for each quadrant.
- * @param region The selection region to be split.
- * @param activeCell The active cell location within the selection.
- * @returns A map of quadrants and their corresponding selection/active cell info.
+ * Splits a selection region and its active cell into subregions based on freeze mode boundaries.
+ * Each subregion corresponds to a different freeze area (e.g., the locked top-left corner vs. the scrollable main area).
+ * @param limit A mapping of freeze modes to their corresponding region boundaries (index-based).
+ * @param region The full selection region to be split.
+ * @param activeCell The location of the active cell, if any.
+ * @returns A map where keys are freeze modes and values contain the intersected selection and active cell regions.
  */
-export function splitIntoQuadrants(
-  limit: Record<EQuadrantType, IRegionInfo>,
+export function splitByFreezeMode(
+  limit: Record<EFreezeMode, IRegionInfo>,
   region: IRegionInfo,
   activeCell?: ILocation,
-): Map<EQuadrantType, TSelectionInfo<IRegionInfo>> {
+): Map<EFreezeMode, TSelectionInfo<IRegionInfo>> {
   const originalActiveCellRegion: IRegionInfo | undefined = !activeCell
     ? undefined
     : {
@@ -247,37 +246,37 @@ export function splitIntoQuadrants(
         endColumnIndex: activeCell.columnIndex,
       };
 
-  const selectionRegion = new Map<EQuadrantType, TSelectionInfo<IRegionInfo>>();
+  const selectionRegion = new Map<EFreezeMode, TSelectionInfo<IRegionInfo>>();
 
-  const cornerRegion = intersectionRegion(region, limit[EQuadrantType.CORNER]);
+  const cornerRegion = intersectionRegion(region, limit[EFreezeMode.BOTH]);
   if (cornerRegion) {
-    selectionRegion.set(EQuadrantType.CORNER, [
+    selectionRegion.set(EFreezeMode.BOTH, [
       cornerRegion,
-      originalActiveCellRegion ? intersectionRegion(originalActiveCellRegion, limit[EQuadrantType.CORNER]) : undefined,
+      originalActiveCellRegion ? intersectionRegion(originalActiveCellRegion, limit[EFreezeMode.BOTH]) : undefined,
     ]);
   }
 
-  const topRegion = intersectionRegion(region, limit[EQuadrantType.TOP]);
+  const topRegion = intersectionRegion(region, limit[EFreezeMode.ROW]);
   if (topRegion) {
-    selectionRegion.set(EQuadrantType.TOP, [
+    selectionRegion.set(EFreezeMode.ROW, [
       topRegion,
-      originalActiveCellRegion ? intersectionRegion(originalActiveCellRegion, limit[EQuadrantType.TOP]) : undefined,
+      originalActiveCellRegion ? intersectionRegion(originalActiveCellRegion, limit[EFreezeMode.ROW]) : undefined,
     ]);
   }
 
-  const leftRegion = intersectionRegion(region, limit[EQuadrantType.LEFT]);
+  const leftRegion = intersectionRegion(region, limit[EFreezeMode.COLUMN]);
   if (leftRegion) {
-    selectionRegion.set(EQuadrantType.LEFT, [
+    selectionRegion.set(EFreezeMode.COLUMN, [
       leftRegion,
-      originalActiveCellRegion ? intersectionRegion(originalActiveCellRegion, limit[EQuadrantType.LEFT]) : undefined,
+      originalActiveCellRegion ? intersectionRegion(originalActiveCellRegion, limit[EFreezeMode.COLUMN]) : undefined,
     ]);
   }
 
-  const mainRegion = intersectionRegion(region, limit[EQuadrantType.MAIN]);
+  const mainRegion = intersectionRegion(region, limit[EFreezeMode.NONE]);
   if (mainRegion) {
-    selectionRegion.set(EQuadrantType.MAIN, [
+    selectionRegion.set(EFreezeMode.NONE, [
       mainRegion,
-      originalActiveCellRegion ? intersectionRegion(originalActiveCellRegion, limit[EQuadrantType.MAIN]) : undefined,
+      originalActiveCellRegion ? intersectionRegion(originalActiveCellRegion, limit[EFreezeMode.NONE]) : undefined,
     ]);
   }
 
@@ -285,12 +284,12 @@ export function splitIntoQuadrants(
 }
 
 /**
- * Generates rendering information for a selection subregion within a specific boundary.
- * It handles splitting the selection area around the active cell to avoid overlap.
- * @param selection The base selection rendering info.
- * @param activeCell The active cell rendering info, if any.
- * @param limit The boundary area (usually a quadrant's pixel area).
- * @param addCallback A callback to receive the generated rendering information chunks.
+ * Generates coordinate-based rendering information for a selection and its active cell within a specific boundary.
+ * It clips the areas against the provided limit and handles the logic for drawing both the selection background and the active cell.
+ * @param selection The pixel-based selection area and its initial line mask.
+ * @param activeCell The pixel-based active cell area and its initial line mask, or undefined.
+ * @param limit The bounding area (e.g., the viewport or a freeze area) to clip against.
+ * @param addCallback A callback function that receives the final rendering information for each rectangle or cell.
  */
 export function generateSubregionRenderInfo(
   selection: TRectRenderInfo,

@@ -92,6 +92,33 @@ export interface IRegionInfo {
 }
 
 /**
+ * Freeze mode
+ */
+export const EFreezeMode = {
+  /**
+   * No freeze
+   */
+  NONE: 0,
+  /**
+   * Freeze rows
+   */
+  ROW: 1,
+  /**
+   * Freeze columns
+   */
+  COLUMN: 2,
+  /**
+   * Freeze both rows and columns
+   */
+  BOTH: 3,
+} as const;
+
+/**
+ * Freeze mode type
+ */
+export type EFreezeMode = (typeof EFreezeMode)[keyof typeof EFreezeMode];
+
+/**
  * Excel entrance interface
  */
 export interface IExcelEntrance extends IDisposable {
