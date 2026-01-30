@@ -13,9 +13,9 @@ import type Konva from 'konva';
 import { combineLatest, distinctUntilChanged, exhaustMap, map, Observable, of, startWith, switchMap } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
+import { EFreezeMode } from '../types';
 
 import { EEditStatus } from './types';
-import { ECellFrozenType } from './types';
 
 /**
  * Abstract content manager
@@ -441,14 +441,14 @@ export abstract class AbstractContentManager extends ObservableDisposable implem
   }
 
   /**
-   * Get cell rect attributes
+   * Retrieves the visual attributes for the cell rectangle based on its freeze mode and position.
    *
-   * @param context - Render options
-   * @returns Observable of cell rect attributes
+   * @param context - The content context containing row/column indices and freeze mode.
+   * @returns An Observable of the rectangle's configuration.
    */
   protected getRectAttrs$(context: IContentContext): Observable<Partial<Konva.RectConfig>> {
-    switch (context.frozenType) {
-      case ECellFrozenType.Corner:
+    switch (context.freezeMode) {
+      case EFreezeMode.BOTH:
         if (context.rowIndex === 0 && context.columnIndex === 0) {
           return this.cornerCellRectAttrs$;
         } else if (context.rowIndex === 0) {
@@ -463,7 +463,7 @@ export abstract class AbstractContentManager extends ObservableDisposable implem
             return this.frozenEvenRectAttrs$;
           }
         }
-      case ECellFrozenType.Header:
+      case EFreezeMode.ROW:
         if (context.rowIndex === 0) {
           return this.columnHeaderRectAttrs$;
         } else {
@@ -474,7 +474,7 @@ export abstract class AbstractContentManager extends ObservableDisposable implem
             return this.frozenEvenRectAttrs$;
           }
         }
-      case ECellFrozenType.Side:
+      case EFreezeMode.COLUMN:
         if (context.columnIndex === 0) {
           return this.rowHeaderRectAttrs$;
         } else {
@@ -496,14 +496,14 @@ export abstract class AbstractContentManager extends ObservableDisposable implem
   }
 
   /**
-   * Get cell text attributes
+   * Retrieves the visual attributes for the cell text based on its freeze mode and position.
    *
-   * @param context - Render options
-   * @returns Observable of cell text attributes
+   * @param context - The content context containing row/column indices and freeze mode.
+   * @returns An Observable of the text's configuration.
    */
   protected getTextAttrs$(context: IContentContext): Observable<Partial<Konva.TextConfig>> {
-    switch (context.frozenType) {
-      case ECellFrozenType.Corner:
+    switch (context.freezeMode) {
+      case EFreezeMode.BOTH:
         if (context.rowIndex === 0 && context.columnIndex === 0) {
           return of({});
         } else if (context.rowIndex === 0) {
@@ -518,7 +518,7 @@ export abstract class AbstractContentManager extends ObservableDisposable implem
             return this.frozenEvenTextAttrs$;
           }
         }
-      case ECellFrozenType.Header:
+      case EFreezeMode.ROW:
         if (context.rowIndex === 0) {
           return this.columnHeaderTextAttrs$;
         } else {
@@ -529,7 +529,7 @@ export abstract class AbstractContentManager extends ObservableDisposable implem
             return this.frozenEvenTextAttrs$;
           }
         }
-      case ECellFrozenType.Side:
+      case EFreezeMode.COLUMN:
         if (context.columnIndex === 0) {
           return this.rowHeaderTextAttrs$;
         } else {

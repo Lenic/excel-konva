@@ -5,7 +5,8 @@ import type { IStageEditListener, IStageMouseEvent } from './types';
 
 import { EMPTY, filter, finalize, switchMap, takeWhile, tap, withLatestFrom } from 'rxjs';
 
-import { ECellFrozenType, EEditStatus } from '../contents';
+import { EEditStatus } from '../contents';
+import { EFreezeMode } from '../types';
 
 import { EventListener } from './listener';
 
@@ -66,18 +67,18 @@ export class StageEditListener extends EventListener implements IStageEditListen
         const cell = getCellLocation(e.evt.clientX - rootRect.left, e.evt.clientY - rootRect.top);
         if (cell.rowIndex === 0 || cell.columnIndex === 0) return EMPTY;
 
-        let frozenType: ECellFrozenType = ECellFrozenType.None;
+        let freezeMode: EFreezeMode = EFreezeMode.NONE;
         if (cell.rowIndex < frozenRows && cell.columnIndex < frozenColumns) {
-          frozenType = ECellFrozenType.Corner;
+          freezeMode = EFreezeMode.BOTH;
         } else if (cell.rowIndex < frozenRows) {
-          frozenType = ECellFrozenType.Header;
+          freezeMode = EFreezeMode.ROW;
         } else if (cell.columnIndex < frozenColumns) {
-          frozenType = ECellFrozenType.Side;
+          freezeMode = EFreezeMode.COLUMN;
         }
 
         const content = getCellData(cell.rowIndex, cell.columnIndex);
         return this.getEditor(content)
-          .edit(content, { rowIndex: cell.rowIndex, columnIndex: cell.columnIndex, frozenType })
+          .edit(content, { rowIndex: cell.rowIndex, columnIndex: cell.columnIndex, freezeMode })
           .pipe(
             takeWhile((status) => status !== EEditStatus.Saved && status !== EEditStatus.Canceled, true),
             tap((status) => {

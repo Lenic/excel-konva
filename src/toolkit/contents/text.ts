@@ -3,9 +3,10 @@ import type { Observable } from 'rxjs';
 
 import { combineLatest, EMPTY, finalize, fromEvent, map, merge, of, skip, startWith, switchMap, take } from 'rxjs';
 
+import { EFreezeMode } from '../types';
+
 import { AbstractContentManager } from './core';
 import { EEditStatus } from './types';
-import { ECellFrozenType } from './types';
 
 /**
  * Text content renderer
@@ -57,19 +58,19 @@ export class TextContentRenderer extends AbstractContentManager {
     editor.select();
 
     return merge(
-      context.frozenType !== ECellFrozenType.None
+      context.freezeMode !== EFreezeMode.NONE
         ? EMPTY
         : this.offset.offset$.pipe(
             skip(1),
             map(() => false),
           ),
-      context.frozenType !== ECellFrozenType.Side
+      context.freezeMode !== EFreezeMode.COLUMN
         ? EMPTY
         : this.offset.top$.pipe(
             skip(1),
             map(() => false),
           ),
-      context.frozenType !== ECellFrozenType.Header
+      context.freezeMode !== EFreezeMode.ROW
         ? EMPTY
         : this.offset.left$.pipe(
             skip(1),

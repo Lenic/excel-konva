@@ -5,7 +5,7 @@ import type { Observable } from 'rxjs';
 
 import { combineLatest, distinctUntilChanged, map, switchMap } from 'rxjs';
 
-import { ECellFrozenType } from '../contents';
+import { EFreezeMode } from '../types';
 
 import { RenderListener } from './renderer';
 import { CollectionSubscription } from './subscription';
@@ -57,37 +57,37 @@ export class CellListener extends RenderListener<IRegionInfo> {
 
         const items: IContentContext[] = [];
 
-        // Render Scrollable Data
+        // Render scrollable data
         for (let r = startRowIndex; r <= endRowIndex; r++) {
           for (let c = startColumnIndex; c <= endColumnIndex; c++) {
-            items.push({ rowIndex: r, columnIndex: c, frozenType: ECellFrozenType.None });
+            items.push({ rowIndex: r, columnIndex: c, freezeMode: EFreezeMode.NONE });
           }
         }
 
-        // Render Frozen Header
+        // Render frozen rows (header)
         for (let r = 0; r < frozenRows; r++) {
           for (let c = startColumnIndex; c <= endColumnIndex; c++) {
-            items.push({ rowIndex: r, columnIndex: c, frozenType: ECellFrozenType.Header });
+            items.push({ rowIndex: r, columnIndex: c, freezeMode: EFreezeMode.ROW });
           }
         }
 
-        // Render Frozen Side
+        // Render frozen columns (side)
         for (let c = 0; c < frozenColumns; c++) {
           for (let r = startRowIndex; r <= endRowIndex; r++) {
-            items.push({ rowIndex: r, columnIndex: c, frozenType: ECellFrozenType.Side });
+            items.push({ rowIndex: r, columnIndex: c, freezeMode: EFreezeMode.COLUMN });
           }
         }
 
-        // Render Corner
+        // Render frozen corner (both)
         for (let r = 0; r < frozenRows; r++) {
           for (let c = 0; c < frozenColumns; c++) {
-            items.push({ rowIndex: r, columnIndex: c, frozenType: ECellFrozenType.Corner });
+            items.push({ rowIndex: r, columnIndex: c, freezeMode: EFreezeMode.BOTH });
           }
         }
 
         this.subscriptions.update(
           items.map((item) => [
-            `${item.rowIndex}:${item.columnIndex}:${item.frozenType}`,
+            `${item.rowIndex}:${item.columnIndex}:${item.freezeMode}`,
             () =>
               this.cellDimension.getCellData$.pipe(
                 map((getData) => getData(item.rowIndex, item.columnIndex)),
