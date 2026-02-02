@@ -358,36 +358,10 @@ export const IStageClickListener: TIdentifier<IEventListener> = Symbol('IStageCl
  * Stage edit listener interface identifier
  */
 export const IStageEditListener: TIdentifier<IEventListener> = Symbol('IStageEditListener');
-
-/**
- * Stage drag listener interface
- */
-export interface IStageDragListener extends IEventListener {
-  /**
-   * Sheet configuration
-   */
-  config: ISheetConfig;
-  /**
-   * Selection store
-   */
-  store: ISelectionStore;
-  /**
-   * Stage mouse events
-   */
-  events: IStageMouseEvent;
-  /**
-   * Cell dimension
-   */
-  cellDimension: ICellDimension;
-  /**
-   * Excel entrance
-   */
-  excelEntrance: IExcelEntrance;
-}
 /**
  * Stage drag listener interface identifier
  */
-export const IStageDragListener: TIdentifier<IStageDragListener> = Symbol('IStageDragListener');
+export const IStageDragListener: TIdentifier<IEventListener> = Symbol('IStageDragListener');
 
 /**
  * Cursor types
