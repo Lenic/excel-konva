@@ -3,47 +3,38 @@ import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
 /**
- * Rectangle pool interface
+ * Shape pool interface
  */
-export interface IRectPool extends IDisposable {
+export interface IShapePool<TConfig extends Konva.ShapeConfig, TShape extends Konva.Shape> extends IDisposable {
   /**
-   * Get rectangle Observable
+   * Shape config Observable
+   */
+  config$: Observable<Partial<TConfig>>;
+  /**
+   * Get shape Observable
    *
-   * The emitted function signature is: `() => Konva.Rect`
-   * - Returns: The rectangle factory function.
+   * The emitted function signature is: `(attrs?: Partial<TConfig>) => TShape`
+   * - `attrs`: The shape attributes.
+   * - Returns: The shape factory function.
    */
-  getRect$: Observable<() => Konva.Rect>;
+  get$: Observable<(attrs?: Partial<TConfig>) => TShape>;
   /**
-   * Dispose rectangle shape
+   * Reuse the shape
    */
-  disposeRect(rect: Konva.Rect): void;
+  reuse(shape: TShape): void;
 }
-/**
- * Selection pool interface identifier
- */
-export const ISelectionPool: TIdentifier<IRectPool> = Symbol('ISelectionPool');
-/**
- * Active cell marker pool interface identifier
- */
-export const IActiveCellMarkerPool: TIdentifier<IRectPool> = Symbol('IActiveCellMarkerPool');
 
 /**
- * Cell pool interface
+ * Shape pool interface identifier
  */
-export interface ICellPool extends IRectPool, IDisposable {
-  /**
-   * Get text Observable
-   *
-   * The emitted function signature is: `() => Konva.Text`
-   * - Returns: The text factory function.
-   */
-  getText$: Observable<() => Konva.Text>;
-  /**
-   * Dispose text shape
-   */
-  disposeText(text: Konva.Text): void;
-}
+export const IShapePool: TIdentifier<IShapePool<Konva.RectConfig, Konva.Rect>> = Symbol('IShapePool');
+
 /**
- * Cell pool interface identifier
+ * Line pool interface identifier
  */
-export const ICellPool: TIdentifier<ICellPool> = Symbol('ICellPool');
+export const ILinePool: TIdentifier<IShapePool<Konva.LineConfig, Konva.Line>> = Symbol('ILinePool');
+
+/**
+ * Cell text pool interface identifier
+ */
+export const ICellTextPool: TIdentifier<IShapePool<Konva.TextConfig, Konva.Text>> = Symbol('ICellTextPool');

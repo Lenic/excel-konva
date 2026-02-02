@@ -21,7 +21,9 @@ export abstract class EventListener extends ObservableDisposable implements IEve
   startListening(): () => void {
     if (this.subscription) return this.destroySubscription;
 
-    this.subscription = this.build().subscribe();
+    this.subscription = this.build().pipe(this.withDestroy()).subscribe();
+    this.disposeWithMe(this.destroySubscription);
+
     return this.destroySubscription;
   }
 

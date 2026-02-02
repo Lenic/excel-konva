@@ -1,6 +1,5 @@
 import type { IDisposable, TIdentifier } from '../../container';
-import type { ICellDimension, IItemBoundary, IScrollOffset, ISheetConfig, ISheetDimension } from '../helpers';
-import type { IExcelEntrance, ILocation, IRegionInfo } from '../types';
+import type { ILocation, IOffset, IRegionInfo } from '../types';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
@@ -225,31 +224,6 @@ export type TMousedownEvent =
  */
 export interface IStageMouseEvent extends IDisposable {
   /**
-   * Cell dimension
-   */
-  cellDimension: ICellDimension;
-  /**
-   * Column boundary
-   */
-  columnBoundary: IItemBoundary;
-  /**
-   * Sheet configuration
-   */
-  config: ISheetConfig;
-  /**
-   * Row boundary
-   */
-  rowBoundary: IItemBoundary;
-  /**
-   * Sheet dimension
-   */
-  sheetDimension: ISheetDimension;
-  /**
-   * Excel entrance
-   */
-  excelEntrance: IExcelEntrance;
-
-  /**
    * Mouse down event
    */
   mousedown$: Observable<Konva.KonvaEventObject<MouseEvent>>;
@@ -282,6 +256,26 @@ export interface IStageMouseEvent extends IDisposable {
  * Stage mouse events interface identifier
  */
 export const IStageMouseEvent: TIdentifier<IStageMouseEvent> = Symbol('IStageMouseEvent');
+
+/**
+ * Cursor getter interface
+ */
+export interface ICursorGetter {
+  /**
+   * Cursor offset
+   */
+  offset: IOffset | null;
+  /**
+   * Observable of cursor offset
+   *
+   * - return the `null` if the cursor is not in the stage or the stage is scrolling
+   */
+  offset$: Observable<IOffset | null>;
+}
+/**
+ * Cursor getter interface identifier
+ */
+export const ICursorGetter: TIdentifier<ICursorGetter> = Symbol('ICursorGetter');
 
 /**
  * Selection store interface
@@ -352,112 +346,21 @@ export interface IEventListener extends IDisposable {
 }
 
 /**
- * Boundary resize listener interface
- */
-export interface IBoundaryResizeListener extends IEventListener {
-  /**
-   * Sheet configuration
-   */
-  config: ISheetConfig;
-  /**
-   * Sheet dimension
-   */
-  sheetDimension: ISheetDimension;
-  /**
-   * Column boundary
-   */
-  columnBoundary: IItemBoundary;
-  /**
-   * Row boundary
-   */
-  rowBoundary: IItemBoundary;
-  /**
-   * Stage mouse events
-   */
-  events: IStageMouseEvent;
-  /**
-   * Excel entrance
-   */
-  excelEntrance: IExcelEntrance;
-}
-/**
  * Boundary resize listener interface identifier
  */
-export const IBoundaryResizeListener: TIdentifier<IBoundaryResizeListener> = Symbol('IBoundaryResizeListener');
-
-/**
- * Stage click listener interface
- */
-export interface IStageClickListener extends IEventListener {
-  /**
-   * Selection store
-   */
-  store: ISelectionStore;
-  /**
-   * Stage mouse events
-   */
-  events: IStageMouseEvent;
-}
+export const IBoundaryResizeListener: TIdentifier<IEventListener> = Symbol('IBoundaryResizeListener');
 /**
  * Stage click listener interface identifier
  */
-export const IStageClickListener: TIdentifier<IStageClickListener> = Symbol('IStageClickListener');
-
-/**
- * Stage edit listener interface
- */
-export interface IStageEditListener extends IEventListener {
-  /**
-   * Stage mouse events
-   */
-  events: IStageMouseEvent;
-  /**
-   * Cell dimension
-   */
-  cellDimension: ICellDimension;
-  /**
-   * Scroll offset
-   */
-  offset: IScrollOffset;
-  /**
-   * Excel entrance
-   */
-  excelEntrance: IExcelEntrance;
-}
+export const IStageClickListener: TIdentifier<IEventListener> = Symbol('IStageClickListener');
 /**
  * Stage edit listener interface identifier
  */
-export const IStageEditListener: TIdentifier<IStageEditListener> = Symbol('IStageEditListener');
-
-/**
- * Stage drag listener interface
- */
-export interface IStageDragListener extends IEventListener {
-  /**
-   * Sheet configuration
-   */
-  config: ISheetConfig;
-  /**
-   * Selection store
-   */
-  store: ISelectionStore;
-  /**
-   * Stage mouse events
-   */
-  events: IStageMouseEvent;
-  /**
-   * Cell dimension
-   */
-  cellDimension: ICellDimension;
-  /**
-   * Excel entrance
-   */
-  excelEntrance: IExcelEntrance;
-}
+export const IStageEditListener: TIdentifier<IEventListener> = Symbol('IStageEditListener');
 /**
  * Stage drag listener interface identifier
  */
-export const IStageDragListener: TIdentifier<IStageDragListener> = Symbol('IStageDragListener');
+export const IStageDragListener: TIdentifier<IEventListener> = Symbol('IStageDragListener');
 
 /**
  * Cursor types
@@ -505,29 +408,3 @@ export interface IResizeBoundaryCursorEvent {
  * The cursor event
  */
 export type TCursorEvent = IEmptyCursorEvent | IResizeBoundaryCursorEvent;
-
-/**
- * Cursor listener interface
- */
-export interface ICursorListener extends IEventListener {
-  /**
-   * Stage mouse events
-   */
-  events: IStageMouseEvent;
-  /**
-   * Cell dimension
-   */
-  cell: ICellDimension;
-  /**
-   * Scroll offset
-   */
-  scrollOffset: IScrollOffset;
-  /**
-   * Excel entrance
-   */
-  excelEntrance: IExcelEntrance;
-}
-/**
- * Cursor listener interface identifier
- */
-export const ICursorListener: TIdentifier<ICursorListener> = Symbol('ICursorListener');

@@ -1,8 +1,8 @@
 import type { ILocation, IPoint, IRectBox } from '../types';
-import type { ICellDimension, IItemBoundary } from './types';
+import type { ICellDimension, IItemBoundary, IItemDimension } from './types';
 import type { Observable } from 'rxjs';
 
-import { combineLatest, map, scan, shareReplay, startWith, Subject, switchMap, take } from 'rxjs';
+import { combineLatest, map, scan, startWith, Subject, switchMap, take } from 'rxjs';
 
 import { getCellKey, getColumnLabel, ObservableDisposable } from '../core';
 
@@ -10,10 +10,12 @@ import { getCellKey, getColumnLabel, ObservableDisposable } from '../core';
  * Cell dimension
  */
 export class CellDimension extends ObservableDisposable implements ICellDimension {
-  private cellDataSubject: Subject<[string, unknown]>;
+  private rowDimension: IItemDimension;
+  private columnDimension: IItemDimension;
+  private rowBoundary: IItemBoundary;
+  private columnBoundary: IItemBoundary;
 
-  columnBoundary: IItemBoundary;
-  rowBoundary: IItemBoundary;
+  private cellDataSubject: Subject<[string, unknown]>;
 
   cellDataStore: Map<string, unknown>;
 
@@ -23,18 +25,27 @@ export class CellDimension extends ObservableDisposable implements ICellDimensio
   getCellPoint$: Observable<(rowIndex: number, columnIndex: number) => IPoint>;
 
   /**
-   * Constructor
+   * CellDimension constructor
    *
-   * @param columnBoundary - Column boundary manager
-   * @param rowBoundary - Row boundary manager
+   * @param rowDimension - The item dimension manager for rows
+   * @param columnDimension - The item dimension manager for columns
+   * @param rowBoundary - The boundary manager for rows
+   * @param columnBoundary - The boundary manager for columns
    */
-  constructor(columnBoundary: IItemBoundary, rowBoundary: IItemBoundary) {
+  constructor(
+    rowDimension: IItemDimension,
+    columnDimension: IItemDimension,
+    rowBoundary: IItemBoundary,
+    columnBoundary: IItemBoundary,
+  ) {
     super();
 
-    this.columnBoundary = columnBoundary;
+    this.rowDimension = rowDimension;
+    this.columnDimension = columnDimension;
     this.rowBoundary = rowBoundary;
+    this.columnBoundary = columnBoundary;
 
-    this.cellDataSubject = new Subject<[string, string | null]>();
+    this.cellDataSubject = new Subject<[string, unknown]>();
     this.disposeWithMe(() => {
       this.cellDataSubject.complete();
     });
@@ -102,7 +113,7 @@ export class CellDimension extends ObservableDisposable implements ICellDimensio
           return typeof value !== 'undefined' ? value : key;
         };
       }),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
   }
 
@@ -110,7 +121,7 @@ export class CellDimension extends ObservableDisposable implements ICellDimensio
     return combineLatest([
       this.columnBoundary.getBoundary$.pipe(
         switchMap((getColumnLeft) =>
-          this.columnBoundary.accumulated.dimension.get$.pipe(
+          this.columnDimension.get$.pipe(
             take(1),
             map((getColumnWidth) => [getColumnLeft, getColumnWidth] as const),
           ),
@@ -118,7 +129,7 @@ export class CellDimension extends ObservableDisposable implements ICellDimensio
       ),
       this.rowBoundary.getBoundary$.pipe(
         switchMap((getRowTop) =>
-          this.rowBoundary.accumulated.dimension.get$.pipe(
+          this.rowDimension.get$.pipe(
             take(1),
             map((getRowHeight) => [getRowTop, getRowHeight] as const),
           ),
@@ -141,7 +152,7 @@ export class CellDimension extends ObservableDisposable implements ICellDimensio
           };
         };
       }),
-      shareReplay({ refCount: true, bufferSize: 1 }),
+      this.withPublish(),
     );
   }
 
@@ -161,7 +172,7 @@ export class CellDimension extends ObservableDisposable implements ICellDimensio
           };
         };
       }),
-      shareReplay({ refCount: true, bufferSize: 1 }),
+      this.withPublish(),
     );
   }
 
@@ -181,7 +192,7 @@ export class CellDimension extends ObservableDisposable implements ICellDimensio
           };
         };
       }),
-      shareReplay({ refCount: true, bufferSize: 1 }),
+      this.withPublish(),
     );
   }
 }

@@ -1,8 +1,7 @@
 import type { ISheetConfig, ISheetOptions } from './types';
 import type { Observable } from 'rxjs';
 
-import { finalize, switchMap } from 'rxjs';
-import { BehaviorSubject, distinctUntilChanged, map, shareReplay } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, finalize, map } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
 
@@ -24,9 +23,9 @@ export const defaultSheetConfig: Required<ISheetOptions> = {
     strokeWidth: 2,
   },
   activeCellRectAttrs: {
-    fill: 'rgba(255, 255, 255, 0.7)',
+    fill: 'rgba(0, 0, 0, 0)',
     stroke: '#10B981',
-    strokeWidth: 3,
+    strokeWidth: 2,
   },
   defaultCellRectAttrs: {
     fill: '#ffffff',
@@ -76,7 +75,6 @@ export const defaultSheetConfig: Required<ISheetOptions> = {
   rowHeaderCellTextAttrs: {
     padding: 0,
   },
-  bufferCellCount: 1,
   resizeTolerance: 5,
 };
 
@@ -85,7 +83,7 @@ export const defaultSheetConfig: Required<ISheetOptions> = {
  */
 export class SheetConfig extends ObservableDisposable implements ISheetConfig {
   private optionsSubject: BehaviorSubject<Required<ISheetOptions>>;
-  private getMap: Map<keyof Required<ISheetOptions>, Observable<any>>;
+  private getterMap: Map<keyof Required<ISheetOptions>, Observable<any>>;
 
   options: Required<ISheetOptions>;
 
@@ -131,9 +129,9 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
       this.optionsSubject.complete();
     });
 
-    this.getMap = new Map<keyof Required<ISheetOptions>, Observable<any>>();
+    this.getterMap = new Map<keyof Required<ISheetOptions>, Observable<any>>();
     this.disposeWithMe(() => {
-      this.getMap.clear();
+      this.getterMap.clear();
     });
 
     this.options$ = this.optionsSubject.asObservable();
@@ -145,16 +143,15 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
   }
 
   get$<K extends keyof Required<ISheetOptions>>(key: K): Observable<Required<ISheetOptions>[K]> {
-    let obs$ = this.getMap.get(key) as Observable<Required<ISheetOptions>[K]> | undefined;
+    let obs$ = this.getterMap.get(key) as Observable<Required<ISheetOptions>[K]> | undefined;
     if (!obs$) {
-      obs$ = this.dispositionSubject.pipe(
-        switchMap(() => this.options$),
+      obs$ = this.options$.pipe(
         map((options) => options[key]),
         distinctUntilChanged(),
-        finalize(() => void this.getMap.delete(key)),
-        shareReplay({ refCount: true, bufferSize: 1 }),
+        finalize(() => void this.getterMap.delete(key)),
+        this.withPublish(),
       );
-      this.getMap.set(key, obs$);
+      this.getterMap.set(key, obs$);
     }
     return obs$;
   }

@@ -1,5 +1,5 @@
 import type { IDisposable, TIdentifier } from '../../container';
-import type { IDimension, IExcelEntrance, ILocation, IOffset, IPoint, IRectBox, IRegionInfo } from '../types';
+import type { IDimension, ILocation, IOffset, IPoint, IRectBox, IRegionInfo } from '../types';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
@@ -80,9 +80,9 @@ export interface ISheetOptions {
    *
    * ```json
    * {
-   *   fill: 'rgba(255, 255, 255, 0.7)',
+   *   fill: 'rgba(0, 0, 0, 0)',
    *   stroke: '#10B981',
-   *   strokeWidth: 3
+   *   strokeWidth: 2
    * }
    * ```
    */
@@ -338,10 +338,6 @@ export interface ISheetOptions {
    */
   rowHeaderCellTextAttrs?: Partial<TTextAttrs>;
   /**
-   * Number of buffer cells: default is 1
-   */
-  bufferCellCount?: number;
-  /**
    * The tolerance of mouse detection boundary (pixels): default is 5
    */
   resizeTolerance?: number;
@@ -445,10 +441,6 @@ export interface IAccumulatedDimension extends IDisposable {
    * Accumulated store
    */
   store: Map<number, number>;
-  /**
-   * Item dimension manager
-   */
-  dimension: IItemDimension;
 
   /**
    * An Observable that emits a function to retrieve the preceding total dimension for a specific index.
@@ -477,19 +469,6 @@ export const IAccumulatedDimension: TIdentifier<IAccumulatedDimension> = Symbol(
  */
 export interface ISheetDimension extends IDisposable {
   /**
-   * Sheet
-   */
-  config: ISheetConfig;
-  /**
-   * Accumulated column dimension
-   */
-  column: IAccumulatedDimension;
-  /**
-   * Accumulated row dimension
-   */
-  row: IAccumulatedDimension;
-
-  /**
    * Visual size
    */
   visualSize: IDimension;
@@ -505,10 +484,6 @@ export interface ISheetDimension extends IDisposable {
    * Real size
    */
   realSize: IDimension;
-  /**
-   * Excel entrance
-   */
-  excelEntrance: IExcelEntrance;
 
   /**
    * Observable visual size
@@ -537,10 +512,6 @@ export const ISheetDimension: TIdentifier<ISheetDimension> = Symbol('ISheetDimen
  */
 export interface IScrollOffset extends IDisposable {
   /**
-   * Sheet dimension
-   */
-  sheetDimension: ISheetDimension;
-  /**
    * Scroll top
    */
   top: number;
@@ -552,10 +523,6 @@ export interface IScrollOffset extends IDisposable {
    * Scroll offset
    */
   offset: IOffset;
-  /**
-   * Excel entrance
-   */
-  excelEntrance: IExcelEntrance;
 
   /**
    * Observable scroll top
@@ -598,10 +565,6 @@ export interface IItemBoundary extends IDisposable {
    */
   options: IItemBoundaryOptions;
   /**
-   * Accumulated dimension
-   */
-  accumulated: IAccumulatedDimension;
-  /**
    * An Observable that emits a function to retrieve the preceding boundary for a specific index.
    *
    * The emitted function signature is: `(index: number) => number`
@@ -627,15 +590,6 @@ export const IItemBoundary: TIdentifier<IItemBoundary> = Symbol('IItemBoundary')
  * Cell dimension
  */
 export interface ICellDimension extends IDisposable {
-  /**
-   * Item boundary manager
-   */
-  columnBoundary: IItemBoundary;
-  /**
-   * Item boundary manager
-   */
-  rowBoundary: IItemBoundary;
-
   /**
    * Cell data store
    */
@@ -702,31 +656,14 @@ export const ICellDimension: TIdentifier<ICellDimension> = Symbol('ICellDimensio
 /**
  * Data region info
  */
-export interface IDataRegion {
+export interface IDataRegion extends IDisposable {
   /**
-   * Sheet
-   */
-  config: ISheetConfig;
-  /**
-   * Column boundary manager
-   */
-  columnBoundary: IItemBoundary;
-  /**
-   * Row boundary manager
-   */
-  rowBoundary: IItemBoundary;
-  /**
-   * Sheet dimension
-   */
-  sheetDimension: ISheetDimension;
-
-  /**
-   * Data region
+   * Scrollable region info
    */
   region: IRegionInfo;
 
   /**
-   * Observable data region
+   * Observable scrollable region info
    */
   region$: Observable<IRegionInfo>;
 }

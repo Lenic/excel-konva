@@ -2,8 +2,7 @@ import type { ISheetConfig } from './helpers';
 import type { Observable } from 'rxjs';
 
 import Konva from 'konva';
-import { switchMap } from 'rxjs';
-import { combineLatest, fromEventPattern, map, shareReplay, tap } from 'rxjs';
+import { combineLatest, fromEventPattern, map, tap } from 'rxjs';
 
 import { Container, ServiceLocator } from '../container';
 
@@ -11,7 +10,6 @@ import { ObservableDisposable } from './core/disposable';
 import { registerContentManagers } from './contents';
 import {
   IBoundaryResizeListener,
-  ICursorListener,
   IStageClickListener,
   IStageDragListener,
   IStageEditListener,
@@ -154,7 +152,7 @@ export class ExcelEntrance extends ObservableDisposable implements IExcelEntranc
     registerRenderers(container);
     ServiceLocator.setProvider(container);
 
-    this.getCellGroup$ = this.dispositionSubject.pipe(switchMap(() => this.buildGetCellGroup$(config)));
+    this.getCellGroup$ = this.buildGetCellGroup$(config);
     this.disposeWithMe(this.getCellGroup$.subscribe());
   }
 
@@ -171,7 +169,6 @@ export class ExcelEntrance extends ObservableDisposable implements IExcelEntranc
     ServiceLocator.current.get(ICellListener).start();
     ServiceLocator.current.get(ISelectionListener).start();
 
-    ServiceLocator.current.get(ICursorListener).startListening();
     ServiceLocator.current.get(IStageDragListener).startListening();
     ServiceLocator.current.get(IStageEditListener).startListening();
     ServiceLocator.current.get(IStageClickListener).startListening();
@@ -199,7 +196,7 @@ export class ExcelEntrance extends ObservableDisposable implements IExcelEntranc
 
         return getCellGroup;
       }),
-      shareReplay({ refCount: true, bufferSize: 1 }),
+      this.withPublish(),
     );
   }
 }

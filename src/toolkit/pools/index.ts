@@ -1,35 +1,105 @@
 import type { IContainer } from '../../container';
 
+import Konva from 'konva';
+import { map } from 'rxjs';
+
 import { ISheetConfig } from '../helpers';
 import { IExcelEntrance } from '../types';
 
-import { CellPool } from './cell-pool';
-import { RectPool } from './rect-pool';
-import { IActiveCellMarkerPool, ICellPool, ISelectionPool } from './types';
+import { ShapePool } from './shape-pool';
+import { ICellTextPool, ILinePool, IShapePool } from './types';
 
 export * from './types';
 
+/**
+ * Selection rect pool identifier
+ */
+export const SELECTION_RECT_POOL = Symbol('SELECTION_RECT_POOL');
+
+/**
+ * Active cell pool identifier
+ */
+export const ACTIVE_CELL_POOL = Symbol('ACTIVE_CELL_POOL');
+
+/**
+ * Active cell line pool identifier
+ */
+export const ACTIVE_CELL_LINE_POOL = Symbol('ACTIVE_CELL_LINE_POOL');
+
+/**
+ * Register pools
+ * @param container container
+ */
 export function registerPools(container: IContainer) {
   container
-    .register(ISelectionPool)
+    .register(IShapePool)
     .set(
       (c, ctx) =>
-        new RectPool(c.get(IExcelEntrance, ctx).selectionLayer, c.get(ISheetConfig, ctx).get$('selectionRectAttrs')),
-    );
-  container
-    .register(IActiveCellMarkerPool)
-    .set(
-      (c, ctx) =>
-        new RectPool(c.get(IExcelEntrance, ctx).selectionLayer, c.get(ISheetConfig, ctx).get$('activeCellRectAttrs')),
-    );
-  container
-    .register(ICellPool)
-    .set(
-      (c, ctx) =>
-        new CellPool(
+        new ShapePool(
           c.get(IExcelEntrance, ctx).backgroundLayer,
           c.get(ISheetConfig, ctx).get$('defaultCellRectAttrs'),
+          (attrs) => new Konva.Rect(attrs),
+        ),
+    )
+    .set(
+      (c, ctx) =>
+        new ShapePool(
+          c.get(IExcelEntrance, ctx).selectionLayer,
+          c
+            .get(ISheetConfig, ctx)
+            .get$('selectionRectAttrs')
+            .pipe(map((attrs) => ({ ...attrs, stroke: 'transparent', strokeWidth: 0 }))),
+          (attrs) => new Konva.Rect(attrs),
+        ),
+      SELECTION_RECT_POOL,
+    )
+    .set(
+      (c, ctx) =>
+        new ShapePool(
+          c.get(IExcelEntrance, ctx).selectionLayer,
+          c
+            .get(ISheetConfig, ctx)
+            .get$('activeCellRectAttrs')
+            .pipe(map((attrs) => ({ ...attrs, stroke: 'transparent', strokeWidth: 0 }))),
+          (attrs) => new Konva.Rect(attrs),
+        ),
+      ACTIVE_CELL_POOL,
+    );
+
+  container
+    .register(ILinePool)
+    .set(
+      (c, ctx) =>
+        new ShapePool(
+          c.get(IExcelEntrance, ctx).selectionLayer,
+          c
+            .get(ISheetConfig, ctx)
+            .get$('selectionRectAttrs')
+            .pipe(map((attrs) => ({ ...attrs, fill: 'transparent' }))),
+          (attrs) => new Konva.Line(attrs),
+        ),
+    )
+    .set(
+      (c, ctx) =>
+        new ShapePool(
+          c.get(IExcelEntrance, ctx).selectionLayer,
+          c
+            .get(ISheetConfig, ctx)
+            .get$('activeCellRectAttrs')
+            .pipe(map((attrs) => ({ ...attrs, fill: 'transparent' }))),
+          (attrs) => new Konva.Line(attrs),
+        ),
+      ACTIVE_CELL_LINE_POOL,
+    );
+
+  container
+    .register(ICellTextPool)
+    .set(
+      (c, ctx) =>
+        new ShapePool(
+          c.get(IExcelEntrance, ctx).backgroundLayer,
           c.get(ISheetConfig, ctx).get$('defaultCellTextAttrs'),
+          (attrs) => new Konva.Text(attrs),
         ),
     );
 }

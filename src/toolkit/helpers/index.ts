@@ -81,9 +81,9 @@ export function registerHelpers(container: IContainer, sheetConfigFactory: TFact
     .set(
       (c, ctx) =>
         new SheetDimension(
-          c.get(ISheetConfig, ctx),
-          c.get(IAccumulatedDimension, COLUMN_TAG, ctx),
           c.get(IAccumulatedDimension, ROW_TAG, ctx),
+          c.get(IAccumulatedDimension, COLUMN_TAG, ctx),
+          c.get(ISheetConfig, ctx),
           c.get(IExcelEntrance, ctx),
         ),
     );
@@ -113,16 +113,26 @@ export function registerHelpers(container: IContainer, sheetConfigFactory: TFact
 
   container
     .register(ICellDimension)
-    .set((c, ctx) => new CellDimension(c.get(IItemBoundary, COLUMN_TAG, ctx), c.get(IItemBoundary, ROW_TAG, ctx)));
+    .set(
+      (c, ctx) =>
+        new CellDimension(
+          c.get(IItemDimension, ROW_TAG, ctx),
+          c.get(IItemDimension, COLUMN_TAG, ctx),
+          c.get(IItemBoundary, ROW_TAG, ctx),
+          c.get(IItemBoundary, COLUMN_TAG, ctx),
+        ),
+    );
 
   container
     .register(IDataRegion)
     .set(
       (c, ctx) =>
         new DataRegion(
-          c.get(ISheetConfig, ctx),
-          c.get(IItemBoundary, COLUMN_TAG, ctx),
+          c.get(IAccumulatedDimension, ROW_TAG, ctx),
+          c.get(IAccumulatedDimension, COLUMN_TAG, ctx),
           c.get(IItemBoundary, ROW_TAG, ctx),
+          c.get(IItemBoundary, COLUMN_TAG, ctx),
+          c.get(ISheetConfig, ctx),
           c.get(ISheetDimension, ctx),
         ),
     );

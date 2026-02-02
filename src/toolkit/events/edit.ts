@@ -1,18 +1,19 @@
 import type { IContentManager } from '../contents';
 import type { ICellDimension, IScrollOffset, ISheetConfig } from '../helpers';
 import type { IExcelEntrance } from '../types';
-import type { IStageEditListener, IStageMouseEvent } from './types';
+import type { IStageMouseEvent } from './types';
 
 import { EMPTY, filter, finalize, switchMap, takeWhile, tap, withLatestFrom } from 'rxjs';
 
-import { ECellFrozenType, EEditStatus } from '../contents';
+import { EEditStatus } from '../contents';
+import { EFreezeMode } from '../types';
 
 import { EventListener } from './listener';
 
 /**
  * Stage click listener
  */
-export class StageEditListener extends EventListener implements IStageEditListener {
+export class StageEditListener extends EventListener {
   private status: EEditStatus;
 
   events: IStageMouseEvent;
@@ -53,9 +54,8 @@ export class StageEditListener extends EventListener implements IStageEditListen
   }
 
   protected build() {
-    return this.dispositionSubject.pipe(
+    return this.events.dblclick$.pipe(
       filter(() => this.status === EEditStatus.Normal),
-      switchMap(() => this.events.dblclick$),
       withLatestFrom(
         this.cellDimension.getCellLocation$,
         this.cellDimension.getCellData$,
@@ -67,18 +67,18 @@ export class StageEditListener extends EventListener implements IStageEditListen
         const cell = getCellLocation(e.evt.clientX - rootRect.left, e.evt.clientY - rootRect.top);
         if (cell.rowIndex === 0 || cell.columnIndex === 0) return EMPTY;
 
-        let frozenType: ECellFrozenType = ECellFrozenType.None;
+        let freezeMode: EFreezeMode = EFreezeMode.NONE;
         if (cell.rowIndex < frozenRows && cell.columnIndex < frozenColumns) {
-          frozenType = ECellFrozenType.Corner;
+          freezeMode = EFreezeMode.BOTH;
         } else if (cell.rowIndex < frozenRows) {
-          frozenType = ECellFrozenType.Header;
+          freezeMode = EFreezeMode.ROW;
         } else if (cell.columnIndex < frozenColumns) {
-          frozenType = ECellFrozenType.Side;
+          freezeMode = EFreezeMode.COLUMN;
         }
 
         const content = getCellData(cell.rowIndex, cell.columnIndex);
         return this.getEditor(content)
-          .edit(content, { rowIndex: cell.rowIndex, columnIndex: cell.columnIndex, frozenType })
+          .edit(content, { rowIndex: cell.rowIndex, columnIndex: cell.columnIndex, freezeMode })
           .pipe(
             takeWhile((status) => status !== EEditStatus.Saved && status !== EEditStatus.Canceled, true),
             tap((status) => {

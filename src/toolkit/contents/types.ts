@@ -1,37 +1,12 @@
 import type { IDisposable, TIdentifier } from '../../container';
+import type { EFreezeMode, IRectBox } from '../types';
+import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
 /**
- * Cell frozen type
+ * Content context
  */
-export const ECellFrozenType = {
-  /**
-   * Header frozen type
-   */
-  Header: 'header',
-  /**
-   * Side frozen type
-   */
-  Side: 'side',
-  /**
-   * Corner frozen type
-   */
-  Corner: 'corner',
-  /**
-   * None frozen type: normal scrollable data area
-   */
-  None: 'none',
-} as const;
-
-/**
- * Cell frozen type
- */
-export type ECellFrozenType = (typeof ECellFrozenType)[keyof typeof ECellFrozenType];
-
-/**
- * Content renderer context
- */
-export interface IContentRendererContext {
+export interface IContentContext {
   /**
    * Row index
    */
@@ -41,9 +16,9 @@ export interface IContentRendererContext {
    */
   columnIndex: number;
   /**
-   * Cell frozen type
+   * Cell freeze mode
    */
-  frozenType: ECellFrozenType;
+  freezeMode: EFreezeMode;
 }
 
 /**
@@ -77,18 +52,70 @@ export interface IContentManager extends IDisposable {
    * Render content
    *
    * @param content - Cell content
-   * @param context - Content renderer context
+   * @param context - Content context
    */
-  render(content: unknown, context: IContentRendererContext): Observable<void>;
+  render(content: unknown, context: IContentContext): Observable<any>;
   /**
    * Edit content
    *
    * @param content - Cell content
-   * @param context - Content renderer context
+   * @param context - Content context
    */
-  edit(content: unknown, context: IContentRendererContext): Observable<EEditStatus>;
+  edit(content: unknown, context: IContentContext): Observable<EEditStatus>;
 }
 /**
  * Content manager identifier
  */
 export const IContentManager: TIdentifier<IContentManager> = Symbol('IContentManager');
+
+/**
+ * Rendering context
+ */
+export interface IRenderingContext extends IContentContext {
+  /**
+   * Bounding box Observable
+   */
+  box$: Observable<IRectBox>;
+  /**
+   * Parent group Observable
+   */
+  group$: Observable<Konva.Group>;
+}
+
+/**
+ * Rect rendering context
+ */
+export interface IRectRenderingContext extends IRenderingContext {
+  /**
+   * Rectangle attributes Observable
+   */
+  rectAttrs$: Observable<Partial<Konva.RectConfig>>;
+}
+
+/**
+ * Text rendering context
+ */
+export interface ITextRenderingContext extends IRenderingContext {
+  /**
+   * Text content
+   */
+  content: unknown;
+  /**
+   * Text attributes Observable
+   */
+  textAttrs$: Observable<Partial<Konva.TextConfig>>;
+}
+
+/**
+ * Edit context
+ */
+export interface IEditContext extends IContentContext {
+  /**
+   * Bounding box
+   */
+  box: IRectBox;
+  /**
+   * Cell content
+   */
+  content: unknown;
+}

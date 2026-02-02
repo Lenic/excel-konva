@@ -1,6 +1,6 @@
 import type { ICellDimension, ISheetConfig } from '../helpers';
 import type { IExcelEntrance, ILocation } from '../types';
-import type { ISelectionRegion, ISelectionStore, IStageDragListener, IStageMouseEvent } from './types';
+import type { ISelectionRegion, ISelectionStore, IStageMouseEvent } from './types';
 
 import { combineLatest, EMPTY, finalize, map, of, switchMap, takeUntil, tap, withLatestFrom } from 'rxjs';
 
@@ -10,7 +10,7 @@ import { EMousedownTypes } from './types';
 /**
  * Stage drag listener
  */
-export class StageDragListener extends EventListener implements IStageDragListener {
+export class StageDragListener extends EventListener {
   config: ISheetConfig;
   store: ISelectionStore;
   events: IStageMouseEvent;
@@ -43,13 +43,10 @@ export class StageDragListener extends EventListener implements IStageDragListen
   }
 
   protected build() {
-    return this.dispositionSubject.pipe(
-      switchMap(() =>
-        this.events.typedMouseDownLeft$.pipe(
-          switchMap((e) => (e.mousedownType === EMousedownTypes.SelectRegion ? of(e) : EMPTY)),
-          switchMap((e) => (e.data.activeCell.rowIndex === 0 && e.data.activeCell.columnIndex === 0 ? EMPTY : of(e))),
-        ),
-      ),
+    return this.events.typedMouseDownLeft$.pipe(
+      switchMap((e) => (e.mousedownType === EMousedownTypes.SelectRegion ? of(e) : EMPTY)),
+      switchMap((e) => (e.data.activeCell.rowIndex === 0 && e.data.activeCell.columnIndex === 0 ? EMPTY : of(e))),
+
       withLatestFrom(this.cellDimension.getCellLocation$),
       switchMap(([{ data }, getCellLocation]) => {
         const { activeCell, isMultiSelect, id } = data;

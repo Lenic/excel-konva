@@ -9,7 +9,6 @@ import {
   distinctUntilChanged,
   fromEvent,
   map,
-  shareReplay,
   startWith,
 } from 'rxjs';
 
@@ -19,22 +18,22 @@ import { ObservableDisposable } from '../core';
  * Scroll offset
  */
 export class ScrollOffset extends ObservableDisposable implements IScrollOffset {
-  sheetDimension: ISheetDimension;
+  private excelEntrance: IExcelEntrance;
+  private sheetDimension: ISheetDimension;
 
   top: number;
   left: number;
   offset: IOffset;
-  excelEntrance: IExcelEntrance;
 
   top$: Observable<number>;
   left$: Observable<number>;
   offset$: Observable<IOffset>;
 
   /**
-   * Constructor
+   * ScrollOffset constructor
    *
-   * @param sheetDimension - Sheet dimension
-   * @param excelEntrance - Excel entrance
+   * @param sheetDimension - The sheet dimension manager used to calculate scroll boundaries
+   * @param excelEntrance - The main entry point for the Excel component to access the UI elements
    */
   constructor(sheetDimension: ISheetDimension, excelEntrance: IExcelEntrance) {
     super();
@@ -52,14 +51,14 @@ export class ScrollOffset extends ObservableDisposable implements IScrollOffset 
     this.top$ = this.offset$.pipe(
       map((offset) => offset.deltaY),
       distinctUntilChanged(),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.top$.subscribe((value) => (this.top = value)));
 
     this.left$ = this.offset$.pipe(
       map((offset) => offset.deltaX),
       distinctUntilChanged(),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
     this.disposeWithMe(this.left$.subscribe((value) => (this.left = value)));
   }
@@ -88,7 +87,7 @@ export class ScrollOffset extends ObservableDisposable implements IScrollOffset 
           }) as IOffset,
       ),
       distinctUntilChanged((x, y) => x.deltaX === y.deltaX && x.deltaY === y.deltaY),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
   }
 }

@@ -5,6 +5,7 @@ import {
   COLUMN_TAG,
   ICellDimension,
   IItemBoundary,
+  IItemDimension,
   IScrollOffset,
   ISheetConfig,
   ISheetDimension,
@@ -14,14 +15,14 @@ import { IExcelEntrance } from '../types';
 
 import { StageClickListener } from './click';
 import { StageMouseEvent } from './core';
-import { CursorListener } from './cursor';
+import { CursorGetter } from './cursor';
 import { StageDragListener } from './drag';
 import { StageEditListener } from './edit';
 import { BoundaryResizeListener } from './resize';
 import { SelectionStore } from './selection';
 import {
   IBoundaryResizeListener,
-  ICursorListener,
+  ICursorGetter,
   ISelectionStore,
   IStageClickListener,
   IStageDragListener,
@@ -44,6 +45,8 @@ export function registerEvents(container: IContainer) {
     .set(
       (c, ctx) =>
         new StageMouseEvent(
+          c.get(IItemDimension, ROW_TAG, ctx),
+          c.get(IItemDimension, COLUMN_TAG, ctx),
           c.get(ICellDimension, ctx),
           c.get(IItemBoundary, COLUMN_TAG, ctx),
           c.get(ISheetConfig, ctx),
@@ -54,16 +57,26 @@ export function registerEvents(container: IContainer) {
     );
 
   container
+    .register(ICursorGetter)
+    .set(
+      (c, ctx) => new CursorGetter(c.get(IStageMouseEvent, ctx), c.get(IScrollOffset, ctx), c.get(IExcelEntrance, ctx)),
+    );
+
+  container
     .register(IBoundaryResizeListener)
     .set(
       (c, ctx) =>
         new BoundaryResizeListener(
+          c.get(IItemDimension, ROW_TAG, ctx),
+          c.get(IItemDimension, COLUMN_TAG, ctx),
           c.get(ISheetConfig, ctx),
           c.get(ISheetDimension, ctx),
-          c.get(IItemBoundary, COLUMN_TAG, ctx),
           c.get(IItemBoundary, ROW_TAG, ctx),
+          c.get(IItemBoundary, COLUMN_TAG, ctx),
           c.get(IStageMouseEvent, ctx),
           c.get(IExcelEntrance, ctx),
+          c.get(ICursorGetter, ctx),
+          c.get(ICellDimension, ctx),
         ),
     );
 
@@ -95,18 +108,6 @@ export function registerEvents(container: IContainer) {
           c.get(IExcelEntrance, ctx),
           c.getAll(IContentManager, ctx),
           c.get(ISheetConfig, ctx),
-        ),
-    );
-
-  container
-    .register(ICursorListener)
-    .set(
-      (c, ctx) =>
-        new CursorListener(
-          c.get(IStageMouseEvent, ctx),
-          c.get(ICellDimension, ctx),
-          c.get(IScrollOffset, ctx),
-          c.get(IExcelEntrance, ctx),
         ),
     );
 }

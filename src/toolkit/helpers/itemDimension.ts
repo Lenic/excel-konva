@@ -1,7 +1,7 @@
 import type { IItemDimension, IItemDimensionOptions } from './types';
 import type { Observable } from 'rxjs';
 
-import { combineLatest, map, scan, shareReplay, startWith, Subject } from 'rxjs';
+import { combineLatest, map, scan, startWith, Subject } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
 
@@ -26,7 +26,7 @@ export class ItemDimension extends ObservableDisposable implements IItemDimensio
     super();
 
     this.minDimension = 0;
-    this.options$ = options$.pipe(shareReplay({ bufferSize: 1, refCount: true }));
+    this.options$ = options$.pipe(this.withPublish());
     this.disposeWithMe(
       this.options$.subscribe((options) => {
         this.minDimension = options.minDimension;
@@ -88,7 +88,7 @@ export class ItemDimension extends ObservableDisposable implements IItemDimensio
           return index === 0 ? options.headerDimension : options.defaultDimension;
         };
       }),
-      shareReplay({ bufferSize: 1, refCount: true }),
+      this.withPublish(),
     );
   }
 }

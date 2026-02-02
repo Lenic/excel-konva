@@ -1,7 +1,7 @@
 import type { IAccumulatedDimension, IItemDimension } from './types';
 import type { Observable } from 'rxjs';
 
-import { combineLatest, map, shareReplay } from 'rxjs';
+import { combineLatest, map } from 'rxjs';
 
 import { binarySearch, ObservableDisposable } from '../core';
 
@@ -9,17 +9,18 @@ import { binarySearch, ObservableDisposable } from '../core';
  * Accumulated dimension
  */
 export class AccumulatedDimension extends ObservableDisposable implements IAccumulatedDimension {
+  private dimension: IItemDimension;
+
   store: Map<number, number>;
-  dimension: IItemDimension;
 
   get$: Observable<(index: number) => number>;
   findIndex$: Observable<(offset: number) => number>;
 
   /**
-   * Constructor
+   * AccumulatedDimension constructor
    *
-   * @param dimension - Item dimension manager
-   * @param count$ - Observable count
+   * @param dimension - The item dimension manager used to retrieve individual item sizes
+   * @param count$ - An Observable that emits the total count of items
    */
   constructor(dimension: IItemDimension, count$: Observable<number>) {
     super();
@@ -71,7 +72,7 @@ export class AccumulatedDimension extends ObservableDisposable implements IAccum
           return currentValue;
         };
       }),
-      shareReplay({ refCount: true, bufferSize: 1 }),
+      this.withPublish(),
     );
   }
 
@@ -157,7 +158,7 @@ export class AccumulatedDimension extends ObservableDisposable implements IAccum
           return index;
         };
       }),
-      shareReplay({ refCount: true, bufferSize: 1 }),
+      this.withPublish(),
     );
   }
 }

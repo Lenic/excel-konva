@@ -1,7 +1,7 @@
 import type { ISelectionRegion, ISelectionStore } from './types';
 import type { Observable } from 'rxjs';
 
-import { distinctUntilChanged, scan, shareReplay, startWith, Subject } from 'rxjs';
+import { distinctUntilChanged, scan, startWith, Subject } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
 
@@ -113,7 +113,7 @@ export class SelectionStore extends ObservableDisposable implements ISelectionSt
         }
       }, this.list),
       distinctUntilChanged(),
-      shareReplay({ refCount: true, bufferSize: 1 }),
+      this.withPublish(),
     );
   }
 }
