@@ -347,38 +347,9 @@ export interface IEventListener extends IDisposable {
 }
 
 /**
- * Boundary resize listener interface
- */
-export interface IBoundaryResizeListener extends IEventListener {
-  /**
-   * Sheet configuration
-   */
-  config: ISheetConfig;
-  /**
-   * Sheet dimension
-   */
-  sheetDimension: ISheetDimension;
-  /**
-   * Column boundary
-   */
-  columnBoundary: IItemBoundary;
-  /**
-   * Row boundary
-   */
-  rowBoundary: IItemBoundary;
-  /**
-   * Stage mouse events
-   */
-  events: IStageMouseEvent;
-  /**
-   * Excel entrance
-   */
-  excelEntrance: IExcelEntrance;
-}
-/**
  * Boundary resize listener interface identifier
  */
-export const IBoundaryResizeListener: TIdentifier<IBoundaryResizeListener> = Symbol('IBoundaryResizeListener');
+export const IBoundaryResizeListener: TIdentifier<IEventListener> = Symbol('IBoundaryResizeListener');
 
 /**
  * Stage click listener interface

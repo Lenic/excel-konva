@@ -1,6 +1,6 @@
 import type { ICellDimension, IItemBoundary, IItemDimension, ISheetConfig, ISheetDimension } from '../helpers';
 import type { IExcelEntrance } from '../types';
-import type { IBoundaryResizeListener, ICursorGetter, IStageMouseEvent } from './types';
+import type { ICursorGetter, IStageMouseEvent } from './types';
 
 import { combineLatest, EMPTY, finalize, map, merge, of, switchMap, take, takeUntil, tap, withLatestFrom } from 'rxjs';
 
@@ -10,7 +10,7 @@ import { EBoundaryTypes, EMousedownTypes } from './types';
 /**
  * Boundary resize listener
  */
-export class BoundaryResizeListener extends EventListener implements IBoundaryResizeListener {
+export class BoundaryResizeListener extends EventListener {
   private rowDimension: IItemDimension;
   private columnDimension: IItemDimension;
 
