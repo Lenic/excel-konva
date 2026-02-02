@@ -27,16 +27,16 @@ import { EHeaderClickType, EMousedownTypes } from './types';
  * Stage mouse events
  */
 export class StageMouseEvent extends ObservableDisposable implements IStageMouseEvent {
+  private config: ISheetConfig;
+  private excelEntrance: IExcelEntrance;
   private rowDimension: IItemDimension;
   private columnDimension: IItemDimension;
-  private checkResizeBoundary$: Observable<(relX: number, relY: number) => IBoundaryInfo | null>;
+  private rowBoundary: IItemBoundary;
+  private columnBoundary: IItemBoundary;
+  private cellDimension: ICellDimension;
+  private sheetDimension: ISheetDimension;
 
-  cellDimension: ICellDimension;
-  columnBoundary: IItemBoundary;
-  config: ISheetConfig;
-  rowBoundary: IItemBoundary;
-  sheetDimension: ISheetDimension;
-  excelEntrance: IExcelEntrance;
+  private checkResizeBoundary$: Observable<(relX: number, relY: number) => IBoundaryInfo | null>;
 
   mousedown$: Observable<Konva.KonvaEventObject<MouseEvent>>;
   mouseMove$: Observable<Konva.KonvaEventObject<MouseEvent>>;

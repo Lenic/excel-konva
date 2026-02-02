@@ -225,31 +225,6 @@ export type TMousedownEvent =
  */
 export interface IStageMouseEvent extends IDisposable {
   /**
-   * Cell dimension
-   */
-  cellDimension: ICellDimension;
-  /**
-   * Column boundary
-   */
-  columnBoundary: IItemBoundary;
-  /**
-   * Sheet configuration
-   */
-  config: ISheetConfig;
-  /**
-   * Row boundary
-   */
-  rowBoundary: IItemBoundary;
-  /**
-   * Sheet dimension
-   */
-  sheetDimension: ISheetDimension;
-  /**
-   * Excel entrance
-   */
-  excelEntrance: IExcelEntrance;
-
-  /**
    * Mouse down event
    */
   mousedown$: Observable<Konva.KonvaEventObject<MouseEvent>>;
