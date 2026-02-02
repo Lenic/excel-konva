@@ -1,6 +1,5 @@
 import type { IDisposable, TIdentifier } from '../../container';
-import type { ICellDimension, ISheetConfig } from '../helpers';
-import type { IExcelEntrance, ILocation, IOffset, IRegionInfo } from '../types';
+import type { ILocation, IOffset, IRegionInfo } from '../types';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
