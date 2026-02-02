@@ -591,15 +591,6 @@ export const IItemBoundary: TIdentifier<IItemBoundary> = Symbol('IItemBoundary')
  */
 export interface ICellDimension extends IDisposable {
   /**
-   * Item boundary manager
-   */
-  columnBoundary: IItemBoundary;
-  /**
-   * Item boundary manager
-   */
-  rowBoundary: IItemBoundary;
-
-  /**
    * Cell data store
    */
   cellDataStore: Map<string, unknown>;

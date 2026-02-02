@@ -12,10 +12,10 @@ import { getCellKey, getColumnLabel, ObservableDisposable } from '../core';
 export class CellDimension extends ObservableDisposable implements ICellDimension {
   private rowDimension: IItemDimension;
   private columnDimension: IItemDimension;
-  private cellDataSubject: Subject<[string, unknown]>;
+  private rowBoundary: IItemBoundary;
+  private columnBoundary: IItemBoundary;
 
-  columnBoundary: IItemBoundary;
-  rowBoundary: IItemBoundary;
+  private cellDataSubject: Subject<[string, unknown]>;
 
   cellDataStore: Map<string, unknown>;
 
