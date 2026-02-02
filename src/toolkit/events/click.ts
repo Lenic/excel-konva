@@ -1,4 +1,4 @@
-import type { ISelectionStore, IStageClickListener, IStageMouseEvent } from './types';
+import type { ISelectionStore, IStageMouseEvent } from './types';
 
 import { filter, map, merge } from 'rxjs';
 
@@ -8,7 +8,7 @@ import { EMousedownTypes } from './types';
 /**
  * Stage click listener
  */
-export class StageClickListener extends EventListener implements IStageClickListener {
+export class StageClickListener extends EventListener {
   store: ISelectionStore;
   events: IStageMouseEvent;
 

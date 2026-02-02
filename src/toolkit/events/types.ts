@@ -350,24 +350,10 @@ export interface IEventListener extends IDisposable {
  * Boundary resize listener interface identifier
  */
 export const IBoundaryResizeListener: TIdentifier<IEventListener> = Symbol('IBoundaryResizeListener');
-
-/**
- * Stage click listener interface
- */
-export interface IStageClickListener extends IEventListener {
-  /**
-   * Selection store
-   */
-  store: ISelectionStore;
-  /**
-   * Stage mouse events
-   */
-  events: IStageMouseEvent;
-}
 /**
  * Stage click listener interface identifier
  */
-export const IStageClickListener: TIdentifier<IStageClickListener> = Symbol('IStageClickListener');
+export const IStageClickListener: TIdentifier<IEventListener> = Symbol('IStageClickListener');
 
 /**
  * Stage edit listener interface
