@@ -171,7 +171,7 @@ export class BoundaryResizeListener extends EventListener {
           ),
         ),
       ),
-      this.events.config.get$('resizeTolerance'),
+      this.config.get$('resizeTolerance'),
     ]).pipe(
       map(([offset, [getCellLocation, getCellRectBox], resizeTolerance]) => {
         if (offset === null) return;
