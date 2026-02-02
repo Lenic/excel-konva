@@ -1,5 +1,5 @@
 import type { IDisposable, TIdentifier } from '../../container';
-import type { ICellDimension, IItemBoundary, IScrollOffset, ISheetConfig, ISheetDimension } from '../helpers';
+import type { ICellDimension, ISheetConfig } from '../helpers';
 import type { IExcelEntrance, ILocation, IOffset, IRegionInfo } from '../types';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
@@ -354,32 +354,10 @@ export const IBoundaryResizeListener: TIdentifier<IEventListener> = Symbol('IBou
  * Stage click listener interface identifier
  */
 export const IStageClickListener: TIdentifier<IEventListener> = Symbol('IStageClickListener');
-
-/**
- * Stage edit listener interface
- */
-export interface IStageEditListener extends IEventListener {
-  /**
-   * Stage mouse events
-   */
-  events: IStageMouseEvent;
-  /**
-   * Cell dimension
-   */
-  cellDimension: ICellDimension;
-  /**
-   * Scroll offset
-   */
-  offset: IScrollOffset;
-  /**
-   * Excel entrance
-   */
-  excelEntrance: IExcelEntrance;
-}
 /**
  * Stage edit listener interface identifier
  */
-export const IStageEditListener: TIdentifier<IStageEditListener> = Symbol('IStageEditListener');
+export const IStageEditListener: TIdentifier<IEventListener> = Symbol('IStageEditListener');
 
 /**
  * Stage drag listener interface

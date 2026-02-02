@@ -1,7 +1,7 @@
 import type { IContentManager } from '../contents';
 import type { ICellDimension, IScrollOffset, ISheetConfig } from '../helpers';
 import type { IExcelEntrance } from '../types';
-import type { IStageEditListener, IStageMouseEvent } from './types';
+import type { IStageMouseEvent } from './types';
 
 import { EMPTY, filter, finalize, switchMap, takeWhile, tap, withLatestFrom } from 'rxjs';
 
@@ -13,7 +13,7 @@ import { EventListener } from './listener';
 /**
  * Stage click listener
  */
-export class StageEditListener extends EventListener implements IStageEditListener {
+export class StageEditListener extends EventListener {
   private status: EEditStatus;
 
   events: IStageMouseEvent;
