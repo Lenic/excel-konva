@@ -10,13 +10,12 @@ import { binarySearch, ObservableDisposable } from '../core';
  * Data region manager
  */
 export class DataRegion extends ObservableDisposable implements IDataRegion {
+  private config: ISheetConfig;
+  private rowBoundary: IItemBoundary;
+  private columnBoundary: IItemBoundary;
+  private sheetDimension: ISheetDimension;
   private rowAccumulated: IAccumulatedDimension;
   private columnAccumulated: IAccumulatedDimension;
-
-  config: ISheetConfig;
-  columnBoundary: IItemBoundary;
-  rowBoundary: IItemBoundary;
-  sheetDimension: ISheetDimension;
 
   region: IRegionInfo;
   region$: Observable<IRegionInfo>;

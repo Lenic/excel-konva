@@ -665,31 +665,14 @@ export const ICellDimension: TIdentifier<ICellDimension> = Symbol('ICellDimensio
 /**
  * Data region info
  */
-export interface IDataRegion {
+export interface IDataRegion extends IDisposable {
   /**
-   * Sheet
-   */
-  config: ISheetConfig;
-  /**
-   * Column boundary manager
-   */
-  columnBoundary: IItemBoundary;
-  /**
-   * Row boundary manager
-   */
-  rowBoundary: IItemBoundary;
-  /**
-   * Sheet dimension
-   */
-  sheetDimension: ISheetDimension;
-
-  /**
-   * Data region
+   * Scrollable region info
    */
   region: IRegionInfo;
 
   /**
-   * Observable data region
+   * Observable scrollable region info
    */
   region$: Observable<IRegionInfo>;
 }
