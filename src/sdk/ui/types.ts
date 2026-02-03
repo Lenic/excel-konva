@@ -86,6 +86,10 @@ export interface ISheetDimension extends IDisposable {
    */
   size: IDimension;
 }
+/**
+ * SheetDimension interface identifier
+ */
+export const ISheetDimension: TIdentifier<ISheetDimension> = Symbol('ISheetDimension');
 
 export interface ISingleOffsetChangePatch extends IChangePatch {
   type: 'top' | 'left';
