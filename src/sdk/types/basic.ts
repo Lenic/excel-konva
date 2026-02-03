@@ -63,7 +63,7 @@ export interface ICellRange {
   columnEndIndex: number;
 }
 
-export interface IChangePatch<T = unknown> {
+export interface IChangePatch<T = number> {
   previous: T;
   current: T;
 }

@@ -1,5 +1,5 @@
-import type { IDisposable } from '../../container';
-import type { ICellRange, IDimension } from '../types';
+import type { IDisposable, TIdentifier } from '../../container';
+import type { ICellRange, IChangePatch, IDimension } from '../types';
 import type { Observable } from 'rxjs';
 
 /**
@@ -55,9 +55,55 @@ export interface IViewport extends IRectBox, IOffset {
 }
 
 /**
+ * Sheet dimension
+ */
+export interface ISheetDimension extends IDisposable {
+  /**
+   * Width
+   */
+  width: number;
+  /**
+   * Height
+   */
+  height: number;
+  /**
+   * Size
+   */
+  size: IDimension;
+
+  /**
+   * Observable width
+   */
+  width$: Observable<number>;
+  /**
+   * Observable height
+   */
+  height$: Observable<number>;
+  /**
+   * Observable size
+   */
+  size$: Observable<IDimension>;
+}
+
+export interface IScrollSingleOffsetChangePatch extends IChangePatch {
+  type: 'top' | 'left';
+}
+
+export interface IScrollBothOffsetChangePatch extends IChangePatch<IOffset> {
+  type: 'both';
+}
+
+export type TScrollOffsetChangePatch = IScrollSingleOffsetChangePatch | IScrollBothOffsetChangePatch;
+
+/**
  * Scroll offset
  */
 export interface IScrollOffset extends IDisposable {
+  /**
+   * Observable scroll offset change
+   */
+  change$: Observable<TScrollOffsetChangePatch>;
+
   /**
    * Scroll top
    */
@@ -70,20 +116,11 @@ export interface IScrollOffset extends IDisposable {
    * Scroll offset
    */
   offset: IOffset;
-
-  /**
-   * Observable scroll top
-   */
-  top$: Observable<number>;
-  /**
-   * Observable scroll left
-   */
-  left$: Observable<number>;
-  /**
-   * Observable scroll offset
-   */
-  offset$: Observable<IOffset>;
 }
+/**
+ * Scroll offset interface identifier
+ */
+export const IScrollOffset: TIdentifier<IScrollOffset> = Symbol('IScrollOffset');
 
 export interface ILayoutCache extends IDisposable {
   /**

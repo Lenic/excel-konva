@@ -1,38 +1,6 @@
-import type Konva from 'konva';
 import type { IDisposable, TIdentifier } from '../../container';
-import type { IDimension } from '../types';
+import type Konva from 'konva';
 import type { Observable } from 'rxjs';
-
-/**
- * Sheet dimension
- */
-export interface ISheetDimension extends IDisposable {
-  /**
-   * Width
-   */
-  width: number;
-  /**
-   * Height
-   */
-  height: number;
-  /**
-   * Size
-   */
-  size: IDimension;
-
-  /**
-   * Observable width
-   */
-  width$: Observable<number>;
-  /**
-   * Observable height
-   */
-  height$: Observable<number>;
-  /**
-   * Observable size
-   */
-  size$: Observable<IDimension>;
-}
 
 /**
  * Cell rect attrs

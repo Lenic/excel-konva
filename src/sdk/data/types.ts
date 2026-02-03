@@ -23,7 +23,7 @@ export interface IDimensionOptions {
 /**
  * Represents a change in a single dimension (row or column).
  */
-export interface IDimensionChangePatch extends IChangePatch<number> {
+export interface IDimensionChangePatch extends IChangePatch {
   /**
    * The index of the row or column being changed.
    */
@@ -91,7 +91,7 @@ export interface ISetCellValuePatch<T = unknown> {
   range: ICellRange;
 }
 
-export interface IItemCountPatch extends IChangePatch<number> {
+export interface IItemCountPatch extends IChangePatch {
   type: 'row' | 'column';
 }
 
