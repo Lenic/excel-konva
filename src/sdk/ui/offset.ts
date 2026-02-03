@@ -1,4 +1,4 @@
-import type { IOffset, IScrollOffset, TScrollOffsetChangePatch } from './types';
+import type { IOffset, IScrollOffset, TOffsetChangePatch } from './types';
 import type { Observable } from 'rxjs';
 
 import { animationFrameScheduler, auditTime, distinctUntilChanged, fromEvent, map, startWith } from 'rxjs';
@@ -15,7 +15,7 @@ export class ScrollOffset extends ObservableDisposable implements IScrollOffset 
   left: number;
   offset: IOffset;
 
-  change$: Observable<TScrollOffsetChangePatch>;
+  change$: Observable<TOffsetChangePatch>;
 
   /**
    * ScrollOffset constructor
@@ -43,32 +43,33 @@ export class ScrollOffset extends ObservableDisposable implements IScrollOffset 
       map(() => ({ deltaX: this.el.scrollLeft, deltaY: this.el.scrollTop }) as IOffset),
       distinctUntilChanged((x, y) => x.deltaX === y.deltaX && x.deltaY === y.deltaY),
       map((delta) => {
-        const leftChanged = this.left !== delta.deltaX;
         const topChanged = this.top !== delta.deltaY;
+        const leftChanged = this.left !== delta.deltaX;
 
-        let patch: TScrollOffsetChangePatch | null = null;
+        let patch: TOffsetChangePatch | null = null;
         if (topChanged && leftChanged) {
           patch = {
             type: 'both',
             previous: this.offset,
             current: delta,
           };
-        } else if (leftChanged) {
-          patch = {
-            type: 'left',
-            previous: this.left,
-            current: delta.deltaX,
-          };
-        } else {
+        } else if (topChanged) {
           patch = {
             type: 'top',
             previous: this.top,
             current: delta.deltaY,
           };
+        } else {
+          patch = {
+            type: 'left',
+            previous: this.left,
+            current: delta.deltaX,
+          };
         }
 
-        this.left = delta.deltaX;
+        this.offset = delta;
         this.top = delta.deltaY;
+        this.left = delta.deltaX;
 
         return patch;
       }),

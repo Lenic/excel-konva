@@ -54,10 +54,25 @@ export interface IViewport extends IRectBox, IOffset {
   frozenColumnCount: number;
 }
 
+export interface ISingleSheetDimensionChangePatch extends IChangePatch {
+  type: 'width' | 'height';
+}
+
+export interface IBothSheetDimensionChangePatch extends IChangePatch<IDimension> {
+  type: 'both';
+}
+
+export type TSheetDimensionChangePatch = ISingleSheetDimensionChangePatch | IBothSheetDimensionChangePatch;
+
 /**
  * Sheet dimension
  */
 export interface ISheetDimension extends IDisposable {
+  /**
+   * Observable sheet dimension change
+   */
+  change$: Observable<TSheetDimensionChangePatch>;
+
   /**
    * Width
    */
@@ -70,30 +85,17 @@ export interface ISheetDimension extends IDisposable {
    * Size
    */
   size: IDimension;
-
-  /**
-   * Observable width
-   */
-  width$: Observable<number>;
-  /**
-   * Observable height
-   */
-  height$: Observable<number>;
-  /**
-   * Observable size
-   */
-  size$: Observable<IDimension>;
 }
 
-export interface IScrollSingleOffsetChangePatch extends IChangePatch {
+export interface ISingleOffsetChangePatch extends IChangePatch {
   type: 'top' | 'left';
 }
 
-export interface IScrollBothOffsetChangePatch extends IChangePatch<IOffset> {
+export interface IBothOffsetChangePatch extends IChangePatch<IOffset> {
   type: 'both';
 }
 
-export type TScrollOffsetChangePatch = IScrollSingleOffsetChangePatch | IScrollBothOffsetChangePatch;
+export type TOffsetChangePatch = ISingleOffsetChangePatch | IBothOffsetChangePatch;
 
 /**
  * Scroll offset
@@ -102,7 +104,7 @@ export interface IScrollOffset extends IDisposable {
   /**
    * Observable scroll offset change
    */
-  change$: Observable<TScrollOffsetChangePatch>;
+  change$: Observable<TOffsetChangePatch>;
 
   /**
    * Scroll top
