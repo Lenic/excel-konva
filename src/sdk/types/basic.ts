@@ -1,4 +1,18 @@
 /**
+ * Target dimension size
+ */
+export interface IDimension {
+  /**
+   * Width
+   */
+  width: number;
+  /**
+   * Height
+   */
+  height: number;
+}
+
+/**
  * Location information of the cell
  */
 export interface ILocation {
@@ -49,16 +63,7 @@ export interface ICellRange {
   columnEndIndex: number;
 }
 
-/**
- * Target dimension size
- */
-export interface IDimension {
-  /**
-   * Width
-   */
-  width: number;
-  /**
-   * Height
-   */
-  height: number;
+export interface IChangePatch<T = unknown> {
+  previous: T;
+  current: T;
 }

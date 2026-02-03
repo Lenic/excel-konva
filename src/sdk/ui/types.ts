@@ -4,6 +4,8 @@ import type { Observable } from 'rxjs';
 
 /**
  * Coordinate point
+ *
+ * - The origin coordinate of the Canvas element is at its top-left corner.
  */
 export interface IPoint {
   /**
@@ -36,6 +38,20 @@ export interface IOffset {
    * - Negative for upward movement
    */
   deltaY: number;
+}
+
+/**
+ * Viewport
+ */
+export interface IViewport extends IRectBox, IOffset {
+  /**
+   * Number of frozen rows
+   */
+  frozenRowCount: number;
+  /**
+   * Number of frozen columns
+   */
+  frozenColumnCount: number;
 }
 
 /**
@@ -73,7 +89,7 @@ export interface ILayoutCache extends IDisposable {
   /**
    * 查询单个 cell 的布局
    */
-  getCellRect(row: number, col: number): IRectBox;
+  getCellRect(rowIndex: number, columnIndex: number): IRectBox;
 
   /**
    * 查询一个范围（用于批量绘制）
@@ -88,6 +104,6 @@ export interface ILayoutCache extends IDisposable {
   /**
    * Dimension 变化触发的失效（整行 / 整列）
    */
-  invalidateByRow(row: number): void;
-  invalidateByCol(col: number): void;
+  invalidateByRow(rowIndex: number): void;
+  invalidateByColumn(columnIndex: number): void;
 }
