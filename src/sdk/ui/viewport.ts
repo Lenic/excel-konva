@@ -1,8 +1,8 @@
 import type { IScrollOffset } from '../core';
 import type { IAccumulatedDimensionManager } from '../data';
-import type { ISheetDimension, IViewport, IViewportManager, IViewportOptions } from './types';
-import type { Observable } from 'rxjs';
+import type { ISheetDimension, IViewport, IViewportChangePatch, IViewportManager, IViewportOptions } from './types';
 
+import { type Observable, Subject } from 'rxjs';
 import { combineLatest, filter, map, startWith } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
@@ -20,10 +20,14 @@ interface IFrozenInfo {
  * ViewportManager
  */
 export class ViewportManager extends ObservableDisposable implements IViewportManager {
-  [EFreezeMode.NONE]!: Observable<IViewport>;
-  [EFreezeMode.ROW]!: Observable<IViewport>;
-  [EFreezeMode.COLUMN]!: Observable<IViewport>;
-  [EFreezeMode.BOTH]!: Observable<IViewport>;
+  private subject: Subject<IViewportChangePatch>;
+
+  [EFreezeMode.NONE]!: IViewport;
+  [EFreezeMode.ROW]!: IViewport;
+  [EFreezeMode.COLUMN]!: IViewport;
+  [EFreezeMode.BOTH]!: IViewport;
+
+  change$: Observable<IViewportChangePatch>;
 
   /**
    * ViewportManager constructor
@@ -43,104 +47,146 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
   ) {
     super();
 
+    this.subject = new Subject<IViewportChangePatch>();
+    this.disposeWithMe(() => {
+      this.subject.complete();
+    });
+    this.change$ = this.subject.asObservable();
+
+    this[EFreezeMode.NONE] = getDefaultViewport();
+    this.disposeWithMe(() => void (this[EFreezeMode.NONE] = null as unknown as IViewport));
+
+    this[EFreezeMode.ROW] = getDefaultViewport();
+    this.disposeWithMe(() => void (this[EFreezeMode.ROW] = null as unknown as IViewport));
+
+    this[EFreezeMode.COLUMN] = getDefaultViewport();
+    this.disposeWithMe(() => void (this[EFreezeMode.COLUMN] = null as unknown as IViewport));
+
+    this[EFreezeMode.BOTH] = getDefaultViewport();
+    this.disposeWithMe(() => void (this[EFreezeMode.BOTH] = null as unknown as IViewport));
+
     const frozenInfo$ = this.buildFrozenInfo(options, row, column);
 
-    this[EFreezeMode.NONE] = frozenInfo$.pipe(
-      map(
-        ({ frozenWidth: width, frozenHeight: height, ...rest }): IViewport => ({
-          ...rest,
-          x: 0,
-          y: 0,
-          width,
-          height,
-          deltaX: 0,
-          deltaY: 0,
+    this.disposeWithMe(
+      combineLatest([
+        frozenInfo$,
+        sheet.change$.pipe(
+          map(() => sheet.size),
+          startWith(sheet.size),
+        ),
+        offset.change$.pipe(
+          map(() => offset.offset),
+          startWith(offset.offset),
+        ),
+      ])
+        .pipe(
+          map(
+            ([{ frozenWidth: width, frozenHeight: height, ...rest }, sheetBoth, offset]): IViewport => ({
+              ...rest,
+              x: width,
+              y: height,
+              width: sheetBoth.width - width,
+              height: sheetBoth.height - height,
+              ...offset,
+            }),
+          ),
+        )
+        .subscribe((viewport) => {
+          const previous = this[EFreezeMode.BOTH];
+          this.subject.next({ mode: EFreezeMode.BOTH, previous, current: viewport });
+          this[EFreezeMode.BOTH] = viewport;
         }),
-      ),
-      this.withPublish(),
     );
-    this.disposeWithMe(this[EFreezeMode.NONE].subscribe());
 
-    this[EFreezeMode.ROW] = combineLatest([
-      frozenInfo$,
-      sheet.change$.pipe(
-        filter((v) => v.type === 'both' || v.type === 'width'),
-        map(() => sheet.width),
-        startWith(sheet.width),
-      ),
-      offset.change$.pipe(
-        filter((v) => v.type === 'both' || v.type === 'left'),
-        map(() => offset.left),
-        startWith(offset.left),
-      ),
-    ]).pipe(
-      map(
-        ([{ frozenWidth: width, frozenHeight: height, ...rest }, sheetWidth, deltaX]): IViewport => ({
-          ...rest,
-          x: width,
-          y: 0,
-          width: sheetWidth - width,
-          height,
-          deltaX,
-          deltaY: 0,
+    this.disposeWithMe(
+      combineLatest([
+        frozenInfo$,
+        sheet.change$.pipe(
+          filter((v) => v.type === 'both' || v.type === 'width'),
+          map(() => sheet.width),
+          startWith(sheet.width),
+        ),
+        offset.change$.pipe(
+          filter((v) => v.type === 'both' || v.type === 'left'),
+          map(() => offset.left),
+          startWith(offset.left),
+        ),
+      ])
+        .pipe(
+          map(
+            ([{ frozenWidth: width, frozenHeight: height, ...rest }, sheetWidth, deltaX]): IViewport => ({
+              ...rest,
+              x: width,
+              y: 0,
+              width: sheetWidth - width,
+              height,
+              deltaX,
+              deltaY: 0,
+            }),
+          ),
+        )
+        .subscribe((viewport) => {
+          const previous = this[EFreezeMode.ROW];
+          this.subject.next({ mode: EFreezeMode.ROW, previous, current: viewport });
+          this[EFreezeMode.ROW] = viewport;
         }),
-      ),
-      this.withPublish(),
     );
-    this.disposeWithMe(this[EFreezeMode.ROW].subscribe());
 
-    this[EFreezeMode.COLUMN] = combineLatest([
-      frozenInfo$,
-      sheet.change$.pipe(
-        filter((v) => v.type === 'both' || v.type === 'height'),
-        map(() => sheet.height),
-        startWith(sheet.height),
-      ),
-      offset.change$.pipe(
-        filter((v) => v.type === 'both' || v.type === 'top'),
-        map(() => offset.top),
-        startWith(offset.top),
-      ),
-    ]).pipe(
-      map(
-        ([{ frozenWidth: width, frozenHeight: height, ...rest }, sheetHeight, deltaY]): IViewport => ({
-          ...rest,
-          x: 0,
-          y: height,
-          width,
-          height: sheetHeight - height,
-          deltaX: 0,
-          deltaY,
+    this.disposeWithMe(
+      combineLatest([
+        frozenInfo$,
+        sheet.change$.pipe(
+          filter((v) => v.type === 'both' || v.type === 'height'),
+          map(() => sheet.height),
+          startWith(sheet.height),
+        ),
+        offset.change$.pipe(
+          filter((v) => v.type === 'both' || v.type === 'top'),
+          map(() => offset.top),
+          startWith(offset.top),
+        ),
+      ])
+        .pipe(
+          map(
+            ([{ frozenWidth: width, frozenHeight: height, ...rest }, sheetHeight, deltaY]): IViewport => ({
+              ...rest,
+              x: 0,
+              y: height,
+              width,
+              height: sheetHeight - height,
+              deltaX: 0,
+              deltaY,
+            }),
+          ),
+        )
+        .subscribe((viewport) => {
+          const previous = this[EFreezeMode.COLUMN];
+          this.subject.next({ mode: EFreezeMode.COLUMN, previous, current: viewport });
+          this[EFreezeMode.COLUMN] = viewport;
         }),
-      ),
-      this.withPublish(),
     );
-    this.disposeWithMe(this[EFreezeMode.COLUMN].subscribe());
 
-    this[EFreezeMode.BOTH] = combineLatest([
-      frozenInfo$,
-      sheet.change$.pipe(
-        map(() => sheet.size),
-        startWith(sheet.size),
-      ),
-      offset.change$.pipe(
-        map(() => offset.offset),
-        startWith(offset.offset),
-      ),
-    ]).pipe(
-      map(
-        ([{ frozenWidth: width, frozenHeight: height, ...rest }, sheetBoth, offset]): IViewport => ({
-          ...rest,
-          x: width,
-          y: height,
-          width: sheetBoth.width - width,
-          height: sheetBoth.height - height,
-          ...offset,
+    this.disposeWithMe(
+      frozenInfo$
+        .pipe(
+          map(
+            ({ frozenWidth: width, frozenHeight: height, ...rest }): IViewport => ({
+              ...rest,
+              x: 0,
+              y: 0,
+              width,
+              height,
+              deltaX: 0,
+              deltaY: 0,
+            }),
+          ),
+        )
+        .subscribe((viewport) => {
+          const previous = this[EFreezeMode.NONE];
+          this.subject.next({ mode: EFreezeMode.NONE, previous, current: viewport });
+          this[EFreezeMode.NONE] = viewport;
         }),
-      ),
-      this.withPublish(),
     );
-    this.disposeWithMe(this[EFreezeMode.BOTH].subscribe());
   }
 
   private buildFrozenInfo(
@@ -166,4 +212,8 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
       this.withPublish(),
     );
   }
+}
+
+function getDefaultViewport(): IViewport {
+  return { x: 0, y: 0, width: 0, height: 0, deltaX: 0, deltaY: 0, frozenRowCount: 0, frozenColumnCount: 0 };
 }

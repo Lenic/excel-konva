@@ -128,9 +128,21 @@ export interface IViewportOptions {
 }
 
 /**
+ * Viewport change patch
+ */
+export interface IViewportChangePatch extends IChangePatch<IViewport> {
+  /**
+   * The freeze mode.
+   */
+  mode: EFreezeMode;
+}
+
+/**
  * ViewportManager
  */
-export interface IViewportManager extends Record<EFreezeMode, Observable<IViewport>>, IDisposable {}
+export interface IViewportManager extends Record<EFreezeMode, IViewport>, IDisposable {
+  change$: Observable<IViewportChangePatch>;
+}
 /**
  * ViewportManager interface identifier
  */
