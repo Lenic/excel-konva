@@ -1,9 +1,14 @@
 import type { IContainer } from '../../container';
 
+import { IAccumulatedDimensionManager } from '../cache';
+import { ISheetConfig } from '../core';
+import { COLUMN_TAG, ROW_TAG } from '../data';
+
 import { KONVA_CONTAINER, UIElement } from './constants';
 import { ScrollOffset } from './offset';
 import { SheetDimension } from './sheet-dimension';
-import { IScrollOffset, ISheetDimension } from './types';
+import { IScrollOffset, ISheetDimension, IViewportManager } from './types';
+import { ViewportManager } from './viewport';
 
 export * from './types';
 
@@ -17,4 +22,14 @@ export function registerUI(container: IContainer) {
 
   container.register(IScrollOffset).set((c, ctx) => new ScrollOffset(c.get(UIElement, KONVA_CONTAINER, ctx)));
   container.register(ISheetDimension).set((c, ctx) => new SheetDimension(c.get(UIElement, KONVA_CONTAINER, ctx)));
+  container.register(IViewportManager).set((c, ctx) => {
+    const config = c.get(ISheetConfig, ctx);
+    return new ViewportManager(
+      c.get(IScrollOffset, ctx),
+      c.get(ISheetDimension, ctx),
+      { frozenRowCount$: config.get$('frozenRows'), frozenColumnCount$: config.get$('frozenColumns') },
+      c.get(IAccumulatedDimensionManager, ROW_TAG, ctx),
+      c.get(IAccumulatedDimensionManager, COLUMN_TAG, ctx),
+    );
+  });
 }

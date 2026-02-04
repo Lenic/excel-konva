@@ -1,4 +1,4 @@
-import type { IDimensionManager } from '../data';
+import type { IDimensionChangePatch, IDimensionManager } from '../data';
 import type { IAccumulatedDimensionManager } from './types';
 import type { Observable } from 'rxjs';
 
@@ -16,6 +16,8 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
   private dimensionList: CuttableList<number>;
   private dimensionRangeList: CuttableList<[beginValue: number, endValue: number]>;
 
+  change$: Observable<IDimensionChangePatch>;
+
   /**
    * AccumulatedDimensionManager constructor
    *
@@ -24,6 +26,8 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
    */
   constructor(dimension: IDimensionManager, count$: Observable<number>) {
     super();
+
+    this.change$ = dimension.change$;
 
     this.maxFindIndex = -1;
     this.disposeWithMe(() => void (this.maxFindIndex = -1));
