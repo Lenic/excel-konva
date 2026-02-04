@@ -8,7 +8,6 @@ import { binarySearch, ObservableDisposable, TruncatableList } from '../core';
  */
 export class AccumulatedDimensionManager extends ObservableDisposable implements IAccumulatedDimensionManager {
   private count: number;
-  private maxFindIndex: number;
   private previousFindIndex: number;
   private previousFindOffset: number;
   private dimension: IDimensionManager;
@@ -27,9 +26,6 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
     super();
 
     this.change$ = dimension.change$;
-
-    this.maxFindIndex = -1;
-    this.disposeWithMe(() => void (this.maxFindIndex = -1));
 
     this.previousFindIndex = -1;
     this.disposeWithMe(() => void (this.previousFindIndex = -1));
@@ -52,11 +48,10 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
 
     this.disposeWithMe(
       dimension.change$.subscribe(({ index }) => {
-        this.dimensionList.truncate(index);
-        this.dimensionRangeList.truncate(index);
+        this.dimensionList.truncate(index + 1);
+        this.dimensionRangeList.truncate(index + 1);
 
-        if (index <= this.maxFindIndex) {
-          this.maxFindIndex = -1;
+        if (index <= this.dimensionRangeList.length - 1) {
           this.previousFindIndex = -1;
           this.previousFindOffset = -1;
         }
@@ -134,22 +129,48 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
       return index;
     }
 
-    let itemIndex = -1;
-    for (let c = this.maxFindIndex + 1; c < this.count; c++) {
+    index = this.findIndexByOffset(offset);
+    this.previousFindIndex = index;
+    return index;
+  }
+
+  findRange(beginValue: number, endValue: number): [beginIndex: number, endIndex: number] {
+    const list = this.dimensionRangeList;
+
+    const comparer = (value: number) => (mid: number) => {
+      const [beginValue, endValue] = list.get(mid)!;
+      if (beginValue <= value && value < endValue) return 0;
+      return beginValue > value ? 1 : -1;
+    };
+
+    let beginIndex = binarySearch(0, list.length - 1, comparer(beginValue), 1);
+    if (beginIndex === -1) {
+      beginIndex = this.findIndexByOffset(beginValue);
+    }
+
+    let endIndex = binarySearch(beginIndex, list.length - 1, comparer(endValue), -1);
+    if (endIndex === -1) {
+      endIndex = this.findIndexByOffset(endValue);
+    }
+
+    return [beginIndex, endIndex];
+  }
+
+  private findIndexByOffset(offset: number): number {
+    let index = -1;
+    let c = this.dimensionRangeList.length;
+    for (; c < this.count; c++) {
       const beginValue = this.get(c);
       const endValue = this.get(c + 1);
 
-      this.maxFindIndex = c;
-      list.push([beginValue, endValue]);
+      this.dimensionRangeList.push([beginValue, endValue]);
 
       if (offset < endValue) {
-        itemIndex = c;
+        index = c;
         break;
       }
     }
 
-    index = itemIndex === -1 ? -1 : Math.min(itemIndex, this.count - 1);
-    this.previousFindIndex = index;
-    return index;
+    return index === -1 ? -1 : Math.min(index, this.count - 1);
   }
 }

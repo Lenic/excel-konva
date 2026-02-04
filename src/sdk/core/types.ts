@@ -68,6 +68,41 @@ export interface ICellRange {
 }
 
 /**
+ * Cell range change type
+ */
+export const ECellRangeChangeType = {
+  /**
+   * Unknown
+   */
+  UNKNOWN: 0,
+  /**
+   * Top
+   */
+  TOP: 1,
+  /**
+   * Right
+   */
+  RIGHT: 2,
+  /**
+   * Bottom
+   */
+  BOTTOM: 4,
+  /**
+   * Left
+   */
+  LEFT: 8,
+} as const;
+
+/**
+ * Cell range change type
+ */
+export type ECellRangeChangeType = (typeof ECellRangeChangeType)[keyof typeof ECellRangeChangeType];
+/**
+ * Cell range change type mask
+ */
+export type TCellRangeChangeTypeMask = number;
+
+/**
  * Change patch
  */
 export interface IChangePatch<T = number> {

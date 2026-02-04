@@ -1,5 +1,12 @@
 import type { IDisposable, TIdentifier } from '../../container';
-import type { ICellRange, IChangePatch, IDimension, IOffset } from '../core';
+import type {
+  ECellRangeChangeType,
+  ICellRange,
+  IChangePatch,
+  IDimension,
+  IOffset,
+  TCellRangeChangeTypeMask,
+} from '../core';
 import type { Observable } from 'rxjs';
 
 /**
@@ -73,7 +80,7 @@ export const EFreezeMode = {
   /**
    * Freeze both rows and columns
    */
-  BOTH: 3,
+  BOTH: 4,
 } as const;
 
 /**
@@ -105,7 +112,7 @@ export interface IRectBox extends IPoint, IDimension {}
 /**
  * Viewport
  */
-export interface IViewport extends IRectBox, IOffset {
+export interface IViewport extends IRectBox, IOffset, ICellRange {
   /**
    * Number of frozen rows
    */
