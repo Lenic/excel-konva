@@ -105,6 +105,9 @@ export interface IOffset {
  * Single offset change patch
  */
 export interface ISingleOffsetChangePatch extends IChangePatch {
+  /**
+   * The type of offset change
+   */
   type: 'top' | 'left';
 }
 
@@ -112,6 +115,9 @@ export interface ISingleOffsetChangePatch extends IChangePatch {
  * Both offset change patch
  */
 export interface IBothOffsetChangePatch extends IChangePatch<IOffset> {
+  /**
+   * The type of offset change
+   */
   type: 'both';
 }
 
