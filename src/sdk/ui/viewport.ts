@@ -1,5 +1,6 @@
+import type { IScrollOffset } from '../core';
 import type { IAccumulatedDimensionManager } from '../data';
-import type { IScrollOffset, ISheetDimension, IViewport, IViewportManager, IViewportOptions } from './types';
+import type { ISheetDimension, IViewport, IViewportManager, IViewportOptions } from './types';
 import type { Observable } from 'rxjs';
 
 import { combineLatest, filter, map, startWith } from 'rxjs';

@@ -1,6 +1,64 @@
 import type { IDisposable, TIdentifier } from '../../container';
+import type { IChangePatch } from '../types';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
+
+/**
+ * Scroll offset
+ */
+export interface IOffset {
+  /**
+   * Horizontal displacement
+   *
+   * - Positive for right movement
+   * - Negative for left movement
+   */
+  deltaX: number;
+  /**
+   * Vertical displacement
+   *
+   * - Positive for downward movement
+   * - Negative for upward movement
+   */
+  deltaY: number;
+}
+
+export interface ISingleOffsetChangePatch extends IChangePatch {
+  type: 'top' | 'left';
+}
+
+export interface IBothOffsetChangePatch extends IChangePatch<IOffset> {
+  type: 'both';
+}
+
+export type TOffsetChangePatch = ISingleOffsetChangePatch | IBothOffsetChangePatch;
+
+/**
+ * Scroll offset
+ */
+export interface IScrollOffset extends IDisposable {
+  /**
+   * Observable scroll offset change
+   */
+  change$: Observable<TOffsetChangePatch>;
+
+  /**
+   * Scroll top
+   */
+  top: number;
+  /**
+   * Scroll left
+   */
+  left: number;
+  /**
+   * Scroll offset
+   */
+  offset: IOffset;
+}
+/**
+ * Scroll offset interface identifier
+ */
+export const IScrollOffset: TIdentifier<IScrollOffset> = Symbol('IScrollOffset');
 
 /**
  * Cell rect attrs

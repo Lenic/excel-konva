@@ -1,12 +1,11 @@
 import type { IContainer } from '../../container';
 
-import { ISheetConfig } from '../core';
+import { IScrollOffset, ISheetConfig } from '../core';
+import { KONVA_CONTAINER, UIElement } from '../core/constants';
 import { COLUMN_TAG, IAccumulatedDimensionManager, ROW_TAG } from '../data';
 
-import { KONVA_CONTAINER, UIElement } from './constants';
-import { ScrollOffset } from './offset';
 import { SheetDimension } from './sheet-dimension';
-import { IScrollOffset, ISheetDimension, IViewportManager } from './types';
+import { ISheetDimension, IViewportManager } from './types';
 import { ViewportManager } from './viewport';
 
 export * from './types';
@@ -19,7 +18,6 @@ export * from './types';
 export function registerUI(container: IContainer) {
   container.register(UIElement).set(() => document.getElementById('konva-container')!, KONVA_CONTAINER);
 
-  container.register(IScrollOffset).set((c, ctx) => new ScrollOffset(c.get(UIElement, KONVA_CONTAINER, ctx)));
   container.register(ISheetDimension).set((c, ctx) => new SheetDimension(c.get(UIElement, KONVA_CONTAINER, ctx)));
   container.register(IViewportManager).set((c, ctx) => {
     const config = c.get(ISheetConfig, ctx);
