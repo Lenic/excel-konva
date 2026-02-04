@@ -93,8 +93,8 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
         )
         .subscribe((viewport) => {
           const previous = this[EFreezeMode.BOTH];
-          this.subject.next({ mode: EFreezeMode.BOTH, previous, current: viewport });
           this[EFreezeMode.BOTH] = viewport;
+          this.subject.next({ mode: EFreezeMode.BOTH, previous, current: viewport });
         }),
     );
 
@@ -127,8 +127,8 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
         )
         .subscribe((viewport) => {
           const previous = this[EFreezeMode.ROW];
-          this.subject.next({ mode: EFreezeMode.ROW, previous, current: viewport });
           this[EFreezeMode.ROW] = viewport;
+          this.subject.next({ mode: EFreezeMode.ROW, previous, current: viewport });
         }),
     );
 
@@ -161,8 +161,8 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
         )
         .subscribe((viewport) => {
           const previous = this[EFreezeMode.COLUMN];
-          this.subject.next({ mode: EFreezeMode.COLUMN, previous, current: viewport });
           this[EFreezeMode.COLUMN] = viewport;
+          this.subject.next({ mode: EFreezeMode.COLUMN, previous, current: viewport });
         }),
     );
 
@@ -183,8 +183,8 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
         )
         .subscribe((viewport) => {
           const previous = this[EFreezeMode.NONE];
-          this.subject.next({ mode: EFreezeMode.NONE, previous, current: viewport });
           this[EFreezeMode.NONE] = viewport;
+          this.subject.next({ mode: EFreezeMode.NONE, previous, current: viewport });
         }),
     );
   }
