@@ -1,6 +1,6 @@
 import { Disposable } from '../../container';
 
-export class CuttableList<T = unknown> extends Disposable {
+export class TruncatableList<T = unknown> extends Disposable {
   private list: T[];
   private count: number;
 

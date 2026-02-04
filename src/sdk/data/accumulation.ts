@@ -2,7 +2,7 @@ import type { IDimensionChangePatch, IDimensionManager } from '../data';
 import type { IAccumulatedDimensionManager } from './types';
 import type { Observable } from 'rxjs';
 
-import { binarySearch, CuttableList, ObservableDisposable } from '../core';
+import { binarySearch, ObservableDisposable, TruncatableList } from '../core';
 
 /**
  * Accumulated dimension manager
@@ -13,8 +13,8 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
   private previousFindIndex: number;
   private previousFindOffset: number;
   private dimension: IDimensionManager;
-  private dimensionList: CuttableList<number>;
-  private dimensionRangeList: CuttableList<[beginValue: number, endValue: number]>;
+  private dimensionList: TruncatableList<number>;
+  private dimensionRangeList: TruncatableList<[beginValue: number, endValue: number]>;
 
   change$: Observable<IDimensionChangePatch>;
 
@@ -45,10 +45,10 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
     this.disposeWithMe(() => void (this.count = 0));
     this.disposeWithMe(count$.subscribe((count) => void (this.count = count)));
 
-    this.dimensionList = new CuttableList<number>();
+    this.dimensionList = new TruncatableList<number>();
     this.disposeWithMe(this.dimensionList);
 
-    this.dimensionRangeList = new CuttableList<[beginValue: number, endValue: number]>();
+    this.dimensionRangeList = new TruncatableList<[beginValue: number, endValue: number]>();
     this.disposeWithMe(this.dimensionRangeList);
 
     this.disposeWithMe(
