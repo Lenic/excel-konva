@@ -1,16 +1,30 @@
 import type { IDisposable, TIdentifier } from '../../container';
-import type { IOffset } from '../core';
-import type { ICellRange, IChangePatch, IDimension } from '../types';
+import type { ICellRange, IChangePatch, IDimension, IOffset } from '../core';
 import type { Observable } from 'rxjs';
 
+/**
+ * Single sheet dimension change patch
+ */
 export interface ISingleSheetDimensionChangePatch extends IChangePatch {
+  /**
+   * The type of patch, set to 'width' or 'height'.
+   */
   type: 'width' | 'height';
 }
 
+/**
+ * Both sheet dimension change patch
+ */
 export interface IBothSheetDimensionChangePatch extends IChangePatch<IDimension> {
+  /**
+   * The type of patch, set to 'both'.
+   */
   type: 'both';
 }
 
+/**
+ * Sheet dimension change patch
+ */
 export type TSheetDimensionChangePatch = ISingleSheetDimensionChangePatch | IBothSheetDimensionChangePatch;
 
 /**
@@ -83,6 +97,9 @@ export interface IPoint {
   y: number;
 }
 
+/**
+ * Rect box
+ */
 export interface IRectBox extends IPoint, IDimension {}
 
 /**
@@ -110,6 +127,9 @@ export interface IViewportOptions {
   frozenColumnCount$: Observable<number>;
 }
 
+/**
+ * ViewportManager
+ */
 export interface IViewportManager extends Record<EFreezeMode, Observable<IViewport>>, IDisposable {}
 /**
  * ViewportManager interface identifier

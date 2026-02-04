@@ -1,5 +1,5 @@
 import type { IDisposable, TIdentifier } from '../../container';
-import type { ICellRange, IChangePatch } from '../types';
+import type { ICellRange, IChangePatch } from '../core';
 import type { Observable } from 'rxjs';
 
 /**

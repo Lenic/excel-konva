@@ -1,4 +1,4 @@
-import type { IDimension } from '../types';
+import type { IDimension } from '../core';
 import type { ISheetDimension, TSheetDimensionChangePatch } from './types';
 
 import { animationFrameScheduler, auditTime, distinctUntilChanged, map, Observable, startWith } from 'rxjs';

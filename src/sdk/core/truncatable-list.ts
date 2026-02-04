@@ -1,9 +1,17 @@
 import { Disposable } from '../../container';
 
+/**
+ * Truncatable list
+ */
 export class TruncatableList<T = unknown> extends Disposable {
   private list: T[];
   private count: number;
 
+  /**
+   * TruncatableList constructor
+   *
+   * @param initialList - The initial list
+   */
   constructor(initialList?: T[]) {
     super();
 
@@ -16,12 +24,21 @@ export class TruncatableList<T = unknown> extends Disposable {
     });
   }
 
+  /**
+   * The length of the list
+   */
   get length(): number {
     this.checkDisposed();
 
     return this.count;
   }
 
+  /**
+   * Get the item at the specified index
+   *
+   * @param index - The index of the item
+   * @returns The item at the specified index
+   */
   get(index: number): T | undefined {
     this.checkDisposed();
 
@@ -30,6 +47,11 @@ export class TruncatableList<T = unknown> extends Disposable {
     return this.list[index];
   }
 
+  /**
+   * Add an item to the end of the list
+   *
+   * @param item - The item to add
+   */
   push(item: T): void {
     this.checkDisposed();
 
@@ -42,8 +64,15 @@ export class TruncatableList<T = unknown> extends Disposable {
     this.count++;
   }
 
+  /**
+   * Truncate the list to the specified length
+   *
+   * @param newCount - The new length of the list
+   */
   truncate(newCount: number): void {
     this.checkDisposed();
+
+    if (this.count < newCount) return;
 
     this.count = newCount;
   }

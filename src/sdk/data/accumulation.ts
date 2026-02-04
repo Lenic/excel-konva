@@ -1,5 +1,4 @@
-import type { IDimensionChangePatch, IDimensionManager } from '../data';
-import type { IAccumulatedDimensionManager } from './types';
+import type { IAccumulatedDimensionManager, IDimensionChangePatch, IDimensionManager } from './types';
 import type { Observable } from 'rxjs';
 
 import { binarySearch, ObservableDisposable, TruncatableList } from '../core';

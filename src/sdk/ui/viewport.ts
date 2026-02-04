@@ -16,12 +16,24 @@ interface IFrozenInfo {
   frozenRowCount: number;
 }
 
+/**
+ * ViewportManager
+ */
 export class ViewportManager extends ObservableDisposable implements IViewportManager {
   [EFreezeMode.NONE]!: Observable<IViewport>;
   [EFreezeMode.ROW]!: Observable<IViewport>;
   [EFreezeMode.COLUMN]!: Observable<IViewport>;
   [EFreezeMode.BOTH]!: Observable<IViewport>;
 
+  /**
+   * ViewportManager constructor
+   *
+   * @param offset - The offset to observe for dimension changes
+   * @param sheet - The sheet to observe for dimension changes
+   * @param options - The viewport options
+   * @param row - The row to observe for dimension changes
+   * @param column - The column to observe for dimension changes
+   */
   constructor(
     offset: IScrollOffset,
     sheet: ISheetDimension,

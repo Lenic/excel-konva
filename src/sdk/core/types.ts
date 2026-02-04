@@ -1,7 +1,85 @@
 import type { IDisposable, TIdentifier } from '../../container';
-import type { IChangePatch } from '../types';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
+
+/**
+ * Target dimension size
+ */
+export interface IDimension {
+  /**
+   * Width
+   */
+  width: number;
+  /**
+   * Height
+   */
+  height: number;
+}
+
+/**
+ * Location information of the cell
+ */
+export interface ILocation {
+  /**
+   * Row index
+   *
+   * - 0-based
+   */
+  rowIndex: number;
+  /**
+   * Column index
+   *
+   * - 0-based
+   */
+  columnIndex: number;
+}
+
+/**
+ * Cell range
+ *
+ * - The start index is on the top-left
+ * - The end index is on the bottom-right
+ */
+export interface ICellRange {
+  /**
+   * Row start index
+   *
+   * - 0-based
+   */
+  rowStartIndex: number;
+  /**
+   * Row end index
+   *
+   * - 0-based
+   */
+  rowEndIndex: number;
+  /**
+   * Column start index
+   *
+   * - 0-based
+   */
+  columnStartIndex: number;
+  /**
+   * Column end index
+   *
+   * - 0-based
+   */
+  columnEndIndex: number;
+}
+
+/**
+ * Change patch
+ */
+export interface IChangePatch<T = number> {
+  /**
+   * Previous value
+   */
+  previous: T;
+  /**
+   * Current value
+   */
+  current: T;
+}
 
 /**
  * Scroll offset
@@ -23,14 +101,23 @@ export interface IOffset {
   deltaY: number;
 }
 
+/**
+ * Single offset change patch
+ */
 export interface ISingleOffsetChangePatch extends IChangePatch {
   type: 'top' | 'left';
 }
 
+/**
+ * Both offset change patch
+ */
 export interface IBothOffsetChangePatch extends IChangePatch<IOffset> {
   type: 'both';
 }
 
+/**
+ * Offset change patch
+ */
 export type TOffsetChangePatch = ISingleOffsetChangePatch | IBothOffsetChangePatch;
 
 /**
