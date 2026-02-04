@@ -1,4 +1,4 @@
-import type { IAccumulatedDimensionManager } from '../cache';
+import type { IAccumulatedDimensionManager } from '../data';
 import type { IScrollOffset, ISheetDimension, IViewport, IViewportManager, IViewportOptions } from './types';
 import type { Observable } from 'rxjs';
 

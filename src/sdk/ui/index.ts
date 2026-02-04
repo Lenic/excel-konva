@@ -1,8 +1,7 @@
 import type { IContainer } from '../../container';
 
-import { IAccumulatedDimensionManager } from '../cache';
 import { ISheetConfig } from '../core';
-import { COLUMN_TAG, ROW_TAG } from '../data';
+import { COLUMN_TAG, IAccumulatedDimensionManager, ROW_TAG } from '../data';
 
 import { KONVA_CONTAINER, UIElement } from './constants';
 import { ScrollOffset } from './offset';

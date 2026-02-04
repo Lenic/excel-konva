@@ -4,8 +4,9 @@ import { combineLatest, map } from 'rxjs';
 
 import { ISheetConfig } from '../core';
 
+import { AccumulatedDimensionManager } from './accumulation';
 import { DimensionManager } from './dimension';
-import { IDimensionManager } from './types';
+import { IAccumulatedDimensionManager, IDimensionManager } from './types';
 
 export * from './types';
 
@@ -43,4 +44,23 @@ export function registerData(container: IContainer) {
         ),
       );
     }, COLUMN_TAG);
+
+  container
+    .register(IAccumulatedDimensionManager)
+    .set(
+      (c, ctx) =>
+        new AccumulatedDimensionManager(
+          c.get(IDimensionManager, ROW_TAG, ctx),
+          c.get(ISheetConfig, ctx).get$('rowCount'),
+        ),
+      ROW_TAG,
+    )
+    .set(
+      (c, ctx) =>
+        new AccumulatedDimensionManager(
+          c.get(IDimensionManager, COLUMN_TAG, ctx),
+          c.get(ISheetConfig, ctx).get$('columnCount'),
+        ),
+      COLUMN_TAG,
+    );
 }

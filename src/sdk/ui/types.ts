@@ -1,5 +1,5 @@
 import type { IDisposable, TIdentifier } from '../../container';
-import type { IChangePatch, IDimension } from '../types';
+import type { ICellRange, IChangePatch, IDimension } from '../types';
 import type { Observable } from 'rxjs';
 
 /**
@@ -171,3 +171,11 @@ export interface IViewportManager extends Record<EFreezeMode, Observable<IViewpo
  * ViewportManager interface identifier
  */
 export const IViewportManager: TIdentifier<IViewportManager> = Symbol('IViewportManager');
+
+export interface ILayoutCache extends IDisposable {
+  getCellRect(rowIndex: number, columnIndex: number): IRectBox;
+  getRangeRects(range: ICellRange): IRectBox[];
+  invalidateRange(range: ICellRange): void;
+  invalidateByRow(rowIndex: number): void;
+  invalidateByColumn(columnIndex: number): void;
+}
