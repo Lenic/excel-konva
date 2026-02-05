@@ -128,14 +128,10 @@ export interface ISetCellValuePatch<T = unknown> {
   range: ICellRange;
 }
 
-export interface IItemCountPatch extends IChangePatch {
-  type: 'row' | 'column';
-}
-
 /**
  * Union type for cell data change patches.
  */
-export type TCellChangePatch<T = unknown> = IClearCellValuePatch | ISetCellValuePatch<T> | IItemCountPatch;
+export type TCellChangePatch<T = unknown> = IClearCellValuePatch | ISetCellValuePatch<T>;
 
 /**
  * Interface for providing and managing spreadsheet cell data.
