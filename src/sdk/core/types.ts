@@ -533,9 +533,9 @@ export interface ISheetOptions {
  */
 export interface ISheetConfig extends IDisposable {
   /**
-   * Observable options
+   * Options
    */
-  options$: Observable<Required<ISheetOptions>>;
+  options: Required<ISheetOptions>;
 
   /**
    * Get option value

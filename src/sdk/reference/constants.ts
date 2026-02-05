@@ -18,4 +18,4 @@ export const VIRTUAL_CONTENT = Symbol('VIRTUAL_CONTENT');
 /**
  * UI element
  */
-export const UIElement: TIdentifier<HTMLElement> = Symbol('UIElement');
+export const UIElement: TIdentifier<HTMLDivElement> = Symbol('UIElement');

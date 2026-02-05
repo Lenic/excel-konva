@@ -1,12 +1,6 @@
 import type { IDisposable, TIdentifier } from '../../container';
-import type {
-  ECellRangeChangeType,
-  ICellRange,
-  IChangePatch,
-  IDimension,
-  IOffset,
-  TCellRangeChangeTypeMask,
-} from '../core';
+import type { ICellRange, IChangePatch, IDimension, IOffset } from '../core';
+import type { EFreezeMode } from '../reference';
 import type { Observable } from 'rxjs';
 
 /**
@@ -60,33 +54,6 @@ export interface ISheetDimension extends IDisposable {
  * SheetDimension interface identifier
  */
 export const ISheetDimension: TIdentifier<ISheetDimension> = Symbol('ISheetDimension');
-
-/**
- * Freeze mode
- */
-export const EFreezeMode = {
-  /**
-   * No freeze
-   */
-  NONE: 0,
-  /**
-   * Freeze rows
-   */
-  ROW: 1,
-  /**
-   * Freeze columns
-   */
-  COLUMN: 2,
-  /**
-   * Freeze both rows and columns
-   */
-  BOTH: 4,
-} as const;
-
-/**
- * Freeze mode type
- */
-export type EFreezeMode = (typeof EFreezeMode)[keyof typeof EFreezeMode];
 
 /**
  * Coordinate point

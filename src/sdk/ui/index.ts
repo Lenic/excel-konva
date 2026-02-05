@@ -1,7 +1,8 @@
 import type { IContainer } from '../../container';
 
-import { IScrollOffset, ISheetConfig, KONVA_CONTAINER, UIElement } from '../core';
+import { IScrollOffset, ISheetConfig } from '../core';
 import { COLUMN_TAG, IAccumulatedDimensionManager, ROW_TAG } from '../data';
+import { KONVA_CONTAINER, UIElement } from '../reference';
 
 import { SheetDimension } from './sheet-dimension';
 import { ISheetDimension, IViewportManager } from './types';
@@ -15,8 +16,6 @@ export * from './types';
  * @param container - the target IOC container
  */
 export function registerUI(container: IContainer) {
-  container.register(UIElement).set(() => document.getElementById('konva-container')!, KONVA_CONTAINER);
-
   container.register(ISheetDimension).set((c, ctx) => new SheetDimension(c.get(UIElement, KONVA_CONTAINER, ctx)));
   container.register(IViewportManager).set((c, ctx) => {
     const config = c.get(ISheetConfig, ctx);

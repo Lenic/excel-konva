@@ -6,8 +6,7 @@ import { type Observable, scan, Subject } from 'rxjs';
 import { combineLatest, map, startWith } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
-
-import { EFreezeMode } from './types';
+import { EFreezeMode } from '../reference';
 
 interface ICache {
   offset: IOffset;

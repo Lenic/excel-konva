@@ -1,10 +1,10 @@
 import type { IContainer } from '../../container';
 
-import { KONVA_CONTAINER, UIElement } from './constants';
+import { KONVA_CONTAINER, UIElement } from '../reference';
+
 import { ScrollOffset } from './offset';
 import { IScrollOffset } from './types';
 
-export * from './constants';
 export * from './disposable';
 export * from './queue';
 export * from './truncatable-list';
