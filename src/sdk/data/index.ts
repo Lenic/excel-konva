@@ -5,8 +5,9 @@ import { combineLatest, map } from 'rxjs';
 import { ISheetConfig } from '../core';
 
 import { AccumulatedDimensionManager } from './accumulation';
+import { DataManager } from './data';
 import { DimensionManager } from './dimension';
-import { IAccumulatedDimensionManager, IDimensionManager } from './types';
+import { IAccumulatedDimensionManager, IDataManager, IDimensionManager } from './types';
 
 export * from './types';
 
@@ -63,4 +64,6 @@ export function registerData(container: IContainer) {
         ),
       COLUMN_TAG,
     );
+
+  container.register(IDataManager).set(() => new DataManager());
 }

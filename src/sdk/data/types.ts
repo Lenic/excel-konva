@@ -97,6 +97,25 @@ export const IAccumulatedDimensionManager: TIdentifier<IAccumulatedDimensionMana
   Symbol('IAccumulatedDimensionManager');
 
 /**
+ * Cell content
+ */
+export interface ICellContent<T = unknown> {
+  /**
+   * Cell content type
+   */
+  type: string;
+  /**
+   * Cell content value
+   */
+  value: T;
+}
+
+/**
+ * Cell content type
+ */
+export type TCellContent<T = unknown> = string | null | ICellContent<T>;
+
+/**
  * Patch representing a command to clear cell values within a specific range.
  */
 export interface IClearCellValuePatch {
@@ -121,7 +140,7 @@ export interface ISetCellValuePatch<T = unknown> {
   /**
    * The 2D array of values to be applied to the range.
    */
-  values: T[][];
+  values: TCellContent<T>[][];
   /**
    * The cell range where values will be set.
    */
@@ -136,11 +155,11 @@ export type TCellChangePatch<T = unknown> = IClearCellValuePatch | ISetCellValue
 /**
  * Interface for providing and managing spreadsheet cell data.
  */
-export interface IDataManager<T = unknown> extends IDisposable {
+export interface IDataManager extends IDisposable {
   /**
    * An observable that emits patches representing incremental changes to the data source.
    */
-  readonly patch$: Observable<TCellChangePatch<T>>;
+  readonly patch$: Observable<TCellChangePatch>;
 
   /**
    * Retrieves the value of a cell at the specified row and column indices.
@@ -148,17 +167,28 @@ export interface IDataManager<T = unknown> extends IDisposable {
    * @param rowIndex - The index of the row.
    * @param columnIndex - The index of the column.
    *
-   * @returns The cell value, or null if empty.
+   * @returns The cell value, or undefined if empty.
    */
-  getCellValue(rowIndex: number, columnIndex: number): T | null;
+  get<T = unknown>(rowIndex: number, columnIndex: number): TCellContent<T> | undefined;
 
   /**
-   * Gets the total number of rows in the data source.
+   * Sets the value of a cell at the specified row and column indices.
+   *
+   * @param rowIndex - The index of the row.
+   * @param columnIndex - The index of the column.
+   * @param value - The value to set for the cell.
    */
-  getRowCount(): number;
+  set<T = unknown>(rowIndex: number, columnIndex: number, value?: TCellContent<T>): void;
 
   /**
-   * Gets the total number of columns in the data source.
+   * Sets the cell values for a given range.
+   *
+   * @param range - The cell range to set values for.
+   * @param values - A 2D array of values corresponding to the range.
    */
-  getColumnCount(): number;
+  setCells<T = unknown>(range: ICellRange, values?: TCellContent<T>[][]): void;
 }
+/**
+ * Identifier for the IDataManager interface.
+ */
+export const IDataManager: TIdentifier<IDataManager> = Symbol('IDataManager');
