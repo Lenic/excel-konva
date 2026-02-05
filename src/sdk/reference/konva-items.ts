@@ -4,7 +4,7 @@ import type { IKonvaItems, IRenderGroup } from './types';
 import Konva from 'konva';
 import { fromEventPattern, tap } from 'rxjs';
 
-import { ObservableDisposable } from '../core';
+import { ObservableDisposable } from '../utils';
 
 import { EFreezeMode } from './types';
 

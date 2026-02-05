@@ -4,7 +4,14 @@ import { Disposable } from '../../container';
  * Truncatable list
  */
 export class TruncatableList<T = unknown> extends Disposable {
+  /**
+   * Data list
+   */
   private list: T[];
+
+  /**
+   * Item count
+   */
   private count: number;
 
   /**

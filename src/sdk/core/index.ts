@@ -6,11 +6,7 @@ import { ScrollOffset } from './offset';
 import { ISheetConfig } from './types';
 import { IScrollOffset } from './types';
 
-export * from './disposable';
-export * from './queue';
-export * from './truncatable-list';
 export * from './types';
-export * from './utils';
 
 /**
  * Add core class registrations to the container

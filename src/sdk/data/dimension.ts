@@ -3,7 +3,7 @@ import type { Observable } from 'rxjs';
 
 import { Subject } from 'rxjs';
 
-import { ObservableDisposable } from '../core';
+import { ObservableDisposable } from '../utils';
 
 /**
  * Dimension manager

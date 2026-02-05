@@ -3,7 +3,7 @@ import type { Observable } from 'rxjs';
 
 import { animationFrameScheduler, auditTime, distinctUntilChanged, filter, fromEvent, map } from 'rxjs';
 
-import { ObservableDisposable } from '../core';
+import { ObservableDisposable } from '../utils';
 
 /**
  * Scroll offset

@@ -3,7 +3,7 @@ import type { ISheetDimension, TSheetDimensionChangePatch } from './types';
 
 import { animationFrameScheduler, auditTime, distinctUntilChanged, filter, map, Observable } from 'rxjs';
 
-import { ObservableDisposable } from '../core';
+import { ObservableDisposable } from '../utils';
 
 /**
  * Sheet dimension

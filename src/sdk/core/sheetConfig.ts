@@ -4,7 +4,7 @@ import type { Observable } from 'rxjs';
 import { filter, startWith, Subject } from 'rxjs';
 import { distinctUntilChanged, finalize, map } from 'rxjs';
 
-import { ObservableDisposable } from '../core';
+import { ObservableDisposable } from '../utils';
 
 export const defaultSheetConfig: Required<ISheetOptions> = {
   headerHeight: 30,

@@ -1,7 +1,7 @@
 import type { IAccumulatedDimensionManager, IDimensionManager, TDimensionPatch } from './types';
 import type { Observable } from 'rxjs';
 
-import { binarySearch, ObservableDisposable, TruncatableList } from '../core';
+import { binarySearch, ObservableDisposable, TruncatableList } from '../utils';
 
 /**
  * Accumulated dimension manager

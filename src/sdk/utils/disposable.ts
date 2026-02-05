@@ -8,6 +8,9 @@ import { Disposable } from '../../container';
  * Observable disposable class
  */
 export class ObservableDisposable extends Disposable {
+  /**
+   * Notification subject
+   */
   private notificationSubject: Subject<void>;
 
   /**
@@ -25,6 +28,8 @@ export class ObservableDisposable extends Disposable {
 
   /**
    * Observable disposable with destroy
+   *
+   * @returns The operator function
    */
   protected withDestroy<T>(): MonoTypeOperatorFunction<T> {
     return (source$: Observable<T>) => source$.pipe(takeUntil(this.notificationSubject));
@@ -32,6 +37,8 @@ export class ObservableDisposable extends Disposable {
 
   /**
    * Observable disposable with publish
+   *
+   * @returns The operator function
    */
   protected withPublish<T>(): MonoTypeOperatorFunction<T> {
     return (source$: Observable<T>) =>
@@ -40,6 +47,8 @@ export class ObservableDisposable extends Disposable {
 
   /**
    * Observable disposable with share
+   *
+   * @returns The operator function
    */
   protected withShare<T>(): MonoTypeOperatorFunction<T> {
     return (source$: Observable<T>) => source$.pipe(takeUntil(this.notificationSubject), share());

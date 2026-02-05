@@ -16,8 +16,19 @@ interface IQueueNode<T> {
  * Queue class
  */
 export class Queue<T> {
+  /**
+   * Head node
+   */
   private head: IQueueNode<T> | null;
+
+  /**
+   * Tail node
+   */
   private tail: IQueueNode<T> | null;
+
+  /**
+   * Queue size
+   */
   private size: number;
 
   /**

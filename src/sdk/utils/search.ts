@@ -1,38 +1,4 @@
 /**
- * Get the key of the cell
- *
- * @param rowIndex - The index of the row, starting from 0
- * @param columnIndex - The index of the column, starting from 0
- */
-export function getCellKey(rowIndex: number, columnIndex: number) {
-  return `R${rowIndex}_C${columnIndex}`;
-}
-
-const columnLablMap = new Map<number, string>();
-/**
- * Get the column header string
- *
- * - Usually strings like A, B, MN, XYZ
- * - Equivalent to converting a decimal number to a base-26 string represented by uppercase English letters
- *
- * @param columnIndex - The index of the column, starting from 0
- */
-export function getColumnLabel(columnIndex: number) {
-  let result = columnLablMap.get(columnIndex) ?? '';
-  if (result) return result;
-
-  let temp = columnIndex;
-  while (temp >= 0) {
-    const index = temp % 26;
-    result = String.fromCharCode(65 + index) + result;
-    temp = Math.floor(temp / 26) - 1;
-  }
-
-  columnLablMap.set(columnIndex, result);
-  return result;
-}
-
-/**
  * Enhanced binary search function.
  *
  * - Assumes the original data is a sorted list in ascending order, and `comparer` returns the result of [value at mid index - target value];

@@ -6,8 +6,8 @@ import type { Observable } from 'rxjs';
 import { distinctUntilChanged, filter, of, scan } from 'rxjs';
 import { combineLatest, map, startWith } from 'rxjs';
 
-import { ObservableDisposable } from '../core';
 import { EFreezeMode } from '../reference';
+import { ObservableDisposable } from '../utils';
 
 import { Viewport } from './viewport';
 
