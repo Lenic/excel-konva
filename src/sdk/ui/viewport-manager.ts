@@ -75,7 +75,10 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
         ),
       ),
     );
-    this.disposeWithMe(() => void (this[EFreezeMode.NONE] = null as unknown as IViewport));
+    this.disposeWithMe(() => {
+      this[EFreezeMode.NONE].dispose();
+      this[EFreezeMode.NONE] = getDefaultValue();
+    });
 
     this[EFreezeMode.ROW] = new Viewport(
       combineLatest([
@@ -108,7 +111,10 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
         ),
       ),
     );
-    this.disposeWithMe(() => void (this[EFreezeMode.ROW] = null as unknown as IViewport));
+    this.disposeWithMe(() => {
+      this[EFreezeMode.ROW].dispose();
+      this[EFreezeMode.ROW] = getDefaultValue();
+    });
 
     this[EFreezeMode.COLUMN] = new Viewport(
       combineLatest([
@@ -141,7 +147,10 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
         ),
       ),
     );
-    this.disposeWithMe(() => void (this[EFreezeMode.COLUMN] = null as unknown as IViewport));
+    this.disposeWithMe(() => {
+      this[EFreezeMode.COLUMN].dispose();
+      this[EFreezeMode.COLUMN] = getDefaultValue();
+    });
 
     this[EFreezeMode.BOTH] = new Viewport(
       box$.pipe(map(({ width, height }): IRectBox => ({ x: 0, y: 0, width, height }))),
@@ -157,7 +166,10 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
         ),
       ),
     );
-    this.disposeWithMe(() => void (this[EFreezeMode.BOTH] = null as unknown as IViewport));
+    this.disposeWithMe(() => {
+      this[EFreezeMode.BOTH].dispose();
+      this[EFreezeMode.BOTH] = getDefaultValue();
+    });
   }
 
   private buildFrozenDimension(
@@ -220,4 +232,8 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
       this.withPublish(),
     );
   }
+}
+
+function getDefaultValue() {
+  return undefined as unknown as IViewport;
 }

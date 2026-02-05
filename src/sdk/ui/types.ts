@@ -114,7 +114,7 @@ export type TViewportChangePatch = IViewportBoxChangePatch | IViewportOffsetChan
 /**
  * Viewport
  */
-export interface IViewport {
+export interface IViewport extends IDisposable {
   /**
    * Observable viewport change
    */
