@@ -1,11 +1,12 @@
 import type { ISheetConfig } from '../core';
+import type { IKonvaItems, IRenderGroup } from './types';
 
 import Konva from 'konva';
 import { fromEventPattern, tap } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
 
-import { EFreezeMode, type IKonvaItems, type IRenderGroup } from './types';
+import { EFreezeMode } from './types';
 
 /**
  * Konva items

@@ -1,8 +1,9 @@
 import type { ICellRange, IDimension, IOffset, IScrollOffset } from '../core';
 import type { IAccumulatedDimensionManager } from '../data';
 import type { IRectBox, ISheetDimension, IViewport, IViewportManager, IViewportOptions } from './types';
+import type { Observable } from 'rxjs';
 
-import { distinctUntilChanged, filter, type Observable, of, scan } from 'rxjs';
+import { distinctUntilChanged, filter, of, scan } from 'rxjs';
 import { combineLatest, map, startWith } from 'rxjs';
 
 import { ObservableDisposable } from '../core';

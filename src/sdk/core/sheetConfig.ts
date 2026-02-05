@@ -1,6 +1,7 @@
 import type { IChangePatch, ISheetConfig, ISheetOptions } from './types';
+import type { Observable } from 'rxjs';
 
-import { filter, type Observable, startWith, Subject } from 'rxjs';
+import { filter, startWith, Subject } from 'rxjs';
 import { distinctUntilChanged, finalize, map } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
