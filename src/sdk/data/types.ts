@@ -25,10 +25,29 @@ export interface IDimensionOptions {
  */
 export interface IDimensionChangePatch extends IChangePatch {
   /**
+   * The type of patch, set to 'dimension'.
+   */
+  type: 'dimension';
+  /**
    * The index of the row or column being changed.
    */
   index: number;
 }
+
+/**
+ * Represents a change in the dimension options.
+ */
+export interface IDimensionOptionsChangePatch extends IChangePatch<IDimensionOptions> {
+  /**
+   * The type of patch, set to 'options'.
+   */
+  type: 'options';
+}
+
+/**
+ * Union type for dimension change patches.
+ */
+export type TDimensionPatch = IDimensionChangePatch | IDimensionOptionsChangePatch;
 
 /**
  * Interface for managing row or column dimensions.
@@ -37,7 +56,7 @@ export interface IDimensionManager extends IDisposable {
   /**
    * An observable that emits when a dimension value changes.
    */
-  readonly change$: Observable<IDimensionChangePatch>;
+  readonly change$: Observable<TDimensionPatch>;
 
   /**
    * Retrieves the dimension size for a specific index.
@@ -66,7 +85,7 @@ export interface IAccumulatedDimensionManager {
   /**
    * An observable that emits when a dimension value changes.
    */
-  readonly change$: Observable<IDimensionChangePatch>;
+  readonly change$: Observable<TDimensionPatch>;
 
   /**
    * Get accumulated dimension

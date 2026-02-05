@@ -1,7 +1,7 @@
-import type { IDimensionChangePatch, IDimensionManager, IDimensionOptions } from './types';
+import type { IDimensionManager, IDimensionOptions, TDimensionPatch } from './types';
 import type { Observable } from 'rxjs';
 
-import { filter, map, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
 
@@ -11,9 +11,9 @@ import { ObservableDisposable } from '../core';
 export class DimensionManager extends ObservableDisposable implements IDimensionManager {
   private store: Map<number, number>;
   private options: IDimensionOptions;
-  private dimensionSubject: Subject<[number, number | undefined]>;
+  private dimensionSubject: Subject<TDimensionPatch>;
 
-  change$: Observable<IDimensionChangePatch>;
+  change$: Observable<TDimensionPatch>;
 
   /**
    * Initializes a new instance of the DimensionManager class.
@@ -28,46 +28,35 @@ export class DimensionManager extends ObservableDisposable implements IDimension
       this.store.clear();
     });
 
-    this.options = getDefaultOptions();
-    this.disposeWithMe(() => {
-      this.options = getDefaultOptions();
-    });
-
-    this.disposeWithMe(
-      options$.subscribe((options) => {
-        this.options = options;
-      }),
-    );
-
-    this.dimensionSubject = new Subject<[number, number | undefined]>();
+    this.dimensionSubject = new Subject<TDimensionPatch>();
     this.disposeWithMe(() => {
       this.dimensionSubject.complete();
     });
+    this.change$ = this.dimensionSubject.asObservable();
 
+    this.options = getDefaultValue();
+    this.disposeWithMe(() => void (this.options = getDefaultValue()));
     this.disposeWithMe(
-      this.dimensionSubject
-        .pipe(
-          map(([index, value]) => {
-            if (typeof value === 'number') {
-              this.store.set(index, value);
-            } else {
-              this.store.delete(index);
-            }
-          }),
-        )
-        .subscribe(),
-    );
+      options$.subscribe((options) => {
+        // the default value is `undefined`
+        if (typeof this.options === 'undefined') {
+          // ignore notification when `this.options === undefined`
+          this.options = options;
+          return;
+        }
 
-    this.change$ = this.dimensionSubject.pipe(
-      map(([index, value]): IDimensionChangePatch | undefined => {
-        const oldValue = this.store.get(index);
-        if (oldValue === value) return;
+        if (
+          this.options.minimalDimension === options.minimalDimension &&
+          this.options.headerDimension === options.headerDimension &&
+          this.options.defaultDimension === options.defaultDimension
+        ) {
+          return;
+        }
 
-        const defaultValue = index === 0 ? this.options.headerDimension : this.options.defaultDimension;
-        return { index, previous: oldValue ?? defaultValue, current: value ?? defaultValue };
+        const previous = this.options;
+        this.options = options;
+        this.dimensionSubject.next({ type: 'options', previous, current: options });
       }),
-      filter((v): v is IDimensionChangePatch => !!v),
-      this.withShare(),
     );
   }
 
@@ -85,10 +74,24 @@ export class DimensionManager extends ObservableDisposable implements IDimension
 
     if (typeof value === 'number' && value < this.options.minimalDimension) return;
 
-    this.dimensionSubject.next([index, value]);
+    const oldValue = this.store.get(index);
+    if (oldValue === value) return;
+
+    const previous = oldValue ?? (index === 0 ? this.options.headerDimension : this.options.defaultDimension);
+    const current = value ?? (index === 0 ? this.options.headerDimension : this.options.defaultDimension);
+
+    if (typeof value === 'number') {
+      this.store.set(index, value);
+    } else {
+      this.store.delete(index);
+    }
+
+    if (previous !== current) {
+      this.dimensionSubject.next({ type: 'dimension', index, previous, current });
+    }
   }
 }
 
-function getDefaultOptions(): IDimensionOptions {
-  return { minimalDimension: 0, headerDimension: 0, defaultDimension: 0 };
+function getDefaultValue() {
+  return undefined as unknown as IDimensionOptions;
 }

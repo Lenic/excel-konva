@@ -1,4 +1,4 @@
-import type { IAccumulatedDimensionManager, IDimensionChangePatch, IDimensionManager } from './types';
+import type { IAccumulatedDimensionManager, IDimensionManager, TDimensionPatch } from './types';
 import type { Observable } from 'rxjs';
 
 import { binarySearch, ObservableDisposable, TruncatableList } from '../core';
@@ -14,7 +14,7 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
   private dimensionList: TruncatableList<number>;
   private dimensionRangeList: TruncatableList<[beginValue: number, endValue: number]>;
 
-  change$: Observable<IDimensionChangePatch>;
+  change$: Observable<TDimensionPatch>;
 
   /**
    * AccumulatedDimensionManager constructor
@@ -47,11 +47,19 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
     this.disposeWithMe(this.dimensionRangeList);
 
     this.disposeWithMe(
-      dimension.change$.subscribe(({ index }) => {
-        this.dimensionList.truncate(index + 1);
-        this.dimensionRangeList.truncate(index + 1);
+      dimension.change$.subscribe((patch) => {
+        if (patch.type === 'dimension') {
+          this.dimensionList.truncate(patch.index + 1);
+          this.dimensionRangeList.truncate(patch.index + 1);
 
-        if (index <= this.dimensionRangeList.length - 1) {
+          if (patch.index <= this.dimensionRangeList.length - 1) {
+            this.previousFindIndex = -1;
+            this.previousFindOffset = -1;
+          }
+        } else {
+          this.dimensionList.truncate(0);
+          this.dimensionRangeList.truncate(0);
+
           this.previousFindIndex = -1;
           this.previousFindOffset = -1;
         }

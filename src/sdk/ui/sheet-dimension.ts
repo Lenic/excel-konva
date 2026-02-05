@@ -1,7 +1,7 @@
 import type { IDimension } from '../core';
 import type { ISheetDimension, TSheetDimensionChangePatch } from './types';
 
-import { animationFrameScheduler, auditTime, distinctUntilChanged, map, Observable, startWith } from 'rxjs';
+import { animationFrameScheduler, auditTime, distinctUntilChanged, filter, map, Observable } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
 
@@ -23,14 +23,14 @@ export class SheetDimension extends ObservableDisposable implements ISheetDimens
   constructor(el: HTMLElement) {
     super();
 
-    this.width = 0;
+    this.width = el.clientWidth;
     this.disposeWithMe(() => void (this.width = 0));
 
-    this.height = 0;
+    this.height = el.clientHeight;
     this.disposeWithMe(() => void (this.height = 0));
 
-    this.size = this.getDefaultDimension();
-    this.disposeWithMe(() => void (this.size = this.getDefaultDimension()));
+    this.size = { width: this.width, height: this.height };
+    this.disposeWithMe(() => void (this.size = { width: 0, height: 0 }));
 
     this.change$ = new Observable<HTMLElement>((observer) => {
       const resizeObserver = new ResizeObserver(() => {
@@ -43,7 +43,6 @@ export class SheetDimension extends ObservableDisposable implements ISheetDimens
       };
     }).pipe(
       auditTime(16, animationFrameScheduler),
-      startWith(el),
       map((el) => ({ width: el.clientWidth, height: el.clientHeight }) as IDimension),
       distinctUntilChanged((prev, curr) => prev.width === curr.width && prev.height === curr.height),
       map((delta) => {
@@ -63,7 +62,7 @@ export class SheetDimension extends ObservableDisposable implements ISheetDimens
             previous: this.width,
             current: delta.width,
           };
-        } else {
+        } else if (heightChanged) {
           patch = {
             type: 'height',
             previous: this.height,
@@ -77,12 +76,9 @@ export class SheetDimension extends ObservableDisposable implements ISheetDimens
 
         return patch;
       }),
+      filter((v): v is TSheetDimensionChangePatch => v !== null),
       this.withShare(),
     );
     this.disposeWithMe(this.change$.subscribe());
-  }
-
-  private getDefaultDimension(): IDimension {
-    return { width: 0, height: 0 };
   }
 }

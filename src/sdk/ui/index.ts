@@ -6,7 +6,7 @@ import { KONVA_CONTAINER, UIElement } from '../reference';
 
 import { SheetDimension } from './sheet-dimension';
 import { ISheetDimension, IViewportManager } from './types';
-import { ViewportManager } from './viewport';
+import { ViewportManager } from './viewport-manager';
 
 export * from './types';
 

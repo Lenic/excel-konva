@@ -1,7 +1,7 @@
 import type { IOffset, IScrollOffset, TOffsetChangePatch } from './types';
 import type { Observable } from 'rxjs';
 
-import { animationFrameScheduler, auditTime, distinctUntilChanged, fromEvent, map, startWith } from 'rxjs';
+import { animationFrameScheduler, auditTime, distinctUntilChanged, filter, fromEvent, map } from 'rxjs';
 
 import { ObservableDisposable } from '../core';
 
@@ -9,8 +9,6 @@ import { ObservableDisposable } from '../core';
  * Scroll offset
  */
 export class ScrollOffset extends ObservableDisposable implements IScrollOffset {
-  private el: HTMLElement;
-
   top: number;
   left: number;
   offset: IOffset;
@@ -25,22 +23,18 @@ export class ScrollOffset extends ObservableDisposable implements IScrollOffset 
   constructor(el: HTMLElement) {
     super();
 
-    this.el = el;
-    this.disposeWithMe(() => void (this.el = null as unknown as HTMLElement));
-
-    this.top = 0;
+    this.top = el.scrollTop;
     this.disposeWithMe(() => void (this.top = 0));
 
-    this.left = 0;
+    this.left = el.scrollLeft;
     this.disposeWithMe(() => void (this.left = 0));
 
-    this.offset = this.getDefaultOffset();
-    this.disposeWithMe(() => void (this.offset = this.getDefaultOffset()));
+    this.offset = { deltaX: this.left, deltaY: this.top };
+    this.disposeWithMe(() => void (this.offset = undefined as unknown as IOffset));
 
-    this.change$ = fromEvent(this.el, 'scroll').pipe(
+    this.change$ = fromEvent(el, 'scroll').pipe(
       auditTime(16, animationFrameScheduler),
-      startWith(null),
-      map(() => ({ deltaX: this.el.scrollLeft, deltaY: this.el.scrollTop }) as IOffset),
+      map(() => ({ deltaX: el.scrollLeft, deltaY: el.scrollTop }) as IOffset),
       distinctUntilChanged((x, y) => x.deltaX === y.deltaX && x.deltaY === y.deltaY),
       map((delta) => {
         const topChanged = this.top !== delta.deltaY;
@@ -59,7 +53,7 @@ export class ScrollOffset extends ObservableDisposable implements IScrollOffset 
             previous: this.top,
             current: delta.deltaY,
           };
-        } else {
+        } else if (leftChanged) {
           patch = {
             type: 'left',
             previous: this.left,
@@ -73,12 +67,9 @@ export class ScrollOffset extends ObservableDisposable implements IScrollOffset 
 
         return patch;
       }),
+      filter((v): v is TOffsetChangePatch => v !== null),
       this.withShare(),
     );
     this.disposeWithMe(this.change$.subscribe());
-  }
-
-  private getDefaultOffset(): IOffset {
-    return { deltaX: 0, deltaY: 0 };
   }
 }

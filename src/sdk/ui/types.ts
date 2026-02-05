@@ -77,17 +77,61 @@ export interface IPoint {
 export interface IRectBox extends IPoint, IDimension {}
 
 /**
+ * Viewport box change patch
+ */
+export interface IViewportBoxChangePatch extends IChangePatch<IRectBox> {
+  /**
+   * The type of patch, set to 'box'.
+   */
+  type: 'box';
+}
+
+/**
+ * Viewport offset change patch
+ */
+export interface IViewportOffsetChangePatch extends IChangePatch<IOffset> {
+  /**
+   * The type of patch, set to 'offset'.
+   */
+  type: 'offset';
+}
+
+/**
+ * Viewport range change patch
+ */
+export interface IViewportRangeChangePatch extends IChangePatch<ICellRange> {
+  /**
+   * The type of patch, set to 'range'.
+   */
+  type: 'range';
+}
+
+/**
+ * Viewport change patch
+ */
+export type TViewportChangePatch = IViewportBoxChangePatch | IViewportOffsetChangePatch | IViewportRangeChangePatch;
+
+/**
  * Viewport
  */
-export interface IViewport extends IRectBox, IOffset, ICellRange {
+export interface IViewport {
   /**
-   * Number of frozen rows
+   * Observable viewport change
    */
-  frozenRowCount: number;
+  change$: Observable<TViewportChangePatch>;
+
   /**
-   * Number of frozen columns
+   * Viewport box
    */
-  frozenColumnCount: number;
+  box: IRectBox;
+  /**
+   * Viewport offset
+   */
+  offset: IOffset;
+  /**
+   * Viewport range
+   */
+  range: ICellRange;
 }
 
 export interface IViewportOptions {
@@ -102,21 +146,9 @@ export interface IViewportOptions {
 }
 
 /**
- * Viewport change patch
- */
-export interface IViewportChangePatch extends IChangePatch<IViewport> {
-  /**
-   * The freeze mode.
-   */
-  mode: EFreezeMode;
-}
-
-/**
  * ViewportManager
  */
-export interface IViewportManager extends Record<EFreezeMode, IViewport>, IDisposable {
-  change$: Observable<IViewportChangePatch>;
-}
+export interface IViewportManager extends Record<EFreezeMode, IViewport>, IDisposable {}
 /**
  * ViewportManager interface identifier
  */
