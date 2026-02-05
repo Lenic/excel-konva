@@ -3,6 +3,7 @@ import type { IContainer } from '../../container';
 import { KONVA_CONTAINER, UIElement } from '../reference';
 
 import { ScrollOffset } from './offset';
+import { ISheetConfig } from './types';
 import { IScrollOffset } from './types';
 
 export * from './disposable';
@@ -16,6 +17,8 @@ export * from './utils';
  *
  * @param container - the target IOC container
  */
-export function registerCore(container: IContainer) {
+export function registerCore(container: IContainer, config: ISheetConfig) {
+  container.register(ISheetConfig).set(() => config);
+
   container.register(IScrollOffset).set((c, ctx) => new ScrollOffset(c.get(UIElement, KONVA_CONTAINER, ctx)));
 }
