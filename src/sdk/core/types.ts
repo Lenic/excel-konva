@@ -198,7 +198,7 @@ export type TRectAttrs = Omit<Konva.RectConfig, 'x' | 'y' | 'width' | 'height'>;
 export type TTextAttrs = Omit<Konva.TextConfig, 'x' | 'y' | 'width' | 'height' | 'text'>;
 
 /**
- * Sheet options
+ * Excel sheet options
  */
 export interface ISheetOptions {
   /**
@@ -214,7 +214,7 @@ export interface ISheetOptions {
    */
   rowHeight?: number;
   /**
-   * Min row height: default is 15px
+   * Minimal row height: default is 15px
    */
   minimalRowHeight?: number;
   /**
@@ -222,7 +222,7 @@ export interface ISheetOptions {
    */
   columnWidth?: number;
   /**
-   * Min column width: default is 20px
+   * Minimal column width: default is 20px
    */
   minimalColumnWidth?: number;
   /**
@@ -536,6 +536,13 @@ export interface ISheetConfig extends IDisposable {
    * Options
    */
   options: Required<ISheetOptions>;
+
+  /**
+   * Observable option value changes
+   * @param key Option key
+   * @returns Observable option value changes
+   */
+  change$<K extends keyof Required<ISheetOptions>>(key: K): Observable<IChangePatch<Required<ISheetOptions>[K]>>;
 
   /**
    * Get option value
