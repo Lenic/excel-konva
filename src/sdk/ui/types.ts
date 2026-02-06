@@ -161,3 +161,7 @@ export interface ILayoutCache extends IDisposable {
   invalidateByRow(rowIndex: number): void;
   invalidateByColumn(columnIndex: number): void;
 }
+/**
+ * Identifier for the ILayoutCache interface.
+ */
+export const ILayoutCache: TIdentifier<ILayoutCache> = Symbol('ILayoutCache');
