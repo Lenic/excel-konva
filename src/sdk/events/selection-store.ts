@@ -2,6 +2,7 @@ import type { ISelectionRegion, ISelectionStore } from './types';
 import type { Observable } from 'rxjs';
 
 import { distinctUntilChanged, scan, startWith, Subject } from 'rxjs';
+
 import { ObservableDisposable } from '../utils';
 
 /**

@@ -3,10 +3,9 @@ import type { IDataManager } from '../../data';
 import type { IKonvaItems } from '../../reference';
 import type { IShapePool } from '../pools/types';
 import type { ILayoutCache, IViewportManager } from '../types';
-import type { ICellRenderer } from './types';
 import type Konva from 'konva';
 
-import { Observable, tap } from 'rxjs';
+import { Observable, of, tap } from 'rxjs';
 import { combineLatestWith, filter, startWith } from 'rxjs';
 import { map, switchMap } from 'rxjs';
 
@@ -21,7 +20,7 @@ import { RenderListener } from './renderer';
  * This class is responsible for rendering visible cells in each viewport.
  * It optimizes rendering by only updating cells that enter or leave the viewport range.
  */
-export class CellRenderer extends RenderListener<unknown> implements ICellRenderer {
+export class CellRenderer extends RenderListener<void> {
   private viewportManager: IViewportManager;
   private konvaItems: IKonvaItems;
   private rectPool: IShapePool<Konva.RectConfig, Konva.Rect>;
@@ -76,7 +75,7 @@ export class CellRenderer extends RenderListener<unknown> implements ICellRender
    *
    * @returns An observable that triggers rendering updates.
    */
-  protected build(): Observable<unknown> {
+  protected build(): Observable<void> {
     // Collect all viewport change observables (one for each freeze mode)
     const viewportModes: EFreezeMode[] = [EFreezeMode.NONE, EFreezeMode.ROW, EFreezeMode.COLUMN, EFreezeMode.BOTH];
 
@@ -86,13 +85,7 @@ export class CellRenderer extends RenderListener<unknown> implements ICellRender
       });
     });
 
-    console.log('build', this.viewportManager);
-
-    const mainViewport = this.viewportManager[EFreezeMode.NONE];
-    return mainViewport.change$.pipe(
-      map(() => mainViewport.range),
-      startWith(mainViewport.range),
-    );
+    return of();
   }
 
   private buildSingleViewport(mode: EFreezeMode) {

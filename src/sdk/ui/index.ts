@@ -6,8 +6,6 @@ import { IKonvaItems, KONVA_CONTAINER, UIElement } from '../reference';
 
 import { ICellTextPool, IRectPool } from './pools/types';
 import { CellRenderer } from './renderers/cell-renderer';
-import { IContentManager } from './renderers/content-types';
-import { TextContentRenderer } from './renderers/text-renderer';
 import { ICellRenderer } from './renderers/types';
 import { LayoutCache } from './layout-cache';
 import { registerPools } from './pools';
@@ -59,10 +57,6 @@ export function registerUI(container: IContainer) {
  * @param container - the target IOC container
  */
 export function registerRenderers(container: IContainer) {
-  container.register(IContentManager).set((c, ctx) => {
-    return new TextContentRenderer(c.get(ICellTextPool, ctx), c.get(ILayoutCache, ctx));
-  }, ''); // Empty string for default text renderer
-
   container.register(ICellRenderer).set((c, ctx) => {
     return new CellRenderer(
       c.get(IViewportManager, ctx),
@@ -73,16 +67,4 @@ export function registerRenderers(container: IContainer) {
       c.get(IDataManager, ctx),
     );
   });
-
-  // container.register(ISelectionRenderer).set((c, ctx) => {
-  //   return new SelectionRenderer(
-  //     c.get(ISelectionStore, ctx),
-  //     c.get(IViewportManager, ctx),
-  //     c.get(ILayoutCache, ctx),
-  //     c.get(IShapePool, SELECTION_RECT_POOL, ctx),
-  //     c.get(IShapePool, ACTIVE_CELL_POOL, ctx),
-  //     c.get(ILinePool, ACTIVE_CELL_LINE_POOL, ctx),
-  //     c.get(IKonvaItems, ctx),
-  //   );
-  // });
 }

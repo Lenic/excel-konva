@@ -24,19 +24,11 @@ export interface IRenderListener<T> extends IDisposable {
 }
 
 /**
- * Cell renderer interface
- */
-export interface ICellRenderer extends IRenderListener<unknown> {}
-/**
  * Identifier for ICellRenderer in the DI container
  */
-export const ICellRenderer: TIdentifier<ICellRenderer> = Symbol('ICellRenderer');
+export const ICellRenderer: TIdentifier<IRenderListener<void>> = Symbol('ICellRenderer');
 
-/**
- * Selection renderer interface
- */
-export interface ISelectionRenderer extends IRenderListener<number> {}
 /**
  * Identifier for ISelectionRenderer in the DI container
  */
-export const ISelectionRenderer: TIdentifier<ISelectionRenderer> = Symbol('ISelectionRenderer');
+export const ISelectionRenderer: TIdentifier<IRenderListener<number>> = Symbol('ISelectionRenderer');

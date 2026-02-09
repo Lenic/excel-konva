@@ -1,4 +1,5 @@
-import type { ISelectionStore, IStageMouseEvent, IEventListener } from './types';
+import type { IEventListener, ISelectionStore, IStageMouseEvent } from './types';
+
 import { ObservableDisposable } from '../utils';
 
 /**
@@ -38,6 +39,8 @@ export class StageClickListener extends ObservableDisposable implements IEventLi
     });
 
     this.disposeWithMe(sub);
-    return () => sub.unsubscribe();
+    return () => {
+      sub.unsubscribe();
+    };
   }
 }

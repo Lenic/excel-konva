@@ -212,19 +212,23 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
     return combineLatest([box$, offset$, size$]).pipe(
       scan(
         (acc, [{ width, height }, { deltaX, deltaY }, { width: sheetWidth, height: sheetHeight }]) => {
+          let changed = false;
+
+          let nextVertical = acc.vertical;
           const rowKey = `${height}-${sheetHeight}-${deltaY}`;
           if (rowKey !== acc.vertical[2]) {
-            const vertical = row.findRange(height + deltaY, sheetHeight + deltaY);
-            acc.vertical = [...vertical, rowKey];
+            changed = true;
+            nextVertical = [...row.findRange(height + deltaY, sheetHeight + deltaY), rowKey];
           }
 
+          let nextHorizontal = acc.horizontal;
           const horizontalKey = `${width}-${sheetWidth}-${deltaX}`;
           if (horizontalKey !== acc.horizontal[2]) {
-            const horizontal = column.findRange(width + deltaX, sheetWidth + deltaX);
-            acc.horizontal = [...horizontal, horizontalKey];
+            changed = true;
+            nextHorizontal = [...column.findRange(width + deltaX, sheetWidth + deltaX), horizontalKey];
           }
 
-          return acc;
+          return changed ? { vertical: nextVertical, horizontal: nextHorizontal } : acc;
         },
         { vertical: [0, 0, ''] as TIndex, horizontal: [0, 0, ''] as TIndex },
       ),
