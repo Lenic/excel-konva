@@ -96,7 +96,7 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
    *
    * @param options - Sheet options
    */
-  constructor(options: ISheetOptions) {
+  constructor(options: ISheetOptions = {}) {
     super();
 
     this.options = {

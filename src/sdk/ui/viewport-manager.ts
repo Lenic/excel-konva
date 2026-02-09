@@ -64,13 +64,13 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
         map(() => offset.offset),
         startWith(offset.offset),
       ),
-      combineLatest([options.frozenRowCount$, options.frozenColumnCount$]).pipe(
+      range$.pipe(
         map(
-          ([rowCount, columnCount]): ICellRange => ({
-            rowStartIndex: 0,
-            rowEndIndex: rowCount - 1,
-            columnStartIndex: 0,
-            columnEndIndex: columnCount - 1,
+          ({ horizontal, vertical }): ICellRange => ({
+            rowStartIndex: vertical[0],
+            rowEndIndex: vertical[1],
+            columnStartIndex: horizontal[0],
+            columnEndIndex: horizontal[1],
           }),
         ),
       ),

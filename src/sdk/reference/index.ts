@@ -24,6 +24,11 @@ export function registerReference(container: IContainer) {
   container
     .register(IKonvaItems)
     .set(
-      (c, ctx) => new KonvaItems(c.get(KONVA_CONTAINER, ctx), c.get(SCROLL_CONTAINER, ctx), c.get(ISheetConfig, ctx)),
+      (c, ctx) =>
+        new KonvaItems(
+          c.get(UIElement, KONVA_CONTAINER, ctx),
+          c.get(UIElement, SCROLL_CONTAINER, ctx),
+          c.get(ISheetConfig, ctx),
+        ),
     );
 }

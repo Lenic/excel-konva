@@ -40,6 +40,9 @@ export class LayoutCache extends ObservableDisposable implements ILayoutCache {
     this.rowA = rowA;
     this.columnA = columnA;
 
+    window.columnA = columnA;
+    window.rowA = rowA;
+
     this.rectCache = new Map<string, IRectBox>();
     this.disposeWithMe(() => {
       this.rectCache.clear();

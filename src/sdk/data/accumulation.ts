@@ -41,6 +41,7 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
     this.disposeWithMe(count$.subscribe((count) => void (this.count = count)));
 
     this.dimensionList = new TruncatableList<number>();
+    this.dimensionList.push(0);
     this.disposeWithMe(this.dimensionList);
 
     this.dimensionRangeList = new TruncatableList<[beginValue: number, endValue: number]>();
@@ -74,7 +75,7 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
     if (typeof value === 'number') return value;
 
     let currentValue = this.dimensionList.get(this.dimensionList.length - 1) ?? 0;
-    for (let c = this.dimensionList.length; c < index; c++) {
+    for (let c = this.dimensionList.length - 1; c < index; c++) {
       const nextValue = currentValue + this.dimension.get(c);
 
       this.dimensionList.push(nextValue);
@@ -143,20 +144,19 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
   }
 
   findRange(beginValue: number, endValue: number): [beginIndex: number, endIndex: number] {
-    const list = this.dimensionRangeList;
-
     const comparer = (value: number) => (mid: number) => {
-      const [beginValue, endValue] = list.get(mid)!;
+      const beginValue = this.get(mid);
+      const endValue = this.get(mid + 1);
       if (beginValue <= value && value < endValue) return 0;
       return beginValue > value ? 1 : -1;
     };
 
-    let beginIndex = binarySearch(0, list.length - 1, comparer(beginValue), 1);
+    let beginIndex = binarySearch(0, this.count - 1, comparer(beginValue), 1);
     if (beginIndex === -1) {
       beginIndex = this.findIndexByOffset(beginValue);
     }
 
-    let endIndex = binarySearch(beginIndex, list.length - 1, comparer(endValue), -1);
+    let endIndex = binarySearch(beginIndex, this.count - 1, comparer(endValue), -1);
     if (endIndex === -1) {
       endIndex = this.findIndexByOffset(endValue);
     }

@@ -24,8 +24,7 @@
       /* Konva Stage overlaps on the container */
       #konva-container {
         position: absolute;
-        top: 0;
-        left: 0;
+        inset: 0;
         z-index: 20;
       }
 
@@ -86,6 +85,6 @@
       <p>Scroll: X=<span id="scroll-x">0</span>, Y=<span id="scroll-y">0</span></p>
       <p>Selection Ranges: <span id="selection-count">0</span></p>
     </div>
-    <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/src/main.sdk.ts"></script>
   </body>
 </html>

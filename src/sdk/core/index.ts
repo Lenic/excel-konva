@@ -3,10 +3,11 @@ import type { IContainer } from '../../container';
 import { KONVA_CONTAINER, UIElement } from '../reference';
 
 import { ScrollOffset } from './offset';
-import { ISheetConfig } from './types';
-import { IScrollOffset } from './types';
+import { defaultSheetConfig, SheetConfig } from './sheetConfig';
+import { IScrollOffset, ISheetConfig } from './types';
 
 export * from './types';
+export { defaultSheetConfig, SheetConfig };
 
 /**
  * Add core class registrations to the container

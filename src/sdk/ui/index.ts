@@ -2,16 +2,20 @@ import type { IContainer } from '../../container';
 
 import { IScrollOffset, ISheetConfig } from '../core';
 import { COLUMN_TAG, IAccumulatedDimensionManager, IDataManager, IDimensionManager, ROW_TAG } from '../data';
-import { KONVA_CONTAINER, UIElement } from '../reference';
+import { IKonvaItems, KONVA_CONTAINER, UIElement } from '../reference';
 
+import { ICellTextPool, IRectPool } from './pools/types';
 import { CellRenderer } from './renderers/cell-renderer';
 import { IContentManager } from './renderers/content-types';
+import { TextContentRenderer } from './renderers/text-renderer';
 import { ICellRenderer } from './renderers/types';
 import { LayoutCache } from './layout-cache';
+import { registerPools } from './pools';
 import { SheetDimension } from './sheet-dimension';
 import { ILayoutCache, ISheetDimension, IViewportManager } from './types';
 import { ViewportManager } from './viewport-manager';
 
+export * from './pools/types';
 export * from './renderers/types';
 export * from './types';
 
@@ -21,6 +25,8 @@ export * from './types';
  * @param container - the target IOC container
  */
 export function registerUI(container: IContainer) {
+  registerPools(container);
+
   container.register(ISheetDimension).set((c, ctx) => new SheetDimension(c.get(UIElement, KONVA_CONTAINER, ctx)));
 
   container.register(IViewportManager).set((c, ctx) => {
@@ -53,7 +59,30 @@ export function registerUI(container: IContainer) {
  * @param container - the target IOC container
  */
 export function registerRenderers(container: IContainer) {
+  container.register(IContentManager).set((c, ctx) => {
+    return new TextContentRenderer(c.get(ICellTextPool, ctx), c.get(ILayoutCache, ctx));
+  }, ''); // Empty string for default text renderer
+
   container.register(ICellRenderer).set((c, ctx) => {
-    return new CellRenderer(c.get(IViewportManager, ctx), c.get(IDataManager, ctx), c.getAll(IContentManager, ctx));
+    return new CellRenderer(
+      c.get(IViewportManager, ctx),
+      c.get(IKonvaItems, ctx),
+      c.get(IRectPool, ctx),
+      c.get(ICellTextPool, ctx),
+      c.get(ILayoutCache, ctx),
+      c.get(IDataManager, ctx),
+    );
   });
+
+  // container.register(ISelectionRenderer).set((c, ctx) => {
+  //   return new SelectionRenderer(
+  //     c.get(ISelectionStore, ctx),
+  //     c.get(IViewportManager, ctx),
+  //     c.get(ILayoutCache, ctx),
+  //     c.get(IShapePool, SELECTION_RECT_POOL, ctx),
+  //     c.get(IShapePool, ACTIVE_CELL_POOL, ctx),
+  //     c.get(ILinePool, ACTIVE_CELL_LINE_POOL, ctx),
+  //     c.get(IKonvaItems, ctx),
+  //   );
+  // });
 }

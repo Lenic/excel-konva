@@ -1,8 +1,8 @@
-import type { ISheetConfig } from '../core';
+import type { IDimension, ISheetConfig } from '../core';
 import type { IKonvaItems, IRenderGroup } from './types';
 
 import Konva from 'konva';
-import { fromEventPattern, tap } from 'rxjs';
+import { animationFrameScheduler, auditTime, fromEventPattern, Observable, tap } from 'rxjs';
 
 import { ObservableDisposable } from '../utils';
 
@@ -31,6 +31,25 @@ export class KonvaItems extends ObservableDisposable implements IKonvaItems {
       this.stage.off().destroy();
       this.stage = null as unknown as Konva.Stage;
     });
+
+    const containerResize$ = new Observable<IDimension>((observer) => {
+      const listener = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          observer.next({ width: entry.contentRect.width, height: entry.contentRect.height });
+        }
+      });
+      listener.observe(konvaContainer);
+      observer.next({ width: konvaContainer.clientWidth, height: konvaContainer.clientHeight });
+
+      return () => {
+        listener.disconnect();
+      };
+    });
+    this.disposeWithMe(
+      containerResize$.pipe(auditTime(16, animationFrameScheduler)).subscribe((dim) => {
+        this.stage.setAttrs(dim);
+      }),
+    );
 
     // Connect Canvas wheel events to scroll container scroll events
     this.disposeWithMe(
