@@ -70,6 +70,7 @@ export function registerRenderers(container: IContainer) {
       c.get(ICellTextPool, ctx),
       c.get(ILayoutCache, ctx),
       c.get(IDataManager, ctx),
+      c.get(IShapeStyleConfig, ctx),
     );
   });
 }

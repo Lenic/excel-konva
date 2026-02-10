@@ -3,113 +3,36 @@ import type { IShapeStyleConfig } from './types';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
-import { combineLatest, map } from 'rxjs';
+import { combineLatest, map, of } from 'rxjs';
 
+import { EFreezeMode } from '../../reference';
 import { ObservableDisposable } from '../../utils';
 
 /**
  * Shape style configuration implementation
  */
 export class ShapeStyleConfig extends ObservableDisposable implements IShapeStyleConfig {
-  /**
-   * Sheet configuration
-   */
   private config: ISheetConfig;
 
-  /**
-   * Observable that emits default rect attributes
-   */
-  readonly defaultRectAttrs$: Observable<Partial<Konva.RectConfig>>;
-
-  /**
-   * Observable that emits default odd rect attributes
-   */
-  readonly defaultOddRectAttrs$: Observable<Partial<Konva.RectConfig>>;
-
-  /**
-   * Observable that emits default even rect attributes
-   */
-  readonly defaultEvenRectAttrs$: Observable<Partial<Konva.RectConfig>>;
-
-  /**
-   * Observable that emits frozen rect attributes
-   */
-  readonly frozenRectAttrs$: Observable<Partial<Konva.RectConfig>>;
-
-  /**
-   * Observable that emits frozen odd rect attributes
-   */
-  readonly frozenOddRectAttrs$: Observable<Partial<Konva.RectConfig>>;
-
-  /**
-   * Observable that emits frozen even rect attributes
-   */
-  readonly frozenEvenRectAttrs$: Observable<Partial<Konva.RectConfig>>;
-
-  /**
-   * Observable that emits header rect attributes
-   */
-  readonly headerRectAttrs$: Observable<Partial<Konva.RectConfig>>;
-
-  /**
-   * Observable that emits column header rect attributes
-   */
-  readonly columnHeaderRectAttrs$: Observable<Partial<Konva.RectConfig>>;
-
-  /**
-   * Observable that emits row header rect attributes
-   */
-  readonly rowHeaderRectAttrs$: Observable<Partial<Konva.RectConfig>>;
-
-  /**
-   * Observable that emits corner cell rect attributes
-   */
-  readonly cornerCellRectAttrs$: Observable<Partial<Konva.RectConfig>>;
-
-  /**
-   * Observable that emits default text attributes
-   */
-  readonly defaultTextAttrs$: Observable<Partial<Konva.TextConfig>>;
-
-  /**
-   * Observable that emits default odd text attributes
-   */
-  readonly defaultOddTextAttrs$: Observable<Partial<Konva.TextConfig>>;
-
-  /**
-   * Observable that emits default even text attributes
-   */
-  readonly defaultEvenTextAttrs$: Observable<Partial<Konva.TextConfig>>;
-
-  /**
-   * Observable that emits frozen text attributes
-   */
-  readonly frozenTextAttrs$: Observable<Partial<Konva.TextConfig>>;
-
-  /**
-   * Observable that emits frozen odd text attributes
-   */
-  readonly frozenOddTextAttrs$: Observable<Partial<Konva.TextConfig>>;
-
-  /**
-   * Observable that emits frozen even text attributes
-   */
-  readonly frozenEvenTextAttrs$: Observable<Partial<Konva.TextConfig>>;
-
-  /**
-   * Observable that emits header text attributes
-   */
-  readonly headerTextAttrs$: Observable<Partial<Konva.TextConfig>>;
-
-  /**
-   * Observable that emits column header text attributes
-   */
-  readonly columnHeaderTextAttrs$: Observable<Partial<Konva.TextConfig>>;
-
-  /**
-   * Observable that emits row header text attributes
-   */
-  readonly rowHeaderTextAttrs$: Observable<Partial<Konva.TextConfig>>;
+  private defaultRectAttrs$: Observable<Partial<Konva.RectConfig>>;
+  private defaultOddRectAttrs$: Observable<Partial<Konva.RectConfig>>;
+  private defaultEvenRectAttrs$: Observable<Partial<Konva.RectConfig>>;
+  private frozenRectAttrs$: Observable<Partial<Konva.RectConfig>>;
+  private frozenOddRectAttrs$: Observable<Partial<Konva.RectConfig>>;
+  private frozenEvenRectAttrs$: Observable<Partial<Konva.RectConfig>>;
+  private headerRectAttrs$: Observable<Partial<Konva.RectConfig>>;
+  private columnHeaderRectAttrs$: Observable<Partial<Konva.RectConfig>>;
+  private rowHeaderRectAttrs$: Observable<Partial<Konva.RectConfig>>;
+  private cornerCellRectAttrs$: Observable<Partial<Konva.RectConfig>>;
+  private defaultTextAttrs$: Observable<Partial<Konva.TextConfig>>;
+  private defaultOddTextAttrs$: Observable<Partial<Konva.TextConfig>>;
+  private defaultEvenTextAttrs$: Observable<Partial<Konva.TextConfig>>;
+  private frozenTextAttrs$: Observable<Partial<Konva.TextConfig>>;
+  private frozenOddTextAttrs$: Observable<Partial<Konva.TextConfig>>;
+  private frozenEvenTextAttrs$: Observable<Partial<Konva.TextConfig>>;
+  private headerTextAttrs$: Observable<Partial<Konva.TextConfig>>;
+  private columnHeaderTextAttrs$: Observable<Partial<Konva.TextConfig>>;
+  private rowHeaderTextAttrs$: Observable<Partial<Konva.TextConfig>>;
 
   /**
    * Constructor
@@ -308,5 +231,103 @@ export class ShapeStyleConfig extends ObservableDisposable implements IShapeStyl
       this.withPublish(),
     );
     this.disposeWithMe(this.rowHeaderTextAttrs$.subscribe());
+  }
+
+  getRectAttrs$(mode: EFreezeMode, rowIndex: number, columnIndex: number): Observable<Partial<Konva.RectConfig>> {
+    switch (mode) {
+      case EFreezeMode.BOTH:
+        if (rowIndex === 0 && columnIndex === 0) {
+          return this.cornerCellRectAttrs$;
+        } else if (rowIndex === 0) {
+          return this.rowHeaderRectAttrs$;
+        } else if (columnIndex === 0) {
+          return this.columnHeaderRectAttrs$;
+        } else {
+          const mod = rowIndex % 2;
+          if (mod === 1) {
+            return this.frozenOddRectAttrs$;
+          } else {
+            return this.frozenEvenRectAttrs$;
+          }
+        }
+      case EFreezeMode.ROW:
+        if (rowIndex === 0) {
+          return this.columnHeaderRectAttrs$;
+        } else {
+          const mod = rowIndex % 2;
+          if (mod === 1) {
+            return this.frozenOddRectAttrs$;
+          } else {
+            return this.frozenEvenRectAttrs$;
+          }
+        }
+      case EFreezeMode.COLUMN:
+        if (columnIndex === 0) {
+          return this.rowHeaderRectAttrs$;
+        } else {
+          const mod = rowIndex % 2;
+          if (mod === 1) {
+            return this.frozenOddRectAttrs$;
+          } else {
+            return this.frozenEvenRectAttrs$;
+          }
+        }
+      default:
+        const mod = rowIndex % 2;
+        if (mod === 1) {
+          return this.defaultOddRectAttrs$;
+        } else {
+          return this.defaultEvenRectAttrs$;
+        }
+    }
+  }
+
+  getTextAttrs$(mode: EFreezeMode, rowIndex: number, columnIndex: number): Observable<Partial<Konva.TextConfig>> {
+    switch (mode) {
+      case EFreezeMode.BOTH:
+        if (rowIndex === 0 && columnIndex === 0) {
+          return of({});
+        } else if (rowIndex === 0) {
+          return this.rowHeaderTextAttrs$;
+        } else if (columnIndex === 0) {
+          return this.columnHeaderTextAttrs$;
+        } else {
+          const mod = rowIndex % 2;
+          if (mod === 1) {
+            return this.frozenOddTextAttrs$;
+          } else {
+            return this.frozenEvenTextAttrs$;
+          }
+        }
+      case EFreezeMode.ROW:
+        if (rowIndex === 0) {
+          return this.columnHeaderTextAttrs$;
+        } else {
+          const mod = rowIndex % 2;
+          if (mod === 1) {
+            return this.frozenOddTextAttrs$;
+          } else {
+            return this.frozenEvenTextAttrs$;
+          }
+        }
+      case EFreezeMode.COLUMN:
+        if (columnIndex === 0) {
+          return this.rowHeaderTextAttrs$;
+        } else {
+          const mod = rowIndex % 2;
+          if (mod === 1) {
+            return this.frozenOddTextAttrs$;
+          } else {
+            return this.frozenEvenTextAttrs$;
+          }
+        }
+      default:
+        const mod = rowIndex % 2;
+        if (mod === 1) {
+          return this.defaultOddTextAttrs$;
+        } else {
+          return this.defaultEvenTextAttrs$;
+        }
+    }
   }
 }

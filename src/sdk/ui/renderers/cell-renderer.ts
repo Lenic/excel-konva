@@ -3,9 +3,10 @@ import type { IDataManager } from '../../data';
 import type { IKonvaItems } from '../../reference';
 import type { IShapePool } from '../pools/types';
 import type { ILayoutCache, IViewportManager } from '../types';
+import type { IShapeStyleConfig } from './types';
 import type Konva from 'konva';
 
-import { Observable, of, tap } from 'rxjs';
+import { combineLatest, Observable, of, tap } from 'rxjs';
 import { combineLatestWith, filter, startWith } from 'rxjs';
 import { map, switchMap } from 'rxjs';
 
@@ -27,6 +28,7 @@ export class CellRenderer extends RenderListener<void> {
   private textPool: IShapePool<Konva.TextConfig, Konva.Text>;
   private layoutCache: ILayoutCache;
   private dataManager: IDataManager;
+  private shapeStyle: IShapeStyleConfig;
 
   private subscriptions: Record<EFreezeMode, CollectionSubscription>;
 
@@ -38,6 +40,8 @@ export class CellRenderer extends RenderListener<void> {
    * @param rectPool - The pool for Konva.Rect shapes.
    * @param textPool - The pool for Konva.Text shapes.
    * @param layoutCache - The layout cache for cell dimensions.
+   * @param dataManager - The data manager for cell data.
+   * @param shapeStyle - The shape style configuration.
    */
   constructor(
     viewportManager: IViewportManager,
@@ -46,6 +50,7 @@ export class CellRenderer extends RenderListener<void> {
     textPool: IShapePool<Konva.TextConfig, Konva.Text>,
     layoutCache: ILayoutCache,
     dataManager: IDataManager,
+    shapeStyle: IShapeStyleConfig,
   ) {
     super();
 
@@ -55,6 +60,7 @@ export class CellRenderer extends RenderListener<void> {
     this.textPool = textPool;
     this.layoutCache = layoutCache;
     this.dataManager = dataManager;
+    this.shapeStyle = shapeStyle;
 
     this.subscriptions = {
       [EFreezeMode.NONE]: new CollectionSubscription(),
@@ -128,10 +134,10 @@ export class CellRenderer extends RenderListener<void> {
             const { x, y, width, height } = this.layoutCache.getCellRect(rowIndex, columnIndex);
 
             const getRect$ = () =>
-              this.rectPool.get$.pipe(
-                switchMap((getter) =>
+              combineLatest([this.rectPool.get$, this.shapeStyle.getRectAttrs$(mode, rowIndex, columnIndex)]).pipe(
+                switchMap(([getter, attrs]) =>
                   new Observable<Konva.Rect>((observer) => {
-                    const rect = getter({ width, height });
+                    const rect = getter({ ...attrs, width, height });
                     if (rect.parent !== group) {
                       group.add(rect);
                     }
@@ -154,10 +160,10 @@ export class CellRenderer extends RenderListener<void> {
             shape$Map.set(`rect:${rowIndex}:${columnIndex}`, getRect$);
 
             const getText$ = () =>
-              this.textPool.get$.pipe(
-                switchMap((getter) =>
+              combineLatest([this.textPool.get$, this.shapeStyle.getTextAttrs$(mode, rowIndex, columnIndex)]).pipe(
+                switchMap(([getter, attrs]) =>
                   new Observable<Konva.Text>((observer) => {
-                    const text = getter({ width, height });
+                    const text = getter({ ...attrs, width, height });
                     if (text.parent !== group) {
                       group.add(text);
                     }
