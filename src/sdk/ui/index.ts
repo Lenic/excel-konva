@@ -6,7 +6,8 @@ import { IKonvaItems, KONVA_CONTAINER, UIElement } from '../reference';
 
 import { ICellTextPool, IRectPool } from './pools/types';
 import { CellRenderer } from './renderers/cell-renderer';
-import { ICellRenderer } from './renderers/types';
+import { ShapeStyleConfig } from './renderers/shape-style';
+import { ICellRenderer, IShapeStyleConfig } from './renderers/types';
 import { LayoutCache } from './layout-cache';
 import { registerPools } from './pools';
 import { SheetDimension } from './sheet-dimension';
@@ -57,6 +58,10 @@ export function registerUI(container: IContainer) {
  * @param container - the target IOC container
  */
 export function registerRenderers(container: IContainer) {
+  container.register(IShapeStyleConfig).set((c, ctx) => {
+    return new ShapeStyleConfig(c.get(ISheetConfig, ctx));
+  });
+
   container.register(ICellRenderer).set((c, ctx) => {
     return new CellRenderer(
       c.get(IViewportManager, ctx),
