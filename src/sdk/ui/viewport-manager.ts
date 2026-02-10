@@ -232,7 +232,7 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
         },
         { vertical: [0, 0, ''] as TIndex, horizontal: [0, 0, ''] as TIndex },
       ),
-      distinctUntilChanged((x, y) => x.horizontal[2] === y.horizontal[2] || x.vertical[2] === y.vertical[2]),
+      distinctUntilChanged((x, y) => x.horizontal[2] === y.horizontal[2] && x.vertical[2] === y.vertical[2]),
       this.withPublish(),
     );
   }
