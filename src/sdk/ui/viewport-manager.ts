@@ -89,7 +89,14 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
         ),
         box$,
       ]).pipe(
-        map(([totalWidth, { width, height }]): IRectBox => ({ x: width, y: 0, width: totalWidth - width, height })),
+        map(
+          ([totalWidth, { width, height }]): IRectBox => ({
+            x: width,
+            y: 0,
+            width: totalWidth - width,
+            height: height + 1,
+          }),
+        ),
       ),
       offset.change$.pipe(
         filter((v) => v.type === 'both' || v.type === 'left'),
@@ -125,7 +132,14 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
         ),
         box$,
       ]).pipe(
-        map(([totalHeight, { width, height }]): IRectBox => ({ x: 0, y: height, width, height: totalHeight - height })),
+        map(
+          ([totalHeight, { width, height }]): IRectBox => ({
+            x: 0,
+            y: height,
+            width: width + 1,
+            height: totalHeight - height,
+          }),
+        ),
       ),
       offset.change$.pipe(
         filter((v) => v.type === 'both' || v.type === 'top'),

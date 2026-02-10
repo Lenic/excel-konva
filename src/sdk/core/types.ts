@@ -281,7 +281,7 @@ export interface ISheetOptions {
    * {
    *   fill: '#ffffff',
    *   stroke: '#e8e8e8',
-   *   strokeWidth: 0.5
+   *   strokeWidth: 1
    * }
    * ```
    */

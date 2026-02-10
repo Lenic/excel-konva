@@ -31,7 +31,7 @@ export const defaultSheetConfig: Required<ISheetOptions> = {
   defaultCellRectAttrs: {
     fill: '#ffffff',
     stroke: '#e8e8e8',
-    strokeWidth: 0.5,
+    strokeWidth: 1,
   },
   defaultOddCellRectAttrs: {},
   defaultEvenCellRectAttrs: {
