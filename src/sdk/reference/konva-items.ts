@@ -29,7 +29,7 @@ export class KonvaItems extends ObservableDisposable implements IKonvaItems {
     this.stage = new Konva.Stage({ container: konvaContainer, width: 0, height: 0 });
     this.disposeWithMe(() => {
       this.stage.off().destroy();
-      this.stage = null as unknown as Konva.Stage;
+      this.stage = undefined as unknown as Konva.Stage;
     });
 
     const containerResize$ = new Observable<IDimension>((observer) => {
@@ -84,7 +84,7 @@ export class KonvaItems extends ObservableDisposable implements IKonvaItems {
       this.background.groups[EFreezeMode.BOTH].destroy();
 
       this.background.layer.destroy();
-      this.background = null as unknown as IRenderGroup;
+      this.background = undefined as unknown as IRenderGroup;
     });
     this.stage.add(this.background.layer);
     this.background.layer.add(
@@ -110,7 +110,7 @@ export class KonvaItems extends ObservableDisposable implements IKonvaItems {
       this.selection.groups[EFreezeMode.BOTH].destroy();
 
       this.selection.layer.destroy();
-      this.selection = null as unknown as IRenderGroup;
+      this.selection = undefined as unknown as IRenderGroup;
     });
     this.stage.add(this.selection.layer);
     this.selection.layer.add(
@@ -133,7 +133,7 @@ export class KonvaItems extends ObservableDisposable implements IKonvaItems {
     });
     this.disposeWithMe(() => {
       this.resizeLine.destroy();
-      this.resizeLine = null as unknown as Konva.Line;
+      this.resizeLine = undefined as unknown as Konva.Line;
     });
     this.selection.layer.add(this.resizeLine);
     this.disposeWithMe(

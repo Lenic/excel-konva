@@ -34,7 +34,7 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
     this.disposeWithMe(() => void (this.previousFindOffset = -1));
 
     this.dimension = dimension;
-    this.disposeWithMe(() => void (this.dimension = null as unknown as IDimensionManager));
+    this.disposeWithMe(() => void (this.dimension = undefined as unknown as IDimensionManager));
 
     this.count = 0;
     this.disposeWithMe(() => void (this.count = 0));
