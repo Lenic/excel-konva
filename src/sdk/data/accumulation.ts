@@ -33,7 +33,7 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
       this.changeSubject.complete();
     });
 
-    this.change$ = merge(this.changeSubject, dimension.change$);
+    this.change$ = merge(this.changeSubject, dimension.change$).pipe(this.withShare());
 
     this.previousFindIndex = -1;
     this.disposeWithMe(() => void (this.previousFindIndex = -1));

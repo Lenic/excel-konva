@@ -164,19 +164,41 @@ export interface ISetCellValuePatch<T = unknown> {
    */
   type: 'set';
   /**
-   * The 2D array of values to be applied to the range.
-   */
-  values: TCellContent<T>[][];
-  /**
    * The cell range where values will be set.
    */
   range: ICellRange;
+  /**
+   * The 2D array of values to be applied to the range.
+   */
+  values: TCellContent<T>[][];
 }
 
 /**
  * Union type for cell data change patches.
  */
 export type TCellChangePatch<T = unknown> = IClearCellValuePatch | ISetCellValuePatch<T>;
+
+/**
+ * Interface for providing and managing spreadsheet cell data.
+ */
+export interface IDataProvider {
+  /**
+   * Retrieves the value of a cell at the specified row and column indices.
+   *
+   * @param rowIndex - The index of the row.
+   * @param columnIndex - The index of the column.
+   *
+   * @returns The cell value, or undefined if empty.
+   */
+  get<T = unknown>(rowIndex: number, columnIndex: number): TCellContent<T> | undefined;
+
+  /**
+   * Sets the value of a cell at the specified row and column indices.
+   *
+   * @param patch - The patch representing the cell value change.
+   */
+  set<T = unknown>(patch: TCellChangePatch<T>): void;
+}
 
 /**
  * Interface for providing and managing spreadsheet cell data.
@@ -202,17 +224,16 @@ export interface IDataManager extends IDisposable {
    *
    * @param rowIndex - The index of the row.
    * @param columnIndex - The index of the column.
-   * @param value - The value to set for the cell.
+   * @param value - The value to set for the cell. If it is a 2D array, it will be set as a range.
    */
-  set<T = unknown>(rowIndex: number, columnIndex: number, value?: TCellContent<T>): void;
+  set<T = unknown>(rowIndex: number, columnIndex: number, value: TCellContent<T> | TCellContent<T>[][]): void;
 
   /**
-   * Sets the cell values for a given range.
+   * Clears the cell values for a given range.
    *
-   * @param range - The cell range to set values for.
-   * @param values - A 2D array of values corresponding to the range.
+   * @param range - The cell range to clear values for.
    */
-  setCells<T = unknown>(range: ICellRange, values?: TCellContent<T>[][]): void;
+  clear(range: ICellRange): void;
 }
 /**
  * Identifier for the IDataManager interface.

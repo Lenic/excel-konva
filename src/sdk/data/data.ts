@@ -1,5 +1,5 @@
 import type { ICellRange } from '../core';
-import type { IDataManager, TCellChangePatch, TCellContent } from './types';
+import type { IDataManager, IDataProvider, TCellChangePatch, TCellContent } from './types';
 import type { Observable } from 'rxjs';
 
 import { Subject } from 'rxjs';
@@ -10,7 +10,7 @@ import { ObservableDisposable } from '../utils';
  * Spreadsheet data manager
  */
 export class DataManager extends ObservableDisposable implements IDataManager {
-  private store: Map<number, Map<number, TCellContent<any>>>;
+  private provider: IDataProvider;
   private patchSubject: Subject<TCellChangePatch<any>>;
 
   patch$: Observable<TCellChangePatch<any>>;
@@ -18,13 +18,11 @@ export class DataManager extends ObservableDisposable implements IDataManager {
   /**
    * Initializes a new instance of the DataManager class.
    */
-  constructor() {
+  constructor(provider: IDataProvider) {
     super();
 
-    this.store = new Map<number, Map<number, TCellContent<any>>>();
-    this.disposeWithMe(() => {
-      this.store.clear();
-    });
+    this.provider = provider;
+    this.disposeWithMe(() => void (this.provider = undefined as unknown as IDataProvider));
 
     this.patchSubject = new Subject<TCellChangePatch<any>>();
     this.disposeWithMe(() => {
@@ -36,13 +34,10 @@ export class DataManager extends ObservableDisposable implements IDataManager {
   get<T = unknown>(rowIndex: number, columnIndex: number): TCellContent<T> | undefined {
     this.checkDisposed();
 
-    const row = this.store.get(rowIndex);
-    if (!row) return;
-
-    return row.get(columnIndex);
+    return this.provider.get(rowIndex, columnIndex);
   }
 
-  set<T = unknown>(rowIndex: number, columnIndex: number, value?: TCellContent<T>): void {
+  set<T = unknown>(rowIndex: number, columnIndex: number, value: TCellContent<T> | TCellContent<T>[][]): void {
     this.checkDisposed();
 
     const range: ICellRange = {
@@ -52,73 +47,22 @@ export class DataManager extends ObservableDisposable implements IDataManager {
       columnEndIndex: columnIndex,
     };
 
-    if (value === undefined || value === null) {
-      const row = this.store.get(rowIndex);
-      if (row) {
-        row.delete(columnIndex);
-        if (row.size === 0) {
-          this.store.delete(rowIndex);
-        }
-      }
-      this.patchSubject.next({ type: 'clear', range });
+    let patch: TCellChangePatch<T>;
+    if (value === null) {
+      patch = { type: 'clear', range };
     } else {
-      let row = this.store.get(rowIndex);
-      if (!row) {
-        row = new Map<number, TCellContent<any>>();
-        this.store.set(rowIndex, row);
-      }
-      row.set(columnIndex, value);
-      this.patchSubject.next({ type: 'set', range, values: [[value]] });
+      patch = { type: 'set', range, values: Array.isArray(value) ? value : [[value]] };
     }
+
+    this.provider.set(patch);
+    this.patchSubject.next(patch);
   }
 
-  setCells<T = unknown>(range: ICellRange, values?: TCellContent<T>[][]): void {
+  clear(range: ICellRange): void {
     this.checkDisposed();
 
-    if (!values) {
-      for (let r = range.rowStartIndex; r <= range.rowEndIndex; r++) {
-        const row = this.store.get(r);
-        if (!row) continue;
-
-        for (let c = range.columnStartIndex; c <= range.columnEndIndex; c++) {
-          row.delete(c);
-        }
-
-        if (row.size === 0) {
-          this.store.delete(r);
-        }
-      }
-
-      this.patchSubject.next({ type: 'clear', range });
-    } else {
-      for (let r = 0; r < values.length; r++) {
-        const rowIndex = range.rowStartIndex + r;
-        if (rowIndex > range.rowEndIndex) break;
-
-        let row = this.store.get(rowIndex);
-        if (!row) {
-          row = new Map<number, TCellContent<any>>();
-          this.store.set(rowIndex, row);
-        }
-
-        for (let c = 0; c < values[r].length; c++) {
-          const columnIndex = range.columnStartIndex + c;
-          if (columnIndex > range.columnEndIndex) break;
-
-          const value = values[r][c];
-          if (value === null) {
-            row.delete(columnIndex);
-          } else {
-            row.set(columnIndex, value);
-          }
-        }
-
-        if (row.size === 0) {
-          this.store.delete(rowIndex);
-        }
-      }
-
-      this.patchSubject.next({ type: 'set', range, values });
-    }
+    const patch: TCellChangePatch<any> = { type: 'clear', range };
+    this.provider.set(patch);
+    this.patchSubject.next(patch);
   }
 }

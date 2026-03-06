@@ -1,4 +1,5 @@
 import type { IContainer } from '../../container';
+import type { IDataProvider } from './types';
 
 import { combineLatest, map } from 'rxjs';
 
@@ -25,8 +26,9 @@ export const COLUMN_TAG = Symbol('COLUMN_TAG');
  * Add data class registrations to the container
  *
  * @param container - the target IOC container
+ * @param dataProvider - the data provider
  */
-export function registerData(container: IContainer) {
+export function registerData(container: IContainer, dataProvider: IDataProvider) {
   container
     .register(IDimensionManager)
     .set((c, ctx) => {
@@ -65,5 +67,5 @@ export function registerData(container: IContainer) {
       COLUMN_TAG,
     );
 
-  container.register(IDataManager).set(() => new DataManager());
+  container.register(IDataManager).set(() => new DataManager(dataProvider));
 }
