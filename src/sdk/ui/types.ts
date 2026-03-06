@@ -148,7 +148,12 @@ export interface IViewportOptions {
 /**
  * ViewportManager
  */
-export interface IViewportManager extends Record<EFreezeMode, IViewport>, IDisposable {}
+export interface IViewportManager extends Record<EFreezeMode, IViewport>, IDisposable {
+  /**
+   * Observable scrollable range
+   */
+  scrollableRange$: Observable<ICellRange>;
+}
 /**
  * ViewportManager interface identifier
  */

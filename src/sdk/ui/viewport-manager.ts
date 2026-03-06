@@ -22,6 +22,8 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
   [EFreezeMode.COLUMN]!: IViewport;
   [EFreezeMode.BOTH]!: IViewport;
 
+  scrollableRange$: Observable<ICellRange>;
+
   /**
    * ViewportManager constructor
    *
@@ -41,7 +43,8 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
     super();
 
     const box$ = this.buildFrozenDimension(options, row, column);
-    const range$ = this.buildRange(box$, offset, sheet, row, column);
+    const range$ = this.buildScrollableRange(box$, offset, sheet, row, column);
+    this.scrollableRange$ = range$;
 
     this[EFreezeMode.NONE] = new Viewport(
       combineLatest([
@@ -64,16 +67,7 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
         map(() => offset.offset),
         startWith(offset.offset),
       ),
-      range$.pipe(
-        map(
-          ({ horizontal, vertical }): ICellRange => ({
-            rowStartIndex: vertical[0],
-            rowEndIndex: vertical[1],
-            columnStartIndex: horizontal[0],
-            columnEndIndex: horizontal[1],
-          }),
-        ),
-      ),
+      range$,
     );
     this.disposeWithMe(() => {
       this[EFreezeMode.NONE].dispose();
@@ -106,14 +100,14 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
       ),
       combineLatest([
         options.frozenRowCount$,
-        range$.pipe(distinctUntilChanged((x, y) => x.horizontal[2] === y.horizontal[2])),
+        range$.pipe(distinctUntilChanged((x, y) => x.horizontalKey === y.horizontalKey)),
       ]).pipe(
         map(
-          ([rowCount, { horizontal }]): ICellRange => ({
+          ([rowCount, { columnStartIndex, columnEndIndex }]): ICellRange => ({
             rowStartIndex: 0,
             rowEndIndex: rowCount - 1,
-            columnStartIndex: horizontal[0],
-            columnEndIndex: horizontal[1],
+            columnStartIndex,
+            columnEndIndex,
           }),
         ),
       ),
@@ -149,12 +143,12 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
       ),
       combineLatest([
         options.frozenColumnCount$,
-        range$.pipe(distinctUntilChanged((x, y) => x.vertical[2] === y.vertical[2])),
+        range$.pipe(distinctUntilChanged((x, y) => x.verticalKey === y.verticalKey)),
       ]).pipe(
         map(
-          ([columnCount, { vertical }]): ICellRange => ({
-            rowStartIndex: vertical[0],
-            rowEndIndex: vertical[1],
+          ([columnCount, { rowStartIndex, rowEndIndex }]): ICellRange => ({
+            rowStartIndex,
+            rowEndIndex,
             columnStartIndex: 0,
             columnEndIndex: columnCount - 1,
           }),
@@ -207,7 +201,7 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
     );
   }
 
-  private buildRange(
+  private buildScrollableRange(
     box$: Observable<IDimension>,
     offset: IScrollOffset,
     sheet: ISheetDimension,
@@ -247,6 +241,14 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
         { vertical: [0, 0, ''] as TIndex, horizontal: [0, 0, ''] as TIndex },
       ),
       distinctUntilChanged((x, y) => x.horizontal[2] === y.horizontal[2] && x.vertical[2] === y.vertical[2]),
+      map(({ horizontal, vertical }): ICellRange & { verticalKey: string; horizontalKey: string } => ({
+        rowStartIndex: vertical[0],
+        rowEndIndex: vertical[1],
+        columnStartIndex: horizontal[0],
+        columnEndIndex: horizontal[1],
+        verticalKey: vertical[2],
+        horizontalKey: horizontal[2],
+      })),
       this.withPublish(),
     );
   }

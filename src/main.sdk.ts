@@ -6,7 +6,7 @@ import { registerData } from './sdk/data';
 import { registerEvents } from './sdk/events';
 import { IStageClickListener, IStageDragListener } from './sdk/events/types';
 import { registerReference } from './sdk/reference';
-import { ICellRenderer, registerRenderers, registerUI } from './sdk/ui';
+import { ICellRenderer, IViewportManager, registerRenderers, registerUI } from './sdk/ui';
 
 /**
  * Main entrance for the SDK-based implementation
@@ -64,6 +64,16 @@ async function bootstrap() {
   // Start renderers
   container.get(ICellRenderer).start();
   // container.get(ISelectionRenderer).start();
+
+  // print infomations
+  container.get(IViewportManager).scrollableRange$.subscribe((range) => {
+    const { rowStartIndex, rowEndIndex, columnStartIndex, columnEndIndex } = range;
+
+    document.getElementById('rendered-range-row')!.textContent =
+      `${rowStartIndex.toLocaleString()} - ${rowEndIndex.toLocaleString()}`;
+    document.getElementById('rendered-range-column')!.textContent =
+      `${columnStartIndex.toLocaleString()} - ${columnEndIndex.toLocaleString()}`;
+  });
 
   console.log('SDK initialized.');
 
