@@ -4,7 +4,7 @@ import type { Observable } from 'rxjs';
 
 import { Subject } from 'rxjs';
 
-import { ObservableDisposable } from '../utils';
+import { getDefaultValue, ObservableDisposable } from '../utils';
 
 /**
  * Viewport
@@ -78,6 +78,3 @@ export class Viewport extends ObservableDisposable implements IViewport {
     );
   }
 }
-
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters
-const getDefaultValue = <T>() => undefined as unknown as T;

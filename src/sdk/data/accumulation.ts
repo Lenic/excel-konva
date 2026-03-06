@@ -3,7 +3,7 @@ import type { Observable } from 'rxjs';
 
 import { merge, Subject } from 'rxjs';
 
-import { binarySearch, ObservableDisposable, TruncatableList } from '../utils';
+import { binarySearch, getDefaultValue, ObservableDisposable, TruncatableList } from '../utils';
 
 /**
  * Accumulated dimension manager
@@ -42,7 +42,7 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
     this.disposeWithMe(() => void (this.previousFindOffset = -1));
 
     this.dimension = dimension;
-    this.disposeWithMe(() => void (this.dimension = undefined as unknown as IDimensionManager));
+    this.disposeWithMe(() => void (this.dimension = getDefaultValue<IDimensionManager>()));
 
     this.count = 0;
     this.disposeWithMe(() => void (this.count = 0));

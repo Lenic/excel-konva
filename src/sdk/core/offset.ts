@@ -3,7 +3,7 @@ import type { Observable } from 'rxjs';
 
 import { animationFrameScheduler, auditTime, distinctUntilChanged, filter, fromEvent, map } from 'rxjs';
 
-import { ObservableDisposable } from '../utils';
+import { getDefaultValue, ObservableDisposable } from '../utils';
 
 /**
  * Scroll offset
@@ -30,7 +30,7 @@ export class ScrollOffset extends ObservableDisposable implements IScrollOffset 
     this.disposeWithMe(() => void (this.left = 0));
 
     this.offset = { deltaX: this.left, deltaY: this.top };
-    this.disposeWithMe(() => void (this.offset = undefined as unknown as IOffset));
+    this.disposeWithMe(() => void (this.offset = getDefaultValue<IOffset>()));
 
     this.change$ = fromEvent(el, 'scroll').pipe(
       auditTime(16, animationFrameScheduler),

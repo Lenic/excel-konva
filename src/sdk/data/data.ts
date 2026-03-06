@@ -4,7 +4,7 @@ import type { Observable } from 'rxjs';
 
 import { Subject } from 'rxjs';
 
-import { ObservableDisposable } from '../utils';
+import { getDefaultValue, ObservableDisposable } from '../utils';
 
 /**
  * Spreadsheet data manager
@@ -22,7 +22,7 @@ export class DataManager extends ObservableDisposable implements IDataManager {
     super();
 
     this.provider = provider;
-    this.disposeWithMe(() => void (this.provider = undefined as unknown as IDataProvider));
+    this.disposeWithMe(() => void (this.provider = getDefaultValue<IDataProvider>()));
 
     this.patchSubject = new Subject<TCellChangePatch<any>>();
     this.disposeWithMe(() => {

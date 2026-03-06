@@ -3,7 +3,7 @@ import type { Observable } from 'rxjs';
 
 import { Subject } from 'rxjs';
 
-import { ObservableDisposable } from '../utils';
+import { getDefaultValue, ObservableDisposable } from '../utils';
 
 /**
  * Dimension manager
@@ -91,8 +91,4 @@ export class DimensionManager extends ObservableDisposable implements IDimension
       this.dimensionSubject.next({ type: 'dimension', index, previous, current });
     }
   }
-}
-
-function getDefaultValue() {
-  return undefined as unknown as IDimensionOptions;
 }

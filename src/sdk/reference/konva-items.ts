@@ -4,7 +4,7 @@ import type { IKonvaItems, IRenderGroup } from './types';
 import Konva from 'konva';
 import { animationFrameScheduler, auditTime, fromEventPattern, Observable, tap } from 'rxjs';
 
-import { ObservableDisposable } from '../utils';
+import { getDefaultValue, ObservableDisposable } from '../utils';
 
 import { EFreezeMode } from './types';
 
@@ -29,7 +29,7 @@ export class KonvaItems extends ObservableDisposable implements IKonvaItems {
     this.stage = new Konva.Stage({ container: konvaContainer, width: 0, height: 0 });
     this.disposeWithMe(() => {
       this.stage.off().destroy();
-      this.stage = undefined as unknown as Konva.Stage;
+      this.stage = getDefaultValue<Konva.Stage>();
     });
 
     const containerResize$ = new Observable<IDimension>((observer) => {
@@ -84,7 +84,7 @@ export class KonvaItems extends ObservableDisposable implements IKonvaItems {
       this.background.groups[EFreezeMode.BOTH].destroy();
 
       this.background.layer.destroy();
-      this.background = undefined as unknown as IRenderGroup;
+      this.background = getDefaultValue<IRenderGroup>();
     });
     this.stage.add(this.background.layer);
     this.background.layer.add(
@@ -110,7 +110,7 @@ export class KonvaItems extends ObservableDisposable implements IKonvaItems {
       this.selection.groups[EFreezeMode.BOTH].destroy();
 
       this.selection.layer.destroy();
-      this.selection = undefined as unknown as IRenderGroup;
+      this.selection = getDefaultValue<IRenderGroup>();
     });
     this.stage.add(this.selection.layer);
     this.selection.layer.add(
@@ -133,7 +133,7 @@ export class KonvaItems extends ObservableDisposable implements IKonvaItems {
     });
     this.disposeWithMe(() => {
       this.resizeLine.destroy();
-      this.resizeLine = undefined as unknown as Konva.Line;
+      this.resizeLine = getDefaultValue<Konva.Line>();
     });
     this.selection.layer.add(this.resizeLine);
     this.disposeWithMe(

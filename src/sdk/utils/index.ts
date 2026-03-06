@@ -1,5 +1,6 @@
 export * from './cell';
 export * from './column';
+export * from './default-value';
 export * from './disposable';
 export * from './queue';
 export * from './search';

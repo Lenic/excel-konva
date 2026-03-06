@@ -7,7 +7,7 @@ import { distinctUntilChanged, filter, of, scan } from 'rxjs';
 import { combineLatest, map, startWith } from 'rxjs';
 
 import { EFreezeMode } from '../reference';
-import { ObservableDisposable } from '../utils';
+import { getDefaultValue, ObservableDisposable } from '../utils';
 
 import { Viewport } from './viewport';
 
@@ -77,7 +77,7 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
     );
     this.disposeWithMe(() => {
       this[EFreezeMode.NONE].dispose();
-      this[EFreezeMode.NONE] = getDefaultValue();
+      this[EFreezeMode.NONE] = getDefaultValue<IViewport>();
     });
 
     this[EFreezeMode.ROW] = new Viewport(
@@ -120,7 +120,7 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
     );
     this.disposeWithMe(() => {
       this[EFreezeMode.ROW].dispose();
-      this[EFreezeMode.ROW] = getDefaultValue();
+      this[EFreezeMode.ROW] = getDefaultValue<IViewport>();
     });
 
     this[EFreezeMode.COLUMN] = new Viewport(
@@ -163,7 +163,7 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
     );
     this.disposeWithMe(() => {
       this[EFreezeMode.COLUMN].dispose();
-      this[EFreezeMode.COLUMN] = getDefaultValue();
+      this[EFreezeMode.COLUMN] = getDefaultValue<IViewport>();
     });
 
     this[EFreezeMode.BOTH] = new Viewport(
@@ -182,7 +182,7 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
     );
     this.disposeWithMe(() => {
       this[EFreezeMode.BOTH].dispose();
-      this[EFreezeMode.BOTH] = getDefaultValue();
+      this[EFreezeMode.BOTH] = getDefaultValue<IViewport>();
     });
   }
 
@@ -250,8 +250,4 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
       this.withPublish(),
     );
   }
-}
-
-function getDefaultValue() {
-  return undefined as unknown as IViewport;
 }
