@@ -1,5 +1,5 @@
 import type { ICellRange } from '../../core';
-import type { IDataManager } from '../../data';
+import type { IDataManager, TCellContent } from '../../data';
 import type { IKonvaItems } from '../../reference';
 import type { IShapePool } from '../pools/types';
 import type { ILayoutCache, IViewportManager } from '../types';
@@ -11,6 +11,7 @@ import { combineLatestWith, filter, startWith } from 'rxjs';
 import { map, switchMap } from 'rxjs';
 
 import { EFreezeMode } from '../../reference';
+import { getColumnLabel } from '../../utils';
 import { CollectionSubscription } from '../subscription';
 
 import { RenderListener } from './renderer';
@@ -159,6 +160,25 @@ export class CellRenderer extends RenderListener<void> {
               );
             shape$Map.set(`rect:${rowIndex}:${columnIndex}`, getRect$);
 
+            let content$: Observable<TCellContent | undefined>;
+            if (rowIndex === 0) {
+              content$ = of(columnIndex === 0 ? '' : getColumnLabel(columnIndex - 1));
+            } else if (columnIndex === 0) {
+              content$ = of(rowIndex.toString());
+            } else {
+              content$ = this.dataManager.patch$.pipe(
+                filter(
+                  (v) =>
+                    rowIndex >= v.range.rowStartIndex &&
+                    rowIndex <= v.range.rowEndIndex &&
+                    columnIndex >= v.range.columnStartIndex &&
+                    columnIndex <= v.range.columnEndIndex,
+                ),
+                map(() => this.dataManager.get(rowIndex, columnIndex)),
+                startWith(this.dataManager.get(rowIndex, columnIndex)),
+              );
+            }
+
             const getText$ = () =>
               combineLatest([this.textPool.get$, this.shapeStyle.getTextAttrs$(mode, rowIndex, columnIndex)]).pipe(
                 switchMap(([getter, attrs]) =>
@@ -173,20 +193,7 @@ export class CellRenderer extends RenderListener<void> {
                       this.textPool.reuse(text);
                     };
                   }).pipe(
-                    combineLatestWith(
-                      offset$,
-                      this.dataManager.patch$.pipe(
-                        filter(
-                          (v) =>
-                            rowIndex >= v.range.rowStartIndex &&
-                            rowIndex <= v.range.rowEndIndex &&
-                            columnIndex >= v.range.columnStartIndex &&
-                            columnIndex <= v.range.columnEndIndex,
-                        ),
-                        map(() => this.dataManager.get(rowIndex, columnIndex)),
-                        startWith(this.dataManager.get(rowIndex, columnIndex)),
-                      ),
-                    ),
+                    combineLatestWith(offset$, content$),
                     map(([text, offset, content]) =>
                       text.setAttrs({
                         x: x + offset.deltaX - group.x(),
