@@ -79,16 +79,31 @@ export interface IDimensionManager extends IDisposable {
 export const IDimensionManager: TIdentifier<IDimensionManager> = Symbol('IDimensionManager');
 
 /**
+ * Represents a change in the accumulated dimension count.
+ */
+export interface TAccumulatedDimensionCountChangePatch extends IChangePatch {
+  /**
+   * The type of patch, set to 'count'.
+   */
+  type: 'count';
+}
+
+/**
+ * Union type for accumulated dimension change patches.
+ */
+export type TAccumulatedDimensionPatch = TDimensionPatch | TAccumulatedDimensionCountChangePatch;
+
+/**
  * Accumulated dimension of items
  */
 export interface IAccumulatedDimensionManager {
   /**
    * An observable that emits when a dimension value changes.
    */
-  readonly change$: Observable<TDimensionPatch>;
+  readonly change$: Observable<TAccumulatedDimensionPatch>;
 
   /**
-   * Get accumulated dimension
+   * Get the accumulated dimension of all items before this index.
    *
    * - The accumulated dimension of the first item is 0
    *
@@ -103,14 +118,6 @@ export interface IAccumulatedDimensionManager {
    * @returns Item index
    */
   findIndex(offset: number): number;
-  /**
-   * Find index range by accumulated dimension
-   *
-   * @param beginValue - Begin accumulated dimension
-   * @param endValue - End accumulated dimension
-   * @returns Item index range
-   */
-  findRange(beginValue: number, endValue: number): [beginIndex: number, endIndex: number];
 }
 export const IAccumulatedDimensionManager: TIdentifier<IAccumulatedDimensionManager> =
   Symbol('IAccumulatedDimensionManager');

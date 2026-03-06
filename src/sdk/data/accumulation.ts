@@ -1,5 +1,7 @@
-import type { IAccumulatedDimensionManager, IDimensionManager, TDimensionPatch } from './types';
+import type { IAccumulatedDimensionManager, IDimensionManager, TAccumulatedDimensionPatch } from './types';
 import type { Observable } from 'rxjs';
+
+import { merge, Subject } from 'rxjs';
 
 import { binarySearch, ObservableDisposable, TruncatableList } from '../utils';
 
@@ -12,9 +14,10 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
   private previousFindOffset: number;
   private dimension: IDimensionManager;
   private dimensionList: TruncatableList<number>;
+  private changeSubject: Subject<TAccumulatedDimensionPatch>;
   private dimensionRangeList: TruncatableList<[beginValue: number, endValue: number]>;
 
-  change$: Observable<TDimensionPatch>;
+  change$: Observable<TAccumulatedDimensionPatch>;
 
   /**
    * AccumulatedDimensionManager constructor
@@ -25,7 +28,12 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
   constructor(dimension: IDimensionManager, count$: Observable<number>) {
     super();
 
-    this.change$ = dimension.change$;
+    this.changeSubject = new Subject<TAccumulatedDimensionPatch>();
+    this.disposeWithMe(() => {
+      this.changeSubject.complete();
+    });
+
+    this.change$ = merge(this.changeSubject, dimension.change$);
 
     this.previousFindIndex = -1;
     this.disposeWithMe(() => void (this.previousFindIndex = -1));
@@ -38,7 +46,14 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
 
     this.count = 0;
     this.disposeWithMe(() => void (this.count = 0));
-    this.disposeWithMe(count$.subscribe((count) => void (this.count = count)));
+    this.disposeWithMe(
+      count$.subscribe((count) => {
+        const previous = this.count;
+        this.count = count;
+
+        this.changeSubject.next({ type: 'count', previous, current: count });
+      }),
+    );
 
     this.dimensionList = new TruncatableList<number>();
     this.dimensionList.push(0);
@@ -48,22 +63,13 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
     this.disposeWithMe(this.dimensionRangeList);
 
     this.disposeWithMe(
-      dimension.change$.subscribe((patch) => {
-        if (patch.type === 'dimension') {
-          this.dimensionList.truncate(patch.index + 1);
-          this.dimensionRangeList.truncate(patch.index + 1);
+      this.change$.subscribe((patch) => {
+        const index = patch.type === 'options' ? 0 : patch.type === 'dimension' ? patch.index : patch.current - 1;
+        this.dimensionList.truncate(index);
+        this.dimensionRangeList.truncate(index);
 
-          if (patch.index <= this.dimensionRangeList.length - 1) {
-            this.previousFindIndex = -1;
-            this.previousFindOffset = -1;
-          }
-        } else {
-          this.dimensionList.truncate(0);
-          this.dimensionRangeList.truncate(0);
-
-          this.previousFindIndex = -1;
-          this.previousFindOffset = -1;
-        }
+        this.previousFindIndex = -1;
+        this.previousFindOffset = -1;
       }),
     );
   }
@@ -138,34 +144,6 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
       return index;
     }
 
-    index = this.findIndexByOffset(offset);
-    this.previousFindIndex = index;
-    return index;
-  }
-
-  findRange(beginValue: number, endValue: number): [beginIndex: number, endIndex: number] {
-    const comparer = (value: number) => (mid: number) => {
-      const beginValue = this.get(mid);
-      const endValue = this.get(mid + 1);
-      if (beginValue <= value && value < endValue) return 0;
-      return beginValue > value ? 1 : -1;
-    };
-
-    let beginIndex = binarySearch(0, this.count - 1, comparer(beginValue), 1);
-    if (beginIndex === -1) {
-      beginIndex = this.findIndexByOffset(beginValue);
-    }
-
-    let endIndex = binarySearch(beginIndex, this.count - 1, comparer(endValue), -1);
-    if (endIndex === -1) {
-      endIndex = this.findIndexByOffset(endValue);
-    }
-
-    return [beginIndex, endIndex];
-  }
-
-  private findIndexByOffset(offset: number): number {
-    let index = -1;
     let c = this.dimensionRangeList.length;
     for (; c < this.count; c++) {
       const beginValue = this.get(c);
@@ -179,6 +157,11 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
       }
     }
 
-    return index === -1 ? -1 : Math.min(index, this.count - 1);
+    if (index !== -1) {
+      index = Math.min(index, this.count - 1);
+    }
+
+    this.previousFindIndex = index;
+    return index;
   }
 }
