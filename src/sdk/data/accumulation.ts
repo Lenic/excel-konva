@@ -92,7 +92,7 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
     return currentValue;
   }
 
-  findIndex(offset: number, exact?: number): number {
+  findIndex(offset: number): number {
     const list = this.dimensionRangeList;
 
     function comparer(mid: number) {
@@ -136,14 +136,40 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
       }
     }
 
-    this.previousFindOffset = offset;
-
-    let index = binarySearch(0, list.length - 1, comparer, exact);
+    let index = binarySearch(0, list.length - 1, comparer);
     if (index !== -1) {
       this.previousFindIndex = index;
       return index;
     }
 
+    index = this.findIndexByOffset(offset);
+    this.previousFindIndex = index;
+    return index;
+  }
+
+  findRange(beginValue: number, endValue: number): [beginIndex: number, endIndex: number] {
+    const comparer = (value: number) => (mid: number) => {
+      const beginValue = this.get(mid);
+      const endValue = this.get(mid + 1);
+      if (beginValue <= value && value < endValue) return 0;
+      return beginValue > value ? 1 : -1;
+    };
+
+    let beginIndex = binarySearch(0, this.count - 1, comparer(beginValue), 1);
+    if (beginIndex === -1) {
+      beginIndex = this.findIndexByOffset(beginValue);
+    }
+
+    let endIndex = binarySearch(beginIndex, this.count - 1, comparer(endValue), -1);
+    if (endIndex === -1) {
+      endIndex = this.findIndexByOffset(endValue);
+    }
+
+    return [beginIndex, endIndex];
+  }
+
+  private findIndexByOffset(offset: number): number {
+    let index = -1;
     let c = this.dimensionRangeList.length;
     for (; c < this.count; c++) {
       const beginValue = this.get(c);
@@ -157,11 +183,6 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
       }
     }
 
-    if (index !== -1) {
-      index = Math.min(index, this.count - 1);
-    }
-
-    this.previousFindIndex = index;
-    return index;
+    return index === -1 ? -1 : Math.min(index, this.count - 1);
   }
 }

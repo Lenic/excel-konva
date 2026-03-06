@@ -115,13 +115,17 @@ export interface IAccumulatedDimensionManager {
    * Find index by accumulated dimension
    *
    * @param offset - Accumulated dimension
-   * @param exact - Search precision mode, defaults to exact search mode.
-   *  - `0` for exact search;
-   *  - `>0` to search for the minimum value greater than or equal to the target;
-   *  - `<0` to search for the maximum value less than or equal to the target;
    * @returns Item index
    */
-  findIndex(offset: number, exact?: number): number;
+  findIndex(offset: number): number;
+  /**
+   * Find index range by accumulated dimension
+   *
+   * @param beginValue - Begin accumulated dimension
+   * @param endValue - End accumulated dimension
+   * @returns Item index range
+   */
+  findRange(beginValue: number, endValue: number): [beginIndex: number, endIndex: number];
 }
 export const IAccumulatedDimensionManager: TIdentifier<IAccumulatedDimensionManager> =
   Symbol('IAccumulatedDimensionManager');

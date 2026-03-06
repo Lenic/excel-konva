@@ -232,18 +232,14 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
           const rowKey = `${height}-${sheetHeight}-${deltaY}`;
           if (rowKey !== acc.vertical[2]) {
             changed = true;
-            nextVertical = [row.findIndex(height + deltaY, 1), row.findIndex(sheetHeight + deltaY, -1), rowKey];
+            nextVertical = [...row.findRange(height + deltaY, sheetHeight + deltaY), rowKey];
           }
 
           let nextHorizontal = acc.horizontal;
           const horizontalKey = `${width}-${sheetWidth}-${deltaX}`;
           if (horizontalKey !== acc.horizontal[2]) {
             changed = true;
-            nextHorizontal = [
-              column.findIndex(width + deltaX, 1),
-              column.findIndex(sheetWidth + deltaX, -1),
-              horizontalKey,
-            ];
+            nextHorizontal = [...column.findRange(width + deltaX, sheetWidth + deltaX), horizontalKey];
           }
 
           return changed ? { vertical: nextVertical, horizontal: nextHorizontal } : acc;
