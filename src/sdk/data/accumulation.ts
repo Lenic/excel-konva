@@ -92,7 +92,7 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
     return currentValue;
   }
 
-  findIndex(offset: number): number {
+  findIndex(offset: number, exact?: number): number {
     const list = this.dimensionRangeList;
 
     function comparer(mid: number) {
@@ -138,7 +138,7 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
 
     this.previousFindOffset = offset;
 
-    let index = binarySearch(0, list.length - 1, comparer);
+    let index = binarySearch(0, list.length - 1, comparer, exact);
     if (index !== -1) {
       this.previousFindIndex = index;
       return index;
