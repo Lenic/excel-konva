@@ -19,14 +19,13 @@ async function bootstrap() {
 
   // data provider
   const data: TCellContent<any>[][] = [
-    [null, 'Header 2', 'Header 3', 'Header 4', 'Header 5', 'Header 6', 'Header 7', 'Header 8', 'Header 9', 'Header 10'],
-    ['2', 'R1 C2', 'R1 C3', 'R1 C4', 'R1 C5', 'R1 C6', 'R1 C7', 'R1 C8', 'R1 C9', 'R1 C10'],
-    ['3', 'R2 C2', 'R2 C3', 'R2 C4', 'R2 C5', 'R2 C6', 'R2 C7', 'R2 C8', 'R2 C9', 'R2 C10'],
-    ['4', 'R3 C2', 'R3 C3', 'R3 C4', 'R3 C5', 'R3 C6', 'R3 C7', 'R3 C8', 'R3 C9', 'R3 C10'],
+    ['R1 C2', 'R1 C3', 'R1 C4', 'R1 C5', 'R1 C6', 'R1 C7', 'R1 C8', 'R1 C9', 'R1 C10'],
+    ['R2 C2', 'R2 C3', 'R2 C4', 'R2 C5', 'R2 C6', 'R2 C7', 'R2 C8', 'R2 C9', 'R2 C10'],
+    ['R3 C2', 'R3 C3', 'R3 C4', 'R3 C5', 'R3 C6', 'R3 C7', 'R3 C8', 'R3 C9', 'R3 C10'],
   ];
   const dataProvider: IDataProvider = {
     get<T = unknown>(rowIndex: number, columnIndex: number): TCellContent<T> | undefined {
-      return data[rowIndex]?.[columnIndex];
+      return data[rowIndex - 1]?.[columnIndex - 1];
     },
     set<T = unknown>(patch: TCellChangePatch<T>): void {
       const { range } = patch;
@@ -34,12 +33,12 @@ async function bootstrap() {
         const { values } = patch;
         for (let i = 0; i < values.length; i++) {
           for (let j = 0; j < values[i].length; j++) {
-            data[range.rowStartIndex + i][range.columnStartIndex + j] = values[i][j];
+            data[range.rowStartIndex + i - 1][range.columnStartIndex + j - 1] = values[i][j];
           }
         }
       } else {
-        for (let i = range.rowStartIndex; i <= range.rowEndIndex; i++) {
-          for (let j = range.columnStartIndex; j <= range.columnEndIndex; j++) {
+        for (let i = range.rowStartIndex - 1; i <= range.rowEndIndex - 1; i++) {
+          for (let j = range.columnStartIndex - 1; j <= range.columnEndIndex - 1; j++) {
             data[i][j] = null;
           }
         }
