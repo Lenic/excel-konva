@@ -20,11 +20,6 @@ export const SELECTION_RECT_POOL = Symbol('SELECTION_RECT_POOL');
 export const ACTIVE_CELL_POOL = Symbol('ACTIVE_CELL_POOL');
 
 /**
- * Symbol for active cell boundary line pool
- */
-export const ACTIVE_CELL_LINE_POOL = Symbol('ACTIVE_CELL_LINE_POOL');
-
-/**
  * Registers pool-related services in the DI container
  *
  * @param container - The target IOC container
