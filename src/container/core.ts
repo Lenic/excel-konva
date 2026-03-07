@@ -84,7 +84,7 @@ export class Container extends Disposable implements IContainer {
 
   private buildGet<T, R>(
     identifier: TIdentifier<T>,
-    getter: (lifecycle: ILifecycle<T>, effectiveContext: Map<symbol, any>, tag?: string | symbol) => R,
+    getter: (lifecycle: ILifecycle<T>, effectiveContext: Map<symbol, any>) => R,
     context?: Map<symbol, any>,
   ): R {
     this.checkDisposed();
