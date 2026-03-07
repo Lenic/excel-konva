@@ -134,26 +134,10 @@ export interface IViewport extends IDisposable {
   range: ICellRange;
 }
 
-export interface IViewportOptions {
-  /**
-   * Observable number of frozen rows
-   */
-  frozenRowCount$: Observable<number>;
-  /**
-   * Observable number of frozen columns
-   */
-  frozenColumnCount$: Observable<number>;
-}
-
 /**
  * ViewportManager
  */
-export interface IViewportManager extends Record<EFreezeMode, IViewport>, IDisposable {
-  /**
-   * Observable scrollable range
-   */
-  scrollableRange$: Observable<ICellRange>;
-}
+export interface IViewportManager extends Record<EFreezeMode, IViewport>, IDisposable {}
 /**
  * ViewportManager interface identifier
  */
@@ -170,3 +154,25 @@ export interface ILayoutCache extends IDisposable {
  * Identifier for the ILayoutCache interface.
  */
 export const ILayoutCache: TIdentifier<ILayoutCache> = Symbol('ILayoutCache');
+
+/**
+ * Information manager
+ */
+export interface IInformation<T> extends IDisposable {
+  /**
+   * Observable value
+   */
+  value$: Observable<T>;
+}
+
+/**
+ * Scrollable range
+ */
+export const IScrollableRange: TIdentifier<IInformation<ICellRange & { verticalKey: string; horizontalKey: string }>> =
+  Symbol('IScrollableRange');
+
+/**
+ * Frozen information
+ */
+export const IFrozenInformation: TIdentifier<IInformation<IDimension & { rowCount: number; columnCount: number }>> =
+  Symbol('IFrozenInformation');

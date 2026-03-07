@@ -1,17 +1,13 @@
 import type { ICellRange, IDimension, IOffset, IScrollOffset } from '../core';
-import type { IAccumulatedDimensionManager } from '../data';
-import type { IRectBox, ISheetDimension, IViewport, IViewportManager, IViewportOptions } from './types';
-import type { Observable } from 'rxjs';
+import type { IInformation, IRectBox, ISheetDimension, IViewport, IViewportManager } from './types';
 
-import { distinctUntilChanged, filter, of, scan } from 'rxjs';
+import { distinctUntilChanged, filter, of } from 'rxjs';
 import { combineLatest, map, startWith } from 'rxjs';
 
 import { EFreezeMode } from '../reference';
 import { getDefaultValue, ObservableDisposable } from '../utils';
 
 import { Viewport } from './viewport';
-
-type TIndex = [startIndex: number, endIndex: number, key: string];
 
 /**
  * ViewportManager
@@ -22,29 +18,39 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
   [EFreezeMode.COLUMN]!: IViewport;
   [EFreezeMode.BOTH]!: IViewport;
 
-  scrollableRange$: Observable<ICellRange>;
-
   /**
    * ViewportManager constructor
    *
    * @param offset - The offset to observe for dimension changes
    * @param sheet - The sheet to observe for dimension changes
-   * @param options - The viewport options
-   * @param row - The row to observe for dimension changes
-   * @param column - The column to observe for dimension changes
+   * @param scrollableRange - The scrollable range to observe for dimension changes
+   * @param frozenInformation - The frozen information to observe for dimension changes
    */
   constructor(
     offset: IScrollOffset,
     sheet: ISheetDimension,
-    options: IViewportOptions,
-    row: IAccumulatedDimensionManager,
-    column: IAccumulatedDimensionManager,
+    scrollableRange: IInformation<ICellRange & { verticalKey: string; horizontalKey: string }>,
+    frozenInformation: IInformation<IDimension & { rowCount: number; columnCount: number }>,
   ) {
     super();
 
-    const box$ = this.buildFrozenDimension(options, row, column);
-    const range$ = this.buildScrollableRange(box$, offset, sheet, row, column);
-    this.scrollableRange$ = range$;
+    const box$ = frozenInformation.value$.pipe(
+      distinctUntilChanged((x, y) => x.width === y.width && x.height === y.height),
+      map(({ width, height }): IDimension => ({ width, height })),
+      this.withPublish(),
+    );
+
+    const frozenRowCount$ = frozenInformation.value$.pipe(
+      distinctUntilChanged((x, y) => x.rowCount === y.rowCount),
+      map(({ rowCount }): number => rowCount),
+      this.withPublish(),
+    );
+
+    const frozenColumnCount$ = frozenInformation.value$.pipe(
+      distinctUntilChanged((x, y) => x.columnCount === y.columnCount),
+      map(({ columnCount }): number => columnCount),
+      this.withPublish(),
+    );
 
     this[EFreezeMode.NONE] = new Viewport(
       combineLatest([
@@ -67,7 +73,7 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
         map(() => offset.offset),
         startWith(offset.offset),
       ),
-      range$,
+      scrollableRange.value$,
     );
     this.disposeWithMe(() => {
       this[EFreezeMode.NONE].dispose();
@@ -99,8 +105,8 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
         map((deltaX): IOffset => ({ deltaX, deltaY: 0 })),
       ),
       combineLatest([
-        options.frozenRowCount$,
-        range$.pipe(distinctUntilChanged((x, y) => x.horizontalKey === y.horizontalKey)),
+        frozenRowCount$,
+        scrollableRange.value$.pipe(distinctUntilChanged((x, y) => x.horizontalKey === y.horizontalKey)),
       ]).pipe(
         map(
           ([rowCount, { columnStartIndex, columnEndIndex }]): ICellRange => ({
@@ -142,8 +148,8 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
         map((deltaY): IOffset => ({ deltaX: 0, deltaY })),
       ),
       combineLatest([
-        options.frozenColumnCount$,
-        range$.pipe(distinctUntilChanged((x, y) => x.verticalKey === y.verticalKey)),
+        frozenColumnCount$,
+        scrollableRange.value$.pipe(distinctUntilChanged((x, y) => x.verticalKey === y.verticalKey)),
       ]).pipe(
         map(
           ([columnCount, { rowStartIndex, rowEndIndex }]): ICellRange => ({
@@ -163,7 +169,7 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
     this[EFreezeMode.BOTH] = new Viewport(
       box$.pipe(map(({ width, height }): IRectBox => ({ x: 0, y: 0, width, height }))),
       of<IOffset>({ deltaX: 0, deltaY: 0 }),
-      combineLatest([options.frozenRowCount$, options.frozenColumnCount$]).pipe(
+      combineLatest([frozenRowCount$, frozenColumnCount$]).pipe(
         map(
           ([rowCount, columnCount]): ICellRange => ({
             rowStartIndex: 0,
@@ -178,78 +184,5 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
       this[EFreezeMode.BOTH].dispose();
       this[EFreezeMode.BOTH] = getDefaultValue<IViewport>();
     });
-  }
-
-  private buildFrozenDimension(
-    options: IViewportOptions,
-    row: IAccumulatedDimensionManager,
-    column: IAccumulatedDimensionManager,
-  ) {
-    const width$ = combineLatest([options.frozenColumnCount$, column.change$.pipe(startWith(null))]).pipe(
-      map(([frozenColumnCount]) => column.get(frozenColumnCount)),
-      distinctUntilChanged(),
-    );
-
-    const height$ = combineLatest([options.frozenRowCount$, row.change$.pipe(startWith(null))]).pipe(
-      map(([frozenRowCount]) => row.get(frozenRowCount)),
-      distinctUntilChanged(),
-    );
-
-    return combineLatest([width$, height$]).pipe(
-      map(([width, height]): IDimension => ({ width, height })),
-      this.withPublish(),
-    );
-  }
-
-  private buildScrollableRange(
-    box$: Observable<IDimension>,
-    offset: IScrollOffset,
-    sheet: ISheetDimension,
-    row: IAccumulatedDimensionManager,
-    column: IAccumulatedDimensionManager,
-  ) {
-    const size$ = sheet.change$.pipe(
-      map(() => sheet.size),
-      startWith(sheet.size),
-    );
-
-    const offset$ = offset.change$.pipe(
-      map(() => offset.offset),
-      startWith(offset.offset),
-    );
-    return combineLatest([box$, offset$, size$]).pipe(
-      scan(
-        (acc, [{ width, height }, { deltaX, deltaY }, { width: sheetWidth, height: sheetHeight }]) => {
-          let changed = false;
-
-          let nextVertical = acc.vertical;
-          const rowKey = `${height}-${sheetHeight}-${deltaY}`;
-          if (rowKey !== acc.vertical[2]) {
-            changed = true;
-            nextVertical = [...row.findRange(height + deltaY, sheetHeight + deltaY), rowKey];
-          }
-
-          let nextHorizontal = acc.horizontal;
-          const horizontalKey = `${width}-${sheetWidth}-${deltaX}`;
-          if (horizontalKey !== acc.horizontal[2]) {
-            changed = true;
-            nextHorizontal = [...column.findRange(width + deltaX, sheetWidth + deltaX), horizontalKey];
-          }
-
-          return changed ? { vertical: nextVertical, horizontal: nextHorizontal } : acc;
-        },
-        { vertical: [0, 0, ''] as TIndex, horizontal: [0, 0, ''] as TIndex },
-      ),
-      distinctUntilChanged((x, y) => x.horizontal[2] === y.horizontal[2] && x.vertical[2] === y.vertical[2]),
-      map(({ horizontal, vertical }): ICellRange & { verticalKey: string; horizontalKey: string } => ({
-        rowStartIndex: vertical[0],
-        rowEndIndex: vertical[1],
-        columnStartIndex: horizontal[0],
-        columnEndIndex: horizontal[1],
-        verticalKey: vertical[2],
-        horizontalKey: horizontal[2],
-      })),
-      this.withPublish(),
-    );
   }
 }
