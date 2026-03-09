@@ -15,12 +15,12 @@ export abstract class RenderListener<T> extends ObservableDisposable implements 
   /**
    * Current data state
    */
-  data: T | null;
+  value: T | null;
 
   /**
    * Observable for data state changes
    */
-  data$: Observable<T>;
+  value$: Observable<T>;
 
   /**
    * Initializes a new instance of the RenderListener class.
@@ -34,11 +34,11 @@ export abstract class RenderListener<T> extends ObservableDisposable implements 
       this.subject.complete();
     });
 
-    this.data = null;
-    this.disposeWithMe(() => void (this.data = null));
+    this.value = null;
+    this.disposeWithMe(() => void (this.value = null));
 
-    this.data$ = this.subject.asObservable();
-    this.disposeWithMe(this.data$.subscribe((data) => void (this.data = data)));
+    this.value$ = this.subject.asObservable();
+    this.disposeWithMe(this.value$.subscribe((data) => void (this.value = data)));
 
     this.disposeWithMe(this.destroySubscription);
   }

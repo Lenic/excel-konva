@@ -10,12 +10,12 @@ export interface IRenderListener<T> extends IDisposable {
   /**
    * Current data state of the renderer
    */
-  data: T | null;
+  value: T | null;
 
   /**
    * Observable that emits data state changes
    */
-  data$: Observable<T>;
+  value$: Observable<T>;
 
   /**
    * Starts the rendering listener
