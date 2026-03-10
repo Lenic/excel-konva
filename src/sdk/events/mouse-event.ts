@@ -1,8 +1,9 @@
 import type { IKonvaItems } from '../reference';
 import type { IStageMouseEvent, TMousedownEvent } from './types';
 import type Konva from 'konva';
+import type { Observable } from 'rxjs';
 
-import { fromEvent, map, type Observable, share } from 'rxjs';
+import { fromEventPattern, map } from 'rxjs';
 
 import { ObservableDisposable } from '../utils/disposable';
 
@@ -21,10 +22,10 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
 
     const stage = konvaItems.stage;
 
-    this.mousedown$ = fromEvent<Konva.KonvaEventObject<MouseEvent>>(stage, 'mousedown').pipe(share());
-    this.mouseMove$ = fromEvent<Konva.KonvaEventObject<MouseEvent>>(stage, 'mousemove').pipe(share());
-    this.mouseUp$ = fromEvent<Konva.KonvaEventObject<MouseEvent>>(stage, 'mouseup').pipe(share());
-    this.dblclick$ = fromEvent<Konva.KonvaEventObject<MouseEvent>>(stage, 'dblclick').pipe(share());
+    this.mousedown$ = this.getMouseEvent$(stage, 'mousedown');
+    this.mouseMove$ = this.getMouseEvent$(stage, 'mousemove');
+    this.mouseUp$ = this.getMouseEvent$(stage, 'mouseup');
+    this.dblclick$ = this.getMouseEvent$(stage, 'dblclick');
 
     // Basic implementation of typedMouseDownLeft$
     this.typedMouseDownLeft$ = this.mousedown$.pipe(
@@ -34,7 +35,14 @@ export class StageMouseEvent extends ObservableDisposable implements IStageMouse
           event,
         };
       }),
-      share(),
+      this.withShare(),
     );
+  }
+
+  private getMouseEvent$(stage: Konva.Stage, key: keyof GlobalEventHandlersEventMap) {
+    return fromEventPattern<Konva.KonvaEventObject<MouseEvent>>(
+      (fn) => stage.on(key, fn),
+      (fn) => stage.off(key, fn),
+    ).pipe(this.withShare());
   }
 }

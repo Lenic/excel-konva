@@ -1,12 +1,13 @@
 import type { ICellRange } from '../../core';
 import type { IDataManager, TCellContent } from '../../data';
+import type { ICursorListener } from '../../events';
 import type { IKonvaItems } from '../../reference';
 import type { IShapePool } from '../pools/types';
 import type { ILayoutCache, IViewportManager } from '../types';
 import type { IShapeStyleConfig } from './types';
 import type Konva from 'konva';
 
-import { combineLatest, Observable, of, tap } from 'rxjs';
+import { combineLatest, EMPTY, Observable, of, tap } from 'rxjs';
 import { combineLatestWith, filter, startWith } from 'rxjs';
 import { map, switchMap } from 'rxjs';
 
@@ -30,6 +31,7 @@ export class CellRenderer extends RenderListener<void> {
   private layoutCache: ILayoutCache;
   private dataManager: IDataManager;
   private shapeStyle: IShapeStyleConfig;
+  private cursorListener: ICursorListener;
 
   private subscriptions: Record<EFreezeMode, CollectionSubscription>;
 
@@ -52,6 +54,7 @@ export class CellRenderer extends RenderListener<void> {
     layoutCache: ILayoutCache,
     dataManager: IDataManager,
     shapeStyle: IShapeStyleConfig,
+    cursorListener: ICursorListener,
   ) {
     super();
 
@@ -62,6 +65,7 @@ export class CellRenderer extends RenderListener<void> {
     this.layoutCache = layoutCache;
     this.dataManager = dataManager;
     this.shapeStyle = shapeStyle;
+    this.cursorListener = cursorListener;
 
     this.subscriptions = {
       [EFreezeMode.NONE]: new CollectionSubscription(),
@@ -129,7 +133,7 @@ export class CellRenderer extends RenderListener<void> {
       map((v) => v.current),
       startWith(viewport.range),
       map((range: ICellRange) => {
-        const shape$Map = new Map<string, () => Observable<Konva.Shape>>();
+        const shape$Map = new Map<string, () => Observable<any>>();
         for (let rowIndex = range.rowStartIndex; rowIndex <= range.rowEndIndex; rowIndex++) {
           for (let columnIndex = range.columnStartIndex; columnIndex <= range.columnEndIndex; columnIndex++) {
             const { x, y, width, height } = this.layoutCache.getCellRect(rowIndex, columnIndex);
@@ -208,6 +212,49 @@ export class CellRenderer extends RenderListener<void> {
                 ),
               );
             shape$Map.set(`text:${rowIndex}:${columnIndex}`, getText$);
+
+            const el$ = combineLatest([
+              new Observable<() => HTMLDivElement>((observer) => {
+                let el: HTMLDivElement | null = null;
+                const createEl = () => {
+                  if (el) return el;
+
+                  el = document.createElement('div');
+                  el.style.position = 'absolute';
+                  el.style.width = `30px`;
+                  el.style.height = `20px`;
+                  el.style.background = 'orange';
+
+                  this.konvaItems.stage.container().appendChild(el);
+                  return el;
+                };
+                observer.next(createEl);
+
+                return () => {
+                  el?.remove();
+                  el = null;
+                };
+              }),
+              offset$,
+            ]).pipe(
+              map(([getter, offset]) => {
+                const current = getter();
+                current.style.top = `${y + offset.deltaY + 5}px`;
+                current.style.left = `${x + offset.deltaX + width - 36}px`;
+                return current;
+              }),
+            );
+
+            const getEditor$ = () =>
+              this.cursorListener.change$.pipe(
+                filter((v) => v.type === 'location'),
+                map((v) => v.current),
+                startWith(this.cursorListener.location),
+                switchMap((location) =>
+                  location?.rowIndex === rowIndex && location.columnIndex === columnIndex ? el$ : EMPTY,
+                ),
+              );
+            shape$Map.set(`editor:${rowIndex}:${columnIndex}`, getEditor$);
           }
         }
         return shape$Map;

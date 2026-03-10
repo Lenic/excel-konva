@@ -1,5 +1,5 @@
 import type { IDisposable, TIdentifier } from '../../container';
-import type { ICellRange, ILocation } from '../core';
+import type { ICellRange, IChangePatch, ILocation, IPoint } from '../core';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
@@ -95,3 +95,52 @@ export interface IEventListener extends IDisposable {
 
 export const IStageClickListener: TIdentifier<IEventListener> = Symbol('IStageClickListener');
 export const IStageDragListener: TIdentifier<IEventListener> = Symbol('IStageDragListener');
+
+/**
+ * Represents a change patch specifically for the mouse cursor's coordinate point.
+ */
+export interface IMousePointChangePatch extends IChangePatch<IPoint | null> {
+  /**
+   * The discriminator type for point changes.
+   */
+  type: 'point';
+}
+
+/**
+ * Represents a change patch specifically for the mouse cursor's logical location (e.g., cell identifiers).
+ */
+export interface IMouseLocationChangePatch extends IChangePatch<ILocation | null> {
+  /**
+   * The discriminator type for location changes.
+   */
+  type: 'location';
+}
+
+/**
+ * A union type representing any change patch related to mouse movement.
+ */
+export type TMouseMoveChangePatch = IMousePointChangePatch | IMouseLocationChangePatch;
+
+/**
+ * Interface defining a listener that tracks mouse movement across the workspace.
+ */
+export interface ICursorListener extends IEventListener {
+  /**
+   * The current absolute coordinate position of the mouse.
+   */
+  position: IPoint | null;
+
+  /**
+   * The current logical location relative to the grid that the mouse is hovering over.
+   */
+  location: ILocation | null;
+
+  /**
+   * An observable stream that emits whenever the mouse movement results in a change patch.
+   */
+  change$: Observable<TMouseMoveChangePatch>;
+}
+/**
+ * The dependency injection identifier for the mouse move listener.
+ */
+export const ICursorListener: TIdentifier<ICursorListener> = Symbol('ICursorListener');

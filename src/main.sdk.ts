@@ -4,7 +4,7 @@ import { Container } from './container/core';
 import { registerCore, SheetConfig } from './sdk/core';
 import { registerData } from './sdk/data';
 import { registerEvents } from './sdk/events';
-import { IStageClickListener, IStageDragListener } from './sdk/events/types';
+import { ICursorListener, IStageClickListener, IStageDragListener } from './sdk/events/types';
 import { registerReference } from './sdk/reference';
 import { ICellRenderer, IScrollableRange, registerRenderers, registerUI } from './sdk/ui';
 
@@ -60,6 +60,7 @@ async function bootstrap() {
   // Start listeners
   container.get(IStageClickListener).startListening();
   container.get(IStageDragListener).startListening();
+  container.get(ICursorListener).startListening();
 
   // Start renderers
   container.get(ICellRenderer).start();

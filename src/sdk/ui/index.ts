@@ -2,6 +2,7 @@ import type { IContainer } from '../../container';
 
 import { IScrollOffset, ISheetConfig } from '../core';
 import { COLUMN_TAG, IAccumulatedDimensionManager, IDataManager, IDimensionManager, ROW_TAG } from '../data';
+import { ICursorListener } from '../events';
 import { IKonvaItems, KONVA_CONTAINER, UIElement } from '../reference';
 
 import { ICellTextPool, IRectPool } from './pools/types';
@@ -94,6 +95,7 @@ export function registerRenderers(container: IContainer) {
       c.get(ILayoutCache, ctx),
       c.get(IDataManager, ctx),
       c.get(IShapeStyleConfig, ctx),
+      c.get(ICursorListener, ctx),
     );
   });
 }

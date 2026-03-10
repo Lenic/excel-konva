@@ -35,6 +35,22 @@ export interface ILocation {
 }
 
 /**
+ * Coordinate point
+ *
+ * - The origin coordinate of the Canvas element is at its top-left corner.
+ */
+export interface IPoint {
+  /**
+   * X-axis coordinate
+   */
+  x: number;
+  /**
+   * Y-axis coordinate
+   */
+  y: number;
+}
+
+/**
  * Cell range
  *
  * - The start index is on the top-left

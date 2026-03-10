@@ -1,5 +1,5 @@
 import type { IDisposable, TIdentifier } from '../../container';
-import type { ICellRange, IChangePatch, IDimension, IOffset } from '../core';
+import type { ICellRange, IChangePatch, IDimension, IOffset, IPoint } from '../core';
 import type { EFreezeMode } from '../reference';
 import type { Observable } from 'rxjs';
 
@@ -54,22 +54,6 @@ export interface ISheetDimension extends IDisposable {
  * SheetDimension interface identifier
  */
 export const ISheetDimension: TIdentifier<ISheetDimension> = Symbol('ISheetDimension');
-
-/**
- * Coordinate point
- *
- * - The origin coordinate of the Canvas element is at its top-left corner.
- */
-export interface IPoint {
-  /**
-   * X-axis coordinate
-   */
-  x: number;
-  /**
-   * Y-axis coordinate
-   */
-  y: number;
-}
 
 /**
  * Rect box
