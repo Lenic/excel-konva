@@ -100,10 +100,6 @@ export class CursorListener extends ObservableDisposable implements ICursorListe
       concatMap(
         (position) =>
           new Observable<TMouseMoveChangePatch>((observer) => {
-            console.log('position', Date.now(), position);
-            if (!position) {
-              debugger;
-            }
             if (!isEqualPoint(position, this.position)) {
               const previousPosition = this.position;
               this.position = position;
