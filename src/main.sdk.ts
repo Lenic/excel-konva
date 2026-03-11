@@ -5,7 +5,6 @@ import { registerCore, SheetConfig } from './sdk/core';
 import { registerData } from './sdk/data';
 import { registerEvents } from './sdk/events';
 import { ICursorListener, IStageClickListener, IStageDragListener } from './sdk/events/types';
-import { registerReference } from './sdk/reference';
 import { ICellRenderer, IScrollableRange, registerRenderers, registerUI } from './sdk/ui';
 
 /**
@@ -48,7 +47,6 @@ async function bootstrap() {
 
   // Register all services
   registerCore(container, config);
-  registerReference(container);
   registerData(container, dataProvider);
   registerUI(container);
   registerEvents(container);

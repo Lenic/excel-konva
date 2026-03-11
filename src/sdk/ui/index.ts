@@ -1,9 +1,9 @@
 import type { IContainer } from '../../container';
 
 import { IScrollOffset, ISheetConfig } from '../core';
+import { IKonvaItems, KONVA_CONTAINER, UIElement } from '../core';
 import { COLUMN_TAG, IAccumulatedDimensionManager, IDataManager, IDimensionManager, ROW_TAG } from '../data';
 import { ICursorListener } from '../events';
-import { IKonvaItems, KONVA_CONTAINER, UIElement } from '../reference';
 
 import { ICellTextPool, IRectPool } from './pools/types';
 import { CellRenderer } from './renderers/cell-renderer';

@@ -1,5 +1,5 @@
 import type { IDisposable, TIdentifier } from '../../../container';
-import type { EFreezeMode } from '../../reference';
+import type { EFreezeMode } from '../../core';
 import type { IRectBox } from '../types';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';

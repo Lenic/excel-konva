@@ -1,8 +1,7 @@
 import type { IContainer } from '../../container';
 
-import { IScrollOffset } from '../core';
+import { IKonvaItems, IScrollOffset } from '../core';
 import { COLUMN_TAG, IAccumulatedDimensionManager, ROW_TAG } from '../data';
-import { IKonvaItems } from '../reference';
 
 import { StageClickListener } from './click-listener';
 import { CursorListener } from './cursor-listener';

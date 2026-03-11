@@ -3,8 +3,7 @@ import type { IContainer } from '../../../container';
 import Konva from 'konva';
 import { map } from 'rxjs';
 
-import { ISheetConfig } from '../../core';
-import { IKonvaItems } from '../../reference';
+import { IKonvaItems, ISheetConfig } from '../../core';
 
 import { ShapePool } from './shape-pool';
 import { ICellTextPool, IRectPool } from './types';

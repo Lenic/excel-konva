@@ -1,4 +1,4 @@
-import type { IKonvaItems } from '../reference';
+import type { IKonvaItems } from '../core';
 import type { IStageMouseEvent, TMousedownEvent } from './types';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';

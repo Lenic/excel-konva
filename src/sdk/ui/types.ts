@@ -1,6 +1,6 @@
 import type { IDisposable, TIdentifier } from '../../container';
 import type { ICellRange, IChangePatch, IDimension, IOffset, IPoint } from '../core';
-import type { EFreezeMode } from '../reference';
+import type { EFreezeMode } from '../core';
 import type { Observable } from 'rxjs';
 
 /**

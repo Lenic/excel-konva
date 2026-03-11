@@ -5,7 +5,7 @@ import type { Observable } from 'rxjs';
 
 import { combineLatest, map, of } from 'rxjs';
 
-import { EFreezeMode } from '../../reference';
+import { EFreezeMode } from '../../core';
 import { ObservableDisposable } from '../../utils';
 
 /**

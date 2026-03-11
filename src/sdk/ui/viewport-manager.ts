@@ -4,7 +4,7 @@ import type { IInformation, IRectBox, ISheetDimension, IViewport, IViewportManag
 import { distinctUntilChanged, filter, of } from 'rxjs';
 import { combineLatest, map, startWith } from 'rxjs';
 
-import { EFreezeMode } from '../reference';
+import { EFreezeMode } from '../core';
 import { getDefaultValue, ObservableDisposable } from '../utils';
 
 import { Viewport } from './viewport';

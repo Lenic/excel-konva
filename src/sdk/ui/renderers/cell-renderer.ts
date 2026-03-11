@@ -1,7 +1,6 @@
-import type { ICellRange } from '../../core';
+import type { ICellRange, IKonvaItems } from '../../core';
 import type { IDataManager, TCellContent } from '../../data';
 import type { ICursorListener } from '../../events';
-import type { IKonvaItems } from '../../reference';
 import type { IShapePool } from '../pools/types';
 import type { ILayoutCache, IViewportManager } from '../types';
 import type { IShapeStyleConfig } from './types';
@@ -11,7 +10,7 @@ import { combineLatest, EMPTY, Observable, of, tap } from 'rxjs';
 import { combineLatestWith, filter, startWith } from 'rxjs';
 import { map, switchMap } from 'rxjs';
 
-import { EFreezeMode } from '../../reference';
+import { EFreezeMode } from '../../core';
 import { getColumnLabel } from '../../utils';
 import { CollectionSubscription } from '../subscription';
 
