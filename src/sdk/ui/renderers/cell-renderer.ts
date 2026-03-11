@@ -27,7 +27,7 @@ export class CellRenderer extends RenderListener<void> {
   private konvaItems: IKonvaItems;
   private rectPool: IShapePool<Konva.RectConfig, Konva.Rect>;
   private textPool: IShapePool<Konva.TextConfig, Konva.Text>;
-  private layoutCache: ICellBoxManager;
+  private cellBox: ICellBoxManager;
   private dataManager: IDataManager;
   private shapeStyle: IShapeStyleConfig;
   private cursorListener: ICursorListener;
@@ -41,7 +41,7 @@ export class CellRenderer extends RenderListener<void> {
    * @param konvaItems - The Konva items including stage, layers, and groups.
    * @param rectPool - The pool for Konva.Rect shapes.
    * @param textPool - The pool for Konva.Text shapes.
-   * @param layoutCache - The layout cache for cell dimensions.
+   * @param cellBox - The layout cache for cell dimensions.
    * @param dataManager - The data manager for cell data.
    * @param shapeStyle - The shape style configuration.
    */
@@ -50,7 +50,7 @@ export class CellRenderer extends RenderListener<void> {
     konvaItems: IKonvaItems,
     rectPool: IShapePool<Konva.RectConfig, Konva.Rect>,
     textPool: IShapePool<Konva.TextConfig, Konva.Text>,
-    layoutCache: ICellBoxManager,
+    cellBox: ICellBoxManager,
     dataManager: IDataManager,
     shapeStyle: IShapeStyleConfig,
     cursorListener: ICursorListener,
@@ -61,7 +61,7 @@ export class CellRenderer extends RenderListener<void> {
     this.konvaItems = konvaItems;
     this.rectPool = rectPool;
     this.textPool = textPool;
-    this.layoutCache = layoutCache;
+    this.cellBox = cellBox;
     this.dataManager = dataManager;
     this.shapeStyle = shapeStyle;
     this.cursorListener = cursorListener;
@@ -135,7 +135,7 @@ export class CellRenderer extends RenderListener<void> {
         const shape$Map = new Map<string, () => Observable<any>>();
         for (let rowIndex = range.rowStartIndex; rowIndex <= range.rowEndIndex; rowIndex++) {
           for (let columnIndex = range.columnStartIndex; columnIndex <= range.columnEndIndex; columnIndex++) {
-            const { x, y, width, height } = this.layoutCache.getCellBox(rowIndex, columnIndex);
+            const { x, y, width, height } = this.cellBox.getCellBox(rowIndex, columnIndex);
 
             const getRect$ = () =>
               combineLatest([this.rectPool.get$, this.shapeStyle.getRectAttrs$(mode, rowIndex, columnIndex)]).pipe(
