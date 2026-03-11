@@ -1,4 +1,4 @@
-import type { ILocation, IPoint, IScrollOffset } from '../core';
+import type { ILocation, IOffset, IPoint, IScrollOffset } from '../core';
 import type { IAccumulatedDimensionManager, IAccumulatedFindOptions } from '../data';
 import type { ICursorListener, IStageMouseEvent, TMouseMoveChangePatch } from './types';
 import type Konva from 'konva';
@@ -8,6 +8,7 @@ import {
   auditTime,
   BehaviorSubject,
   combineLatest,
+  combineLatestWith,
   concatMap,
   debounceTime,
   distinctUntilChanged,
@@ -109,8 +110,14 @@ export class CursorListener extends ObservableDisposable implements ICursorListe
             ),
       ),
       distinctUntilChanged(isEqualPoint),
+      combineLatestWith(
+        scrollOffset.change$.pipe(
+          map(() => scrollOffset.offset),
+          startWith(scrollOffset.offset),
+        ),
+      ),
       concatMap(
-        (position) =>
+        ([position, offset]) =>
           new Observable<TMouseMoveChangePatch>((observer) => {
             if (!isEqualPoint(position, this.position)) {
               const previousPosition = this.position;
@@ -118,7 +125,7 @@ export class CursorListener extends ObservableDisposable implements ICursorListe
               observer.next({ type: 'point', previous: previousPosition, current: position });
             }
 
-            const nextLocation = this.getLocation(position);
+            const nextLocation = this.getLocation(position, offset);
             if (!isEqualLocation(this.location, nextLocation)) {
               const previousLocation = this.location;
               this.location = nextLocation;
@@ -132,11 +139,11 @@ export class CursorListener extends ObservableDisposable implements ICursorListe
     );
   }
 
-  getLocation(point: IPoint | null): ILocation | null {
+  private getLocation(point: IPoint | null, offset: IOffset): ILocation | null {
     if (point === null) return null;
 
-    const rowIndex = this.row.findIndex(point.y, this.rowFindOptions);
-    const columnIndex = this.column.findIndex(point.x, this.columnFindOptions);
+    const rowIndex = this.row.findIndex(point.y + offset.deltaY, this.rowFindOptions);
+    const columnIndex = this.column.findIndex(point.x + offset.deltaX, this.columnFindOptions);
     return { rowIndex, columnIndex };
   }
 }
