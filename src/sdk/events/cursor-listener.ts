@@ -11,11 +11,11 @@ import {
   concatMap,
   debounceTime,
   distinctUntilChanged,
-  EMPTY,
   fromEvent,
   map,
   merge,
   Observable,
+  of,
   startWith,
   switchMap,
 } from 'rxjs';
@@ -95,17 +95,20 @@ export class CursorListener extends ObservableDisposable implements ICursorListe
       distinctUntilChanged(),
     );
 
-    const mouseMove$ = merge(
-      fromEvent(stage.container(), 'mouseleave').pipe(map(() => null)),
-      events.mouseMove$.pipe(map((e) => `${e.evt.clientX},${e.evt.clientY}`)),
-    ).pipe(
-      auditTime(16, animationFrameScheduler),
-      map((v) => (!v ? null : stage.getPointerPosition())),
-      distinctUntilChanged(isEqualPoint),
-    );
-
     return canProcess$.pipe(
-      switchMap((can) => (can ? mouseMove$ : EMPTY)),
+      switchMap((can) =>
+        !can
+          ? of(null)
+          : merge(
+              fromEvent(stage.container(), 'mouseleave').pipe(map(() => null)),
+              events.mouseMove$.pipe(map((e) => `${e.evt.clientX},${e.evt.clientY}`)),
+            ).pipe(
+              auditTime(16, animationFrameScheduler),
+              map((v) => (!v ? null : stage.getPointerPosition())),
+              startWith(stage.getPointerPosition()),
+            ),
+      ),
+      distinctUntilChanged(isEqualPoint),
       concatMap(
         (position) =>
           new Observable<TMouseMoveChangePatch>((observer) => {
