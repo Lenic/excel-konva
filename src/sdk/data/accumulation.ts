@@ -134,8 +134,8 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
     if (cache && cache.index !== -1) {
       if (cache.offset > offset) {
         endIndex = Math.min(this.count - 1, cache.index);
-      } else if (cache.offset < offset) {
-        beginIndex = Math.max(startIndex, cache.index);
+      } else if (cache.offset < offset && startIndex <= cache.index) {
+        beginIndex = cache.index;
       }
     }
 
