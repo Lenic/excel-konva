@@ -1,5 +1,13 @@
 import type { ICellRange, IDimension, IOffset, IScrollOffset } from '../core';
-import type { IInformation, IRectBox, ISheetDimension, IViewport, IViewportManager } from './types';
+import type {
+  IFrozenInformation,
+  IInformationManager,
+  IRectBox,
+  IScrollableRange,
+  ISheetDimension,
+  IViewport,
+  IViewportManager,
+} from './types';
 
 import { distinctUntilChanged, filter, of } from 'rxjs';
 import { combineLatest, map, startWith } from 'rxjs';
@@ -29,8 +37,8 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
   constructor(
     offset: IScrollOffset,
     sheet: ISheetDimension,
-    scrollableRange: IInformation<ICellRange & { verticalKey: string; horizontalKey: string }>,
-    frozenInformation: IInformation<IDimension & { rowCount: number; columnCount: number }>,
+    scrollableRange: IInformationManager<IScrollableRange>,
+    frozenInformation: IInformationManager<IFrozenInformation>,
   ) {
     super();
 

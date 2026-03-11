@@ -1,6 +1,6 @@
-import type { ICellRange, IDimension, IScrollOffset } from '../core';
+import type { IDimension, IScrollOffset } from '../core';
 import type { IAccumulatedDimensionManager, IAccumulatedFindOptions } from '../data';
-import type { IInformation, ISheetDimension } from './types';
+import type { IInformationManager, IScrollableRange, ISheetDimension } from './types';
 import type { Observable } from 'rxjs';
 
 import { combineLatest, distinctUntilChanged, map, scan, startWith } from 'rxjs';
@@ -9,19 +9,16 @@ import { getDefaultValue, ObservableDisposable } from '../utils';
 
 type TIndex = [startIndex: number, endIndex: number, key: string];
 
-export class ScrollableRange
-  extends ObservableDisposable
-  implements IInformation<ICellRange & { verticalKey: string; horizontalKey: string }>
-{
+export class ScrollableRangeManager extends ObservableDisposable implements IInformationManager<IScrollableRange> {
   private rowFindEndOptions: IAccumulatedFindOptions;
   private rowFindBeginOptions: IAccumulatedFindOptions;
   private columnFindEndOptions: IAccumulatedFindOptions;
   private columnFindBeginOptions: IAccumulatedFindOptions;
 
-  value$: Observable<ICellRange & { verticalKey: string; horizontalKey: string }>;
+  value$: Observable<IScrollableRange>;
 
   constructor(
-    frozenDimension: IInformation<IDimension>,
+    frozenDimension: IInformationManager<IDimension>,
     offset: IScrollOffset,
     sheet: ISheetDimension,
     row: IAccumulatedDimensionManager,
@@ -95,14 +92,16 @@ export class ScrollableRange
         { vertical: [0, 0, ''] as TIndex, horizontal: [0, 0, ''] as TIndex },
       ),
       distinctUntilChanged((x, y) => x.horizontal[2] === y.horizontal[2] && x.vertical[2] === y.vertical[2]),
-      map(({ horizontal, vertical }): ICellRange & { verticalKey: string; horizontalKey: string } => ({
-        rowStartIndex: vertical[0],
-        rowEndIndex: vertical[1],
-        columnStartIndex: horizontal[0],
-        columnEndIndex: horizontal[1],
-        verticalKey: vertical[2],
-        horizontalKey: horizontal[2],
-      })),
+      map(
+        ({ horizontal, vertical }): IScrollableRange => ({
+          rowStartIndex: vertical[0],
+          rowEndIndex: vertical[1],
+          columnStartIndex: horizontal[0],
+          columnEndIndex: horizontal[1],
+          verticalKey: vertical[2],
+          horizontalKey: horizontal[2],
+        }),
+      ),
       this.withPublish(),
     );
     this.disposeWithMe(this.value$.subscribe());

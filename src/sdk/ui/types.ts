@@ -157,23 +157,52 @@ export interface ICellBoxManager extends IDisposable {
 export const ICellBoxManager: TIdentifier<ICellBoxManager> = Symbol('ICellBoxManager');
 
 /**
- * Information manager
+ * A generic manager interface for handling and exposing observable state information.
  */
-export interface IInformation<T> extends IDisposable {
+export interface IInformationManager<T> extends IDisposable {
   /**
-   * Observable value
+   * An observable stream that emits the current state or information.
    */
   value$: Observable<T>;
 }
 
 /**
- * Scrollable range
+ * Defines a specific cell range with associated vertical and horizontal scroll keys,
+ * used for managing scrollable viewports.
  */
-export const IScrollableRange: TIdentifier<IInformation<ICellRange & { verticalKey: string; horizontalKey: string }>> =
-  Symbol('IScrollableRange');
+export interface IScrollableRange extends ICellRange {
+  /**
+   * The unique identifier key for the vertical scroll state.
+   */
+  verticalKey: string;
+  /**
+   * The unique identifier key for the horizontal scroll state.
+   */
+  horizontalKey: string;
+}
 
 /**
- * Frozen information
+ * Dependency injection identifier for the IScrollableRangeManager service.
  */
-export const IFrozenInformation: TIdentifier<IInformation<IDimension & { rowCount: number; columnCount: number }>> =
-  Symbol('IFrozenInformation');
+export const IScrollableRangeManager: TIdentifier<IInformationManager<IScrollableRange>> =
+  Symbol('IScrollableRangeManager');
+
+/**
+ * Represents the configuration for frozen rows and columns, incorporating their total dimensions.
+ */
+export interface IFrozenInformation extends IDimension {
+  /**
+   * The total count of rows to be frozen at the top of the view.
+   */
+  rowCount: number;
+  /**
+   * The total count of columns to be frozen at the left side of the view.
+   */
+  columnCount: number;
+}
+
+/**
+ * Dependency injection identifier for the IFrozenInformationManager service.
+ */
+export const IFrozenInformationManager: TIdentifier<IInformationManager<IFrozenInformation>> =
+  Symbol('IFrozenInformationManager');

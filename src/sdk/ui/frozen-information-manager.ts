@@ -1,17 +1,13 @@
-import type { IDimension } from '../core';
 import type { IAccumulatedDimensionManager } from '../data';
-import type { IInformation } from './types';
+import type { IFrozenInformation, IInformationManager } from './types';
 import type { Observable } from 'rxjs';
 
 import { combineLatest, distinctUntilChanged, map, startWith } from 'rxjs';
 
 import { ObservableDisposable } from '../utils';
 
-export class FrozenInformation
-  extends ObservableDisposable
-  implements IInformation<IDimension & { rowCount: number; columnCount: number }>
-{
-  value$: Observable<IDimension & { rowCount: number; columnCount: number }>;
+export class FrozenInformationManager extends ObservableDisposable implements IInformationManager<IFrozenInformation> {
+  value$: Observable<IFrozenInformation>;
 
   constructor(
     frozenRowCount$: Observable<number>,
@@ -32,12 +28,14 @@ export class FrozenInformation
     );
 
     this.value$ = combineLatest([width$, height$]).pipe(
-      map(([[width, columnCount], [height, rowCount]]): IDimension & { rowCount: number; columnCount: number } => ({
-        width,
-        height,
-        rowCount,
-        columnCount,
-      })),
+      map(
+        ([[width, columnCount], [height, rowCount]]): IFrozenInformation => ({
+          width,
+          height,
+          rowCount,
+          columnCount,
+        }),
+      ),
       this.withPublish(),
     );
     this.disposeWithMe(this.value$.subscribe());

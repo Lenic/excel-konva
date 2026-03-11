@@ -9,7 +9,7 @@ import { registerEvents } from './sdk/events';
 import { ICursorListener, IStageClickListener, IStageDragListener } from './sdk/events';
 import { registerPools } from './sdk/pools';
 import { ICellRenderer, registerRenderers } from './sdk/renderers';
-import { IScrollableRange, registerUI } from './sdk/ui';
+import { IScrollableRangeManager, registerUI } from './sdk/ui';
 
 /**
  * Main entrance for the SDK-based implementation
@@ -91,7 +91,7 @@ async function bootstrap() {
     .subscribe((width) => void (virtualContent.style.width = `${width}px`));
 
   // print infomations
-  container.get(IScrollableRange).value$.subscribe((range) => {
+  container.get(IScrollableRangeManager).value$.subscribe((range) => {
     const { rowStartIndex, rowEndIndex, columnStartIndex, columnEndIndex } = range;
 
     document.getElementById('rendered-range-row')!.textContent =

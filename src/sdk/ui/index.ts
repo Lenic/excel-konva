@@ -5,10 +5,16 @@ import { KONVA_CONTAINER, UIElement } from '../core';
 import { COLUMN_TAG, IAccumulatedDimensionManager, IDimensionManager, ROW_TAG } from '../data';
 
 import { CellBoxManager } from './cell-box-manager';
-import { FrozenInformation } from './frozen-information';
-import { ScrollableRange } from './scrollable-range';
+import { FrozenInformationManager } from './frozen-information-manager';
+import { ScrollableRangeManager } from './scrollable-range-manager';
 import { SheetDimension } from './sheet-dimension';
-import { ICellBoxManager, IFrozenInformation, IScrollableRange, ISheetDimension, IViewportManager } from './types';
+import {
+  ICellBoxManager,
+  IFrozenInformationManager,
+  IScrollableRangeManager,
+  ISheetDimension,
+  IViewportManager,
+} from './types';
 import { ViewportManager } from './viewport-manager';
 
 export * from './types';
@@ -21,9 +27,9 @@ export * from './types';
 export function registerUI(container: IContainer) {
   container.register(ISheetDimension).set((c, ctx) => new SheetDimension(c.get(UIElement, KONVA_CONTAINER, ctx)));
 
-  container.register(IFrozenInformation).set((c, ctx) => {
+  container.register(IFrozenInformationManager).set((c, ctx) => {
     const config = c.get(ISheetConfig, ctx);
-    return new FrozenInformation(
+    return new FrozenInformationManager(
       config.get$('frozenRows'),
       config.get$('frozenColumns'),
       c.get(IAccumulatedDimensionManager, ROW_TAG, ctx),
@@ -32,11 +38,11 @@ export function registerUI(container: IContainer) {
   });
 
   container
-    .register(IScrollableRange)
+    .register(IScrollableRangeManager)
     .set(
       (c, ctx) =>
-        new ScrollableRange(
-          c.get(IFrozenInformation, ctx),
+        new ScrollableRangeManager(
+          c.get(IFrozenInformationManager, ctx),
           c.get(IScrollOffset, ctx),
           c.get(ISheetDimension, ctx),
           c.get(IAccumulatedDimensionManager, ROW_TAG, ctx),
@@ -51,8 +57,8 @@ export function registerUI(container: IContainer) {
         new ViewportManager(
           c.get(IScrollOffset, ctx),
           c.get(ISheetDimension, ctx),
-          c.get(IScrollableRange, ctx),
-          c.get(IFrozenInformation, ctx),
+          c.get(IScrollableRangeManager, ctx),
+          c.get(IFrozenInformationManager, ctx),
         ),
     );
 
