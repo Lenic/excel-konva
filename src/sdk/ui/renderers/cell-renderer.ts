@@ -2,7 +2,7 @@ import type { ICellRange, IKonvaItems } from '../../core';
 import type { IDataManager, TCellContent } from '../../data';
 import type { ICursorListener } from '../../events';
 import type { IShapePool } from '../pools/types';
-import type { ILayoutCache, IViewportManager } from '../types';
+import type { ICellBoxManager, IViewportManager } from '../types';
 import type { IShapeStyleConfig } from './types';
 import type Konva from 'konva';
 
@@ -27,7 +27,7 @@ export class CellRenderer extends RenderListener<void> {
   private konvaItems: IKonvaItems;
   private rectPool: IShapePool<Konva.RectConfig, Konva.Rect>;
   private textPool: IShapePool<Konva.TextConfig, Konva.Text>;
-  private layoutCache: ILayoutCache;
+  private layoutCache: ICellBoxManager;
   private dataManager: IDataManager;
   private shapeStyle: IShapeStyleConfig;
   private cursorListener: ICursorListener;
@@ -50,7 +50,7 @@ export class CellRenderer extends RenderListener<void> {
     konvaItems: IKonvaItems,
     rectPool: IShapePool<Konva.RectConfig, Konva.Rect>,
     textPool: IShapePool<Konva.TextConfig, Konva.Text>,
-    layoutCache: ILayoutCache,
+    layoutCache: ICellBoxManager,
     dataManager: IDataManager,
     shapeStyle: IShapeStyleConfig,
     cursorListener: ICursorListener,
@@ -135,7 +135,7 @@ export class CellRenderer extends RenderListener<void> {
         const shape$Map = new Map<string, () => Observable<any>>();
         for (let rowIndex = range.rowStartIndex; rowIndex <= range.rowEndIndex; rowIndex++) {
           for (let columnIndex = range.columnStartIndex; columnIndex <= range.columnEndIndex; columnIndex++) {
-            const { x, y, width, height } = this.layoutCache.getCellRect(rowIndex, columnIndex);
+            const { x, y, width, height } = this.layoutCache.getCellBox(rowIndex, columnIndex);
 
             const getRect$ = () =>
               combineLatest([this.rectPool.get$, this.shapeStyle.getRectAttrs$(mode, rowIndex, columnIndex)]).pipe(

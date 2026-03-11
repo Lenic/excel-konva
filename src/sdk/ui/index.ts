@@ -9,12 +9,12 @@ import { ICellTextPool, IRectPool } from './pools/types';
 import { CellRenderer } from './renderers/cell-renderer';
 import { ShapeStyleConfig } from './renderers/shape-style';
 import { ICellRenderer, IShapeStyleConfig } from './renderers/types';
+import { CellBoxManager } from './cell-box-manager';
 import { FrozenInformation } from './frozen-information';
-import { LayoutCache } from './layout-cache';
 import { registerPools } from './pools';
 import { ScrollableRange } from './scrollable-range';
 import { SheetDimension } from './sheet-dimension';
-import { IFrozenInformation, ILayoutCache, IScrollableRange, ISheetDimension, IViewportManager } from './types';
+import { ICellBoxManager, IFrozenInformation, IScrollableRange, ISheetDimension, IViewportManager } from './types';
 import { ViewportManager } from './viewport-manager';
 
 export * from './pools/types';
@@ -66,8 +66,8 @@ export function registerUI(container: IContainer) {
         ),
     );
 
-  container.register(ILayoutCache).set((c, ctx) => {
-    return new LayoutCache(
+  container.register(ICellBoxManager).set((c, ctx) => {
+    return new CellBoxManager(
       c.get(IDimensionManager, ROW_TAG, ctx),
       c.get(IDimensionManager, COLUMN_TAG, ctx),
       c.get(IAccumulatedDimensionManager, ROW_TAG, ctx),
@@ -92,7 +92,7 @@ export function registerRenderers(container: IContainer) {
       c.get(IKonvaItems, ctx),
       c.get(IRectPool, ctx),
       c.get(ICellTextPool, ctx),
-      c.get(ILayoutCache, ctx),
+      c.get(ICellBoxManager, ctx),
       c.get(IDataManager, ctx),
       c.get(IShapeStyleConfig, ctx),
       c.get(ICursorListener, ctx),

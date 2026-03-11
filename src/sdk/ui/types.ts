@@ -127,17 +127,34 @@ export interface IViewportManager extends Record<EFreezeMode, IViewport>, IDispo
  */
 export const IViewportManager: TIdentifier<IViewportManager> = Symbol('IViewportManager');
 
-export interface ILayoutCache extends IDisposable {
-  getCellRect(rowIndex: number, columnIndex: number): IRectBox;
-  getRangeRects(range: ICellRange): IRectBox[];
-  invalidateRange(range: ICellRange): void;
-  invalidateByRow(rowIndex: number): void;
-  invalidateByColumn(columnIndex: number): void;
-}
 /**
- * Identifier for the ILayoutCache interface.
+ * Manages the geometric bounding boxes of cells, providing layout information
+ * for rendering and hit testing.
  */
-export const ILayoutCache: TIdentifier<ILayoutCache> = Symbol('ILayoutCache');
+export interface ICellBoxManager extends IDisposable {
+  /**
+   * Retrieves the bounding box dimensions for a specific cell identified by
+   * its row and column indices.
+   *
+   * @param rowIndex - The zero-based index of the row.
+   * @param columnIndex - The zero-based index of the column.
+   * @returns The rectangular area occupied by the specified cell.
+   */
+  getCellBox(rowIndex: number, columnIndex: number): IRectBox;
+
+  /**
+   * Returns a list of bounding boxes for all cells within the specified range.
+   *
+   * @param range - The coordinate range of cells to retrieve boxes for.
+   * @returns An array of rectangular boxes corresponding to the cells in the range.
+   */
+  getCellBoxListByRange(range: ICellRange): IRectBox[];
+}
+
+/**
+ * Dependency injection identifier for the ICellBoxManager service.
+ */
+export const ICellBoxManager: TIdentifier<ICellBoxManager> = Symbol('ICellBoxManager');
 
 /**
  * Information manager
