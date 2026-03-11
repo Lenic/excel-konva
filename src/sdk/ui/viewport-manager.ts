@@ -167,7 +167,7 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
     });
 
     this[EFreezeMode.BOTH] = new Viewport(
-      box$.pipe(map(({ width, height }): IRectBox => ({ x: 0, y: 0, width, height }))),
+      box$.pipe(map(({ width, height }): IRectBox => ({ x: 0, y: 0, width: width + 1, height: height + 1 }))),
       of<IOffset>({ deltaX: 0, deltaY: 0 }),
       combineLatest([frozenRowCount$, frozenColumnCount$]).pipe(
         map(

@@ -24,7 +24,7 @@ export function registerCore(container: IContainer, config: ISheetConfig) {
     .set(() => document.getElementById('scroll-container') as HTMLDivElement, SCROLL_CONTAINER)
     .set(() => document.getElementById('virtual-content') as HTMLDivElement, VIRTUAL_CONTENT);
 
-  container.register(IScrollOffset).set((c, ctx) => new ScrollOffset(c.get(UIElement, KONVA_CONTAINER, ctx)));
+  container.register(IScrollOffset).set((c, ctx) => new ScrollOffset(c.get(UIElement, SCROLL_CONTAINER, ctx)));
 
   container
     .register(IKonvaItems)

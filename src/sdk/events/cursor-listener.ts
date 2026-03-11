@@ -1,5 +1,5 @@
 import type { ILocation, IPoint, IScrollOffset } from '../core';
-import type { IAccumulatedDimensionManager } from '../data';
+import type { IAccumulatedDimensionManager, IAccumulatedFindOptions } from '../data';
 import type { ICursorListener, IStageMouseEvent, TMouseMoveChangePatch } from './types';
 import type Konva from 'konva';
 
@@ -20,12 +20,14 @@ import {
   switchMap,
 } from 'rxjs';
 
-import { isEqualLocation, isEqualPoint, ObservableDisposable } from '../utils';
+import { getDefaultValue, isEqualLocation, isEqualPoint, ObservableDisposable } from '../utils';
 
 export class CursorListener extends ObservableDisposable implements ICursorListener {
   private notifySubject: BehaviorSubject<boolean>;
   private row: IAccumulatedDimensionManager;
   private column: IAccumulatedDimensionManager;
+  private rowFindOptions: IAccumulatedFindOptions;
+  private columnFindOptions: IAccumulatedFindOptions;
 
   position: IPoint | null;
   location: ILocation | null;
@@ -45,8 +47,15 @@ export class CursorListener extends ObservableDisposable implements ICursorListe
       this.notifySubject.complete();
     });
 
+    this.rowFindOptions = createNewFindOptions();
+    this.disposeWithMe(() => void (this.rowFindOptions = getDefaultValue<IAccumulatedFindOptions>()));
+    this.columnFindOptions = createNewFindOptions();
+    this.disposeWithMe(() => void (this.columnFindOptions = getDefaultValue<IAccumulatedFindOptions>()));
+
     this.row = row;
+    this.disposeWithMe(() => void (this.rowFindOptions = createNewFindOptions()));
     this.column = column;
+    this.disposeWithMe(() => void (this.columnFindOptions = createNewFindOptions()));
 
     this.position = stage.getPointerPosition();
     this.disposeWithMe(() => void (this.position = null));
@@ -123,8 +132,12 @@ export class CursorListener extends ObservableDisposable implements ICursorListe
   getLocation(point: IPoint | null): ILocation | null {
     if (point === null) return null;
 
-    const rowIndex = this.row.findIndex(point.y);
-    const columnIndex = this.column.findIndex(point.x);
+    const rowIndex = this.row.findIndex(point.y, this.rowFindOptions);
+    const columnIndex = this.column.findIndex(point.x, this.columnFindOptions);
     return { rowIndex, columnIndex };
   }
+}
+
+function createNewFindOptions(): IAccumulatedFindOptions {
+  return { cache: { index: -1, offset: -1 } };
 }

@@ -153,7 +153,7 @@ export class CellRenderer extends RenderListener<void> {
                   }).pipe(
                     combineLatestWith(offset$),
                     map(([rect, offset]) =>
-                      rect.setAttrs({ x: x + offset.deltaX - group.x(), y: y + offset.deltaY - group.y() }),
+                      rect.setAttrs({ x: x - offset.deltaX - group.x(), y: y - offset.deltaY - group.y() }),
                     ),
                     tap(() => {
                       this.konvaItems.background.layer.batchDraw();
@@ -199,8 +199,8 @@ export class CellRenderer extends RenderListener<void> {
                     combineLatestWith(offset$, content$),
                     map(([text, offset, content]) =>
                       text.setAttrs({
-                        x: x + offset.deltaX - group.x(),
-                        y: y + offset.deltaY - group.y(),
+                        x: x - offset.deltaX - group.x(),
+                        y: y - offset.deltaY - group.y(),
                         text: content as string,
                       }),
                     ),
@@ -238,8 +238,8 @@ export class CellRenderer extends RenderListener<void> {
             ]).pipe(
               map(([getter, offset]) => {
                 const current = getter();
-                current.style.top = `${y + offset.deltaY + 5}px`;
-                current.style.left = `${x + offset.deltaX + width - 36}px`;
+                current.style.top = `${y - offset.deltaY + 5}px`;
+                current.style.left = `${x - offset.deltaX + width - 36}px`;
                 return current;
               }),
             );

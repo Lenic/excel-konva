@@ -1,8 +1,10 @@
 import type { IDataProvider, TCellChangePatch, TCellContent } from './sdk/data';
 
+import { filter, map, startWith } from 'rxjs';
+
 import { Container } from './container/core';
-import { registerCore, SheetConfig } from './sdk/core';
-import { registerData } from './sdk/data';
+import { registerCore, SheetConfig, UIElement, VIRTUAL_CONTENT } from './sdk/core';
+import { COLUMN_TAG, IAccumulatedDimensionManager, registerData, ROW_TAG } from './sdk/data';
 import { registerEvents } from './sdk/events';
 import { ICursorListener, IStageClickListener, IStageDragListener } from './sdk/events/types';
 import { ICellRenderer, IScrollableRange, registerRenderers, registerUI } from './sdk/ui';
@@ -63,6 +65,27 @@ async function bootstrap() {
   // Start renderers
   container.get(ICellRenderer).start();
   // container.get(ISelectionRenderer).start();
+
+  // connection
+  const virtualContent = container.get(UIElement, VIRTUAL_CONTENT);
+
+  const rowA = container.get(IAccumulatedDimensionManager, ROW_TAG);
+  rowA.change$
+    .pipe(
+      filter((v) => v.type === 'count'),
+      map(() => rowA.maxOffset),
+      startWith(rowA.maxOffset),
+    )
+    .subscribe((height) => void (virtualContent.style.height = `${height}px`));
+
+  const columnA = container.get(IAccumulatedDimensionManager, COLUMN_TAG);
+  columnA.change$
+    .pipe(
+      filter((v) => v.type === 'count'),
+      map(() => columnA.maxOffset),
+      startWith(columnA.maxOffset),
+    )
+    .subscribe((width) => void (virtualContent.style.width = `${width}px`));
 
   // print infomations
   container.get(IScrollableRange).value$.subscribe((range) => {

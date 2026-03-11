@@ -1,4 +1,9 @@
-import type { IAccumulatedDimensionManager, IDimensionManager, TAccumulatedDimensionPatch } from './types';
+import type {
+  IAccumulatedDimensionManager,
+  IAccumulatedFindOptions,
+  IDimensionManager,
+  TAccumulatedDimensionPatch,
+} from './types';
 import type { Observable } from 'rxjs';
 
 import { merge, Subject } from 'rxjs';
@@ -10,13 +15,11 @@ import { binarySearch, getDefaultValue, ObservableDisposable, TruncatableList } 
  */
 export class AccumulatedDimensionManager extends ObservableDisposable implements IAccumulatedDimensionManager {
   private count: number;
-  private previousFindIndex: number;
-  private previousFindOffset: number;
   private dimension: IDimensionManager;
-  private dimensionList: TruncatableList<number>;
+  private list: TruncatableList<number>;
   private changeSubject: Subject<TAccumulatedDimensionPatch>;
-  private dimensionRangeList: TruncatableList<[beginValue: number, endValue: number]>;
 
+  maxOffset: number;
   change$: Observable<TAccumulatedDimensionPatch>;
 
   /**
@@ -35,41 +38,29 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
 
     this.change$ = merge(this.changeSubject, dimension.change$).pipe(this.withShare());
 
-    this.previousFindIndex = -1;
-    this.disposeWithMe(() => void (this.previousFindIndex = -1));
-
-    this.previousFindOffset = -1;
-    this.disposeWithMe(() => void (this.previousFindOffset = -1));
-
     this.dimension = dimension;
     this.disposeWithMe(() => void (this.dimension = getDefaultValue<IDimensionManager>()));
 
+    this.list = new TruncatableList<number>();
+    this.list.push(0);
+    this.disposeWithMe(this.list);
+    this.disposeWithMe(
+      this.change$.subscribe((patch) => {
+        this.list.truncate(patch.type === 'options' ? 0 : patch.type === 'dimension' ? patch.index : patch.current - 1);
+      }),
+    );
+
     this.count = 0;
     this.disposeWithMe(() => void (this.count = 0));
+    this.maxOffset = 0;
+    this.disposeWithMe(() => void (this.maxOffset = 0));
     this.disposeWithMe(
       count$.subscribe((count) => {
         const previous = this.count;
         this.count = count;
+        this.maxOffset = this.get(count);
 
         this.changeSubject.next({ type: 'count', previous, current: count });
-      }),
-    );
-
-    this.dimensionList = new TruncatableList<number>();
-    this.dimensionList.push(0);
-    this.disposeWithMe(this.dimensionList);
-
-    this.dimensionRangeList = new TruncatableList<[beginValue: number, endValue: number]>();
-    this.disposeWithMe(this.dimensionRangeList);
-
-    this.disposeWithMe(
-      this.change$.subscribe((patch) => {
-        const index = patch.type === 'options' ? 0 : patch.type === 'dimension' ? patch.index : patch.current - 1;
-        this.dimensionList.truncate(index);
-        this.dimensionRangeList.truncate(index);
-
-        this.previousFindIndex = -1;
-        this.previousFindOffset = -1;
       }),
     );
   }
@@ -77,14 +68,14 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
   get(index: number): number {
     this.checkDisposed();
 
-    const value = this.dimensionList.get(index);
+    const value = this.list.get(index);
     if (typeof value === 'number') return value;
 
-    let currentValue = this.dimensionList.get(this.dimensionList.length - 1) ?? 0;
-    for (let c = this.dimensionList.length - 1; c < index; c++) {
+    let currentValue = this.list.get(this.list.length - 1) ?? 0;
+    for (let c = this.list.length - 1; c < index; c++) {
       const nextValue = currentValue + this.dimension.get(c);
 
-      this.dimensionList.push(nextValue);
+      this.list.push(nextValue);
 
       currentValue = nextValue;
     }
@@ -92,97 +83,70 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
     return currentValue;
   }
 
-  findIndex(offset: number): number {
-    const list = this.dimensionRangeList;
+  findIndex(offset: number, options?: IAccumulatedFindOptions): number {
+    const { startIndex = 0, cache, exact = 0 } = options ?? {};
 
-    function comparer(mid: number) {
-      const [beginValue, endValue] = list.get(mid)!;
+    if (startIndex < 0) throw new Error('startIndex must be greater than or equal to 0');
+    if (startIndex >= this.count) throw new Error('startIndex must be less than the count');
+
+    const comparer = (mid: number) => {
+      const beginValue = this.get(mid);
+      const endValue = this.get(mid + 1);
       if (beginValue <= offset && offset < endValue) return 0;
-      return beginValue > offset ? 1 : -1;
-    }
+      return offset < beginValue ? 1 : -1;
+    };
 
     /**
-     * If the previous index is not -1, try to find the index from the previous index.
+     * If the cache index is not -1, try to find the index from the cache index.
      */
-    if (this.previousFindIndex !== -1) {
-      const result = comparer(this.previousFindIndex);
-      if (result === 0) {
-        this.previousFindOffset = offset;
-        return this.previousFindIndex;
+    if (cache && cache.index !== -1) {
+      if (!comparer(cache.index)) {
+        cache.offset = offset;
+        return cache.index;
       }
 
-      if (this.previousFindOffset > offset) {
-        const lessIndex = this.previousFindIndex - 1;
+      if (cache.offset > offset) {
+        const lessIndex = cache.index - 1;
         if (lessIndex >= 0) {
-          const lessResult = comparer(lessIndex);
-          if (lessResult === 0) {
-            this.previousFindIndex = lessIndex;
-            this.previousFindOffset = offset;
+          if (!comparer(lessIndex)) {
+            cache.index = lessIndex;
+            cache.offset = offset;
             return lessIndex;
           }
         }
       }
 
-      if (this.previousFindIndex < offset) {
-        const greaterIndex = this.previousFindIndex + 1;
-        if (greaterIndex < list.length) {
-          const greaterResult = comparer(greaterIndex);
-          if (greaterResult === 0) {
-            this.previousFindIndex = greaterIndex;
-            this.previousFindOffset = offset;
+      if (cache.offset < offset) {
+        const greaterIndex = cache.index + 1;
+        if (greaterIndex < this.count) {
+          if (!comparer(greaterIndex)) {
+            cache.index = greaterIndex;
+            cache.offset = offset;
             return greaterIndex;
           }
         }
       }
     }
 
-    let index = binarySearch(0, list.length - 1, comparer);
-    if (index !== -1) {
-      this.previousFindIndex = index;
-      return index;
-    }
+    let beginIndex = startIndex;
+    let endIndex = this.count - 1;
 
-    index = this.findIndexByOffset(offset);
-    this.previousFindIndex = index;
-    return index;
-  }
-
-  findRange(beginValue: number, endValue: number): [beginIndex: number, endIndex: number] {
-    const comparer = (value: number) => (mid: number) => {
-      const beginValue = this.get(mid);
-      const endValue = this.get(mid + 1);
-      if (beginValue <= value && value < endValue) return 0;
-      return beginValue > value ? 1 : -1;
-    };
-
-    let beginIndex = binarySearch(0, this.count - 1, comparer(beginValue), 1);
-    if (beginIndex === -1) {
-      beginIndex = this.findIndexByOffset(beginValue);
-    }
-
-    let endIndex = binarySearch(beginIndex, this.count - 1, comparer(endValue), -1);
-    if (endIndex === -1) {
-      endIndex = this.findIndexByOffset(endValue);
-    }
-
-    return [beginIndex, endIndex];
-  }
-
-  private findIndexByOffset(offset: number): number {
-    let index = -1;
-    let c = this.dimensionRangeList.length;
-    for (; c < this.count; c++) {
-      const beginValue = this.get(c);
-      const endValue = this.get(c + 1);
-
-      this.dimensionRangeList.push([beginValue, endValue]);
-
-      if (offset < endValue) {
-        index = c;
-        break;
+    if (cache && cache.index !== -1) {
+      if (cache.offset > offset) {
+        endIndex = Math.min(this.count - 1, cache.index);
+      } else if (cache.offset < offset) {
+        beginIndex = Math.max(startIndex, cache.index);
       }
     }
 
-    return index === -1 ? -1 : Math.min(index, this.count - 1);
+    const index = binarySearch(beginIndex, endIndex, comparer, exact);
+    if (index !== -1) {
+      if (cache) {
+        cache.index = index;
+        cache.offset = offset;
+      }
+      return index;
+    }
+    return index;
   }
 }

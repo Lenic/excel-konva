@@ -3,158 +3,196 @@ import type { ICellRange, IChangePatch } from '../core';
 import type { Observable } from 'rxjs';
 
 /**
- * Configuration options for row or column dimensions.
+ * Configuration for row or column sizes.
  */
 export interface IDimensionOptions {
   /**
-   * The minimum allowed dimension size (e.g., minimum row height or column width).
+   * The minimum allowable size for a row or column (e.g., minimum height or width).
    */
   minimalDimension: number;
   /**
-   * The default dimension size for headers (index 0).
+   * The default size for header rows or columns (assigned to index 0).
    */
   headerDimension: number;
   /**
-   * The default dimension size for all other indices.
+   * The default size for all other rows or columns.
    */
   defaultDimension: number;
 }
 
 /**
- * Represents a change in a single dimension (row or column).
+ * Represents a change to the size of a specific row or column.
  */
 export interface IDimensionChangePatch extends IChangePatch {
   /**
-   * The type of patch, set to 'dimension'.
+   * Identifies this as a dimension-related patch.
    */
   type: 'dimension';
   /**
-   * The index of the row or column being changed.
+   * The specific row or column index being modified.
    */
   index: number;
 }
 
 /**
- * Represents a change in the dimension options.
+ * Represents a change to the global dimension configuration (IDimensionOptions).
  */
 export interface IDimensionOptionsChangePatch extends IChangePatch<IDimensionOptions> {
   /**
-   * The type of patch, set to 'options'.
+   * Identifies this as an options-related patch.
    */
   type: 'options';
 }
 
 /**
- * Union type for dimension change patches.
+ * Union type representing any update patch related to dimensions.
  */
 export type TDimensionPatch = IDimensionChangePatch | IDimensionOptionsChangePatch;
 
 /**
- * Interface for managing row or column dimensions.
+ * Interface for managing row or column sizes.
  */
 export interface IDimensionManager extends IDisposable {
   /**
-   * An observable that emits when a dimension value changes.
+   * An observable stream that emits whenever a dimension or its configuration is updated.
    */
   readonly change$: Observable<TDimensionPatch>;
 
   /**
-   * Retrieves the dimension size for a specific index.
+   * Retrieves the size of the row or column at the specified index.
    *
    * @param index - The row or column index.
+   * @returns The size of the dimension.
    */
   get(index: number): number;
 
   /**
-   * Sets the dimension size for a specific index.
+   * Updates the size of the row or column at the given index.
    *
    * @param index - The row or column index.
-   * @param value - The new dimension size. If undefined, it resets to the default value.
+   * @param value - The new size. If 'undefined', it resets to the default size.
    */
   set(index: number, value?: number): void;
 }
 /**
- * Identifier for the IDimensionManager interface.
+ * Unique identifier for the IDimensionManager service.
  */
 export const IDimensionManager: TIdentifier<IDimensionManager> = Symbol('IDimensionManager');
 
 /**
- * Represents a change in the accumulated dimension count.
+ * Represents a change indicating that the total number of accumulated dimensions has been modified.
  */
 export interface TAccumulatedDimensionCountChangePatch extends IChangePatch {
   /**
-   * The type of patch, set to 'count'.
+   * Identifies this as a count-related patch.
    */
   type: 'count';
 }
 
 /**
- * Union type for accumulated dimension change patches.
+ * Union type for any patch that affects accumulated dimensions.
  */
 export type TAccumulatedDimensionPatch = TDimensionPatch | TAccumulatedDimensionCountChangePatch;
 
 /**
- * Accumulated dimension of items
+ * Cache structure used to accelerate the lookup of accumulated dimension indices and offsets.
+ */
+export interface IAccumulatedFindIndexCache {
+  /**
+   * The row or column index.
+   */
+  index: number;
+  /**
+   * The cumulative offset (total size) of all items preceding this index.
+   */
+  offset: number;
+}
+
+/**
+ * Options for searching or looking up indices within accumulated dimension data.
+ */
+export interface IAccumulatedFindOptions {
+  /**
+   * The index where the search should begin.
+   *
+   * @default 0
+   */
+  startIndex?: number;
+  /**
+   * Optional cached mapping or result to optimize search performance.
+   */
+  cache?: IAccumulatedFindIndexCache;
+  /**
+   * Determines search precision or behavior:
+   * - `0`: Exact match (default).
+   * - `>0`: Finds the smallest index greater than or equal to the target.
+   * - `<0`: Finds the largest index less than or equal to the target.
+   */
+  exact?: number;
+}
+
+/**
+ * Manages the calculation and lookup of cumulative pixel offsets (accumulated dimensions).
  */
 export interface IAccumulatedDimensionManager {
   /**
-   * An observable that emits when a dimension value changes.
+   * The max the cumulative offset.
+   */
+  readonly maxOffset: number;
+  /**
+   * An observable stream that emits whenever accumulated dimension data is updated.
    */
   readonly change$: Observable<TAccumulatedDimensionPatch>;
 
   /**
-   * Get the accumulated dimension of all items before this index.
+   * Retrieves the cumulative offset (total size) of all items preceding the specified index.
    *
-   * - The accumulated dimension of the first item is 0
-   *
-   * @param index - Item index
-   * @returns Accumulated dimension
+   * @param index - The item index.
+   * @returns The accumulated dimension offset.
    */
   get(index: number): number;
   /**
-   * Find index by accumulated dimension
+   * Finds the index corresponding to a given cumulative offset (pixel position).
    *
-   * @param offset - Accumulated dimension
-   * @returns Item index
+   * @param offset - The cumulative offset to look up.
+   * @param options - Search options.
+   * @returns The corresponding item index.
    */
-  findIndex(offset: number): number;
-  /**
-   * Find index range by accumulated dimension
-   *
-   * @param beginValue - Begin accumulated dimension
-   * @param endValue - End accumulated dimension
-   * @returns Item index range
-   */
-  findRange(beginValue: number, endValue: number): [beginIndex: number, endIndex: number];
+  findIndex(offset: number, options?: IAccumulatedFindOptions): number;
 }
+
+/**
+ * Unique identifier for the IAccumulatedDimensionManager service.
+ */
 export const IAccumulatedDimensionManager: TIdentifier<IAccumulatedDimensionManager> =
   Symbol('IAccumulatedDimensionManager');
 
 /**
- * Cell content
+ * Represents the structured data stored within a cell.
  */
 export interface ICellContent<T = unknown> {
   /**
-   * Cell content type
+   * The metadata type of the cell content (e.g., 'text', 'number', 'formula').
    */
   type: string;
   /**
-   * Cell content value
+   * The actual data value stored in the cell.
    */
   value: T;
 }
 
 /**
- * Cell content type
+ * Union type representing various formats of cell content.
+ * It can be a literal string, null (empty), or a structured ICellContent object.
  */
 export type TCellContent<T = unknown> = string | null | ICellContent<T>;
 
 /**
- * Patch representing a command to clear cell values within a specific range.
+ * Represents a command patch to clear all cell values within a specific range.
  */
 export interface IClearCellValuePatch {
   /**
-   * The type of patch, set to 'clear'.
+   * Identifies this as a 'clear' operation.
    */
   type: 'clear';
   /**
@@ -164,86 +202,85 @@ export interface IClearCellValuePatch {
 }
 
 /**
- * Patch representing a command to set cell values within a specific range.
+ * Represents a command patch to populate a specific cell range with values.
  */
 export interface ISetCellValuePatch<T = unknown> {
   /**
-   * The type of patch, set to 'set'.
+   * Identifies this as a 'set' operation.
    */
   type: 'set';
   /**
-   * The cell range where values will be set.
+   * The target cell range for the operation.
    */
   range: ICellRange;
   /**
-   * The 2D array of values to be applied to the range.
+   * A 2D array of content to be applied to the specified range.
    */
   values: TCellContent<T>[][];
 }
 
 /**
- * Union type for cell data change patches.
+ * Union type for any patch representing a change in cell data.
  */
 export type TCellChangePatch<T = unknown> = IClearCellValuePatch | ISetCellValuePatch<T>;
 
 /**
- * Interface for providing and managing spreadsheet cell data.
+ * Interface for the underlying data source provider of the spreadsheet.
  */
 export interface IDataProvider {
   /**
-   * Retrieves the value of a cell at the specified row and column indices.
+   * Retrieves the content of a cell at the given row and column indices.
    *
    * @param rowIndex - The index of the row.
    * @param columnIndex - The index of the column.
-   *
-   * @returns The cell value, or undefined if empty.
+   * @returns The cell content, or undefined if the cell is empty.
    */
   get<T = unknown>(rowIndex: number, columnIndex: number): TCellContent<T> | undefined;
 
   /**
-   * Sets the value of a cell at the specified row and column indices.
+   * Applies a change patch to the cell data.
    *
-   * @param patch - The patch representing the cell value change.
+   * @param patch - The patch representing the modification.
    */
   set<T = unknown>(patch: TCellChangePatch<T>): void;
 }
 
 /**
- * Interface for providing and managing spreadsheet cell data.
+ * Public API for managing and observing spreadsheet cell data.
  */
 export interface IDataManager extends IDisposable {
   /**
-   * An observable that emits patches representing incremental changes to the data source.
+   * An observable stream that emits patches representing real-time updates to the data.
    */
   readonly patch$: Observable<TCellChangePatch>;
 
   /**
-   * Retrieves the value of a cell at the specified row and column indices.
+   * Retrieves the content of a cell at the given row and column indices.
    *
    * @param rowIndex - The index of the row.
    * @param columnIndex - The index of the column.
-   *
-   * @returns The cell value, or undefined if empty.
+   * @returns The cell content, or undefined if the cell is empty.
    */
   get<T = unknown>(rowIndex: number, columnIndex: number): TCellContent<T> | undefined;
 
   /**
-   * Sets the value of a cell at the specified row and column indices.
+   * Updates the content of a cell or a range of cells.
    *
-   * @param rowIndex - The index of the row.
-   * @param columnIndex - The index of the column.
-   * @param value - The value to set for the cell. If it is a 2D array, it will be set as a range.
+   * @param rowIndex - The starting row index.
+   * @param columnIndex - The starting column index.
+   * @param value - The new content to set. If a 2D array, it populates a range starting from the coordinates.
    */
   set<T = unknown>(rowIndex: number, columnIndex: number, value: TCellContent<T> | TCellContent<T>[][]): void;
 
   /**
-   * Clears the cell values for a given range.
+   * Removes all content from cells within the specified range.
    *
-   * @param range - The cell range to clear values for.
+   * @param range - The cell range to clear.
    */
   clear(range: ICellRange): void;
 }
+
 /**
- * Identifier for the IDataManager interface.
+ * Unique identifier for the IDataManager service.
  */
 export const IDataManager: TIdentifier<IDataManager> = Symbol('IDataManager');

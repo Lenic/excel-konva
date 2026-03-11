@@ -1,11 +1,11 @@
 import type { ICellRange, IDimension, IScrollOffset } from '../core';
-import type { IAccumulatedDimensionManager } from '../data';
+import type { IAccumulatedDimensionManager, IAccumulatedFindOptions } from '../data';
 import type { IInformation, ISheetDimension } from './types';
 import type { Observable } from 'rxjs';
 
 import { combineLatest, distinctUntilChanged, map, scan, startWith } from 'rxjs';
 
-import { ObservableDisposable } from '../utils';
+import { getDefaultValue, ObservableDisposable } from '../utils';
 
 type TIndex = [startIndex: number, endIndex: number, key: string];
 
@@ -13,6 +13,11 @@ export class ScrollableRange
   extends ObservableDisposable
   implements IInformation<ICellRange & { verticalKey: string; horizontalKey: string }>
 {
+  private rowFindEndOptions: IAccumulatedFindOptions;
+  private rowFindBeginOptions: IAccumulatedFindOptions;
+  private columnFindEndOptions: IAccumulatedFindOptions;
+  private columnFindBeginOptions: IAccumulatedFindOptions;
+
   value$: Observable<ICellRange & { verticalKey: string; horizontalKey: string }>;
 
   constructor(
@@ -23,6 +28,28 @@ export class ScrollableRange
     column: IAccumulatedDimensionManager,
   ) {
     super();
+
+    this.rowFindEndOptions = createNewFindOptions(-1);
+    this.disposeWithMe(() => void (this.rowFindEndOptions = getDefaultValue<IAccumulatedFindOptions>()));
+    this.rowFindBeginOptions = createNewFindOptions(1);
+    this.disposeWithMe(() => void (this.rowFindBeginOptions = getDefaultValue<IAccumulatedFindOptions>()));
+    this.columnFindEndOptions = createNewFindOptions(-1);
+    this.disposeWithMe(() => void (this.columnFindEndOptions = getDefaultValue<IAccumulatedFindOptions>()));
+    this.columnFindBeginOptions = createNewFindOptions(1);
+    this.disposeWithMe(() => void (this.columnFindBeginOptions = getDefaultValue<IAccumulatedFindOptions>()));
+
+    this.disposeWithMe(
+      row.change$.subscribe(() => {
+        this.rowFindEndOptions = createNewFindOptions(-1);
+        this.rowFindBeginOptions = createNewFindOptions(1);
+      }),
+    );
+    this.disposeWithMe(
+      column.change$.subscribe(() => {
+        this.columnFindEndOptions = createNewFindOptions(-1);
+        this.columnFindBeginOptions = createNewFindOptions(1);
+      }),
+    );
 
     const size$ = sheet.change$.pipe(
       map(() => sheet.size),
@@ -43,14 +70,24 @@ export class ScrollableRange
           const rowKey = `${height}-${sheetHeight}-${deltaY}`;
           if (rowKey !== acc.vertical[2]) {
             changed = true;
-            nextVertical = [...row.findRange(height + deltaY, sheetHeight + deltaY), rowKey];
+            const beginIndex = row.findIndex(height + deltaY, this.rowFindBeginOptions);
+            nextVertical = [
+              beginIndex,
+              row.findIndex(sheetHeight + deltaY, { ...this.rowFindEndOptions, startIndex: beginIndex }),
+              rowKey,
+            ];
           }
 
           let nextHorizontal = acc.horizontal;
           const horizontalKey = `${width}-${sheetWidth}-${deltaX}`;
           if (horizontalKey !== acc.horizontal[2]) {
             changed = true;
-            nextHorizontal = [...column.findRange(width + deltaX, sheetWidth + deltaX), horizontalKey];
+            const beginIndex = column.findIndex(width + deltaX, this.columnFindBeginOptions);
+            nextHorizontal = [
+              beginIndex,
+              column.findIndex(sheetWidth + deltaX, { ...this.columnFindEndOptions, startIndex: beginIndex }),
+              horizontalKey,
+            ];
           }
 
           return changed ? { vertical: nextVertical, horizontal: nextHorizontal } : acc;
@@ -70,4 +107,8 @@ export class ScrollableRange
     );
     this.disposeWithMe(this.value$.subscribe());
   }
+}
+
+function createNewFindOptions(exact = 0): IAccumulatedFindOptions {
+  return { cache: { index: -1, offset: -1 }, exact };
 }
