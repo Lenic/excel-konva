@@ -1,24 +1,16 @@
 import type { IContainer } from '../../container';
 
 import { IScrollOffset, ISheetConfig } from '../core';
-import { IKonvaItems, KONVA_CONTAINER, UIElement } from '../core';
-import { COLUMN_TAG, IAccumulatedDimensionManager, IDataManager, IDimensionManager, ROW_TAG } from '../data';
-import { ICursorListener } from '../events';
+import { KONVA_CONTAINER, UIElement } from '../core';
+import { COLUMN_TAG, IAccumulatedDimensionManager, IDimensionManager, ROW_TAG } from '../data';
 
-import { ICellTextPool, IRectPool } from './pools/types';
-import { CellRenderer } from './renderers/cell-renderer';
-import { ShapeStyleConfig } from './renderers/shape-style';
-import { ICellRenderer, IShapeStyleConfig } from './renderers/types';
 import { CellBoxManager } from './cell-box-manager';
 import { FrozenInformation } from './frozen-information';
-import { registerPools } from './pools';
 import { ScrollableRange } from './scrollable-range';
 import { SheetDimension } from './sheet-dimension';
 import { ICellBoxManager, IFrozenInformation, IScrollableRange, ISheetDimension, IViewportManager } from './types';
 import { ViewportManager } from './viewport-manager';
 
-export * from './pools/types';
-export * from './renderers/types';
 export * from './types';
 
 /**
@@ -27,8 +19,6 @@ export * from './types';
  * @param container - the target IOC container
  */
 export function registerUI(container: IContainer) {
-  registerPools(container);
-
   container.register(ISheetDimension).set((c, ctx) => new SheetDimension(c.get(UIElement, KONVA_CONTAINER, ctx)));
 
   container.register(IFrozenInformation).set((c, ctx) => {
@@ -72,30 +62,6 @@ export function registerUI(container: IContainer) {
       c.get(IDimensionManager, COLUMN_TAG, ctx),
       c.get(IAccumulatedDimensionManager, ROW_TAG, ctx),
       c.get(IAccumulatedDimensionManager, COLUMN_TAG, ctx),
-    );
-  });
-}
-
-/**
- * Add renderer registrations to the container
- *
- * @param container - the target IOC container
- */
-export function registerRenderers(container: IContainer) {
-  container.register(IShapeStyleConfig).set((c, ctx) => {
-    return new ShapeStyleConfig(c.get(ISheetConfig, ctx));
-  });
-
-  container.register(ICellRenderer).set((c, ctx) => {
-    return new CellRenderer(
-      c.get(IViewportManager, ctx),
-      c.get(IKonvaItems, ctx),
-      c.get(IRectPool, ctx),
-      c.get(ICellTextPool, ctx),
-      c.get(ICellBoxManager, ctx),
-      c.get(IDataManager, ctx),
-      c.get(IShapeStyleConfig, ctx),
-      c.get(ICursorListener, ctx),
     );
   });
 }

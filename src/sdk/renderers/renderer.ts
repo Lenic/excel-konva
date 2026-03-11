@@ -3,7 +3,7 @@ import type { Observable, Subscription } from 'rxjs';
 
 import { ReplaySubject } from 'rxjs';
 
-import { ObservableDisposable } from '../../utils';
+import { ObservableDisposable } from '../utils';
 
 /**
  * Abstract base class for all renderers

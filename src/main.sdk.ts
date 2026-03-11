@@ -6,8 +6,10 @@ import { Container } from './container/core';
 import { registerCore, SheetConfig, UIElement, VIRTUAL_CONTENT } from './sdk/core';
 import { COLUMN_TAG, IAccumulatedDimensionManager, registerData, ROW_TAG } from './sdk/data';
 import { registerEvents } from './sdk/events';
-import { ICursorListener, IStageClickListener, IStageDragListener } from './sdk/events/types';
-import { ICellRenderer, IScrollableRange, registerRenderers, registerUI } from './sdk/ui';
+import { ICursorListener, IStageClickListener, IStageDragListener } from './sdk/events';
+import { registerPools } from './sdk/pools';
+import { ICellRenderer, registerRenderers } from './sdk/renderers';
+import { IScrollableRange, registerUI } from './sdk/ui';
 
 /**
  * Main entrance for the SDK-based implementation
@@ -50,6 +52,7 @@ async function bootstrap() {
   // Register all services
   registerCore(container, config);
   registerData(container, dataProvider);
+  registerPools(container);
   registerUI(container);
   registerEvents(container);
   registerRenderers(container);

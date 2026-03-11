@@ -1,12 +1,12 @@
-import type { ISheetConfig } from '../../core/types';
+import type { ISheetConfig } from '../core/types';
 import type { IShapeStyleConfig } from './types';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
 import { combineLatest, map, of } from 'rxjs';
 
-import { EFreezeMode } from '../../core';
-import { ObservableDisposable } from '../../utils';
+import { EFreezeMode } from '../core';
+import { ObservableDisposable } from '../utils';
 
 /**
  * Shape style configuration implementation

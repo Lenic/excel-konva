@@ -1,8 +1,8 @@
-import type { ICellRange, IKonvaItems } from '../../core';
-import type { IDataManager, TCellContent } from '../../data';
-import type { ICursorListener } from '../../events';
-import type { IShapePool } from '../pools/types';
-import type { ICellBoxManager, IViewportManager } from '../types';
+import type { ICellRange, IKonvaItems } from '../core';
+import type { IDataManager, TCellContent } from '../data';
+import type { ICursorListener } from '../events';
+import type { IShapePool } from '../pools';
+import type { ICellBoxManager, IViewportManager } from '../ui';
 import type { IShapeStyleConfig } from './types';
 import type Konva from 'konva';
 
@@ -10,11 +10,11 @@ import { combineLatest, EMPTY, Observable, of, tap } from 'rxjs';
 import { combineLatestWith, filter, startWith } from 'rxjs';
 import { map, switchMap } from 'rxjs';
 
-import { EFreezeMode } from '../../core';
-import { getColumnLabel } from '../../utils';
-import { CollectionSubscription } from '../subscription';
+import { EFreezeMode } from '../core';
+import { getColumnLabel } from '../utils';
 
 import { RenderListener } from './renderer';
+import { CollectionSubscription } from './subscription';
 
 /**
  * Cell renderer implementation

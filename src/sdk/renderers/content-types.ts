@@ -1,6 +1,6 @@
-import type { IDisposable, TIdentifier } from '../../../container';
-import type { EFreezeMode } from '../../core';
-import type { IRectBox } from '../types';
+import type { IDisposable, TIdentifier } from '../../container';
+import type { EFreezeMode } from '../core';
+import type { IRectBox } from '../ui';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 

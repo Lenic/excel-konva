@@ -1,12 +1,14 @@
-import type { IContainer } from '../../../container';
+import type { IContainer } from '../../container';
 
 import Konva from 'konva';
 import { map } from 'rxjs';
 
-import { IKonvaItems, ISheetConfig } from '../../core';
+import { IKonvaItems, ISheetConfig } from '../core';
 
 import { ShapePool } from './shape-pool';
 import { ICellTextPool, IRectPool } from './types';
+
+export * from './types';
 
 /**
  * Symbol for selection rectangle pool

@@ -3,7 +3,7 @@ import type Konva from 'konva';
 
 import { map, type Observable } from 'rxjs';
 
-import { ObservableDisposable, Queue } from '../../utils';
+import { ObservableDisposable, Queue } from '../utils';
 
 /**
  * Implementation of shape pool for reusing Konva shapes

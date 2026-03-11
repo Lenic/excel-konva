@@ -1,4 +1,4 @@
-import type { IDisposable, TIdentifier } from '../../../container';
+import type { IDisposable, TIdentifier } from '../../container';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
