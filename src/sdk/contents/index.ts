@@ -5,7 +5,6 @@ import { IDataManager } from '../data';
 import { ICursorListener } from '../events';
 import { ICellTextPool, IRectPool } from '../pools';
 import { IShapeStyleConfig } from '../renderers';
-import { ICellBoxManager } from '../ui';
 
 import { DefaultRectContentRenderer } from './default-rect-renderer';
 import { DefaultTextContentRenderer } from './default-text-renderer';
