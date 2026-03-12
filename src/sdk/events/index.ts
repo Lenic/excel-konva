@@ -2,6 +2,7 @@ import type { IContainer } from '../../container';
 
 import { IKonvaItems, IScrollOffset } from '../core';
 import { COLUMN_TAG, IAccumulatedDimensionManager, ROW_TAG } from '../data';
+import { IFrozenInformationManager } from '../ui';
 
 import { StageClickListener } from './click-listener';
 import { CursorListener } from './cursor-listener';
@@ -39,6 +40,7 @@ export function registerEvents(container: IContainer) {
       c.get(IAccumulatedDimensionManager, COLUMN_TAG, ctx),
       c.get(IStageMouseEvent, ctx),
       c.get(IScrollOffset, ctx),
+      c.get(IFrozenInformationManager, ctx),
     );
   });
 }

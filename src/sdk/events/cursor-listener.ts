@@ -1,5 +1,6 @@
 import type { ILocation, IOffset, IPoint, IScrollOffset } from '../core';
 import type { IAccumulatedDimensionManager, IAccumulatedFindOptions } from '../data';
+import type { IFrozenInformation, IInformationManager } from '../ui';
 import type { ICursorListener, IStageMouseEvent, TMouseMoveChangePatch } from './types';
 import type Konva from 'konva';
 
@@ -29,6 +30,7 @@ export class CursorListener extends ObservableDisposable implements ICursorListe
   private column: IAccumulatedDimensionManager;
   private rowFindOptions: IAccumulatedFindOptions;
   private columnFindOptions: IAccumulatedFindOptions;
+  private frozenInformation: IInformationManager<IFrozenInformation>;
 
   position: IPoint | null;
   location: ILocation | null;
@@ -40,8 +42,14 @@ export class CursorListener extends ObservableDisposable implements ICursorListe
     column: IAccumulatedDimensionManager,
     events: IStageMouseEvent,
     scrollOffset: IScrollOffset,
+    frozenInformation: IInformationManager<IFrozenInformation>,
   ) {
     super();
+
+    this.frozenInformation = frozenInformation;
+    this.disposeWithMe(
+      () => void (this.frozenInformation = getDefaultValue<IInformationManager<IFrozenInformation>>()),
+    );
 
     this.notifySubject = new BehaviorSubject<boolean>(false);
     this.disposeWithMe(() => {
@@ -115,9 +123,10 @@ export class CursorListener extends ObservableDisposable implements ICursorListe
           map(() => scrollOffset.offset),
           startWith(scrollOffset.offset),
         ),
+        this.frozenInformation.value$,
       ),
       concatMap(
-        ([position, offset]) =>
+        ([position, offset, frozenInformation]) =>
           new Observable<TMouseMoveChangePatch>((observer) => {
             if (!isEqualPoint(position, this.position)) {
               const previousPosition = this.position;
@@ -125,7 +134,7 @@ export class CursorListener extends ObservableDisposable implements ICursorListe
               observer.next({ type: 'point', previous: previousPosition, current: position });
             }
 
-            const nextLocation = this.getLocation(position, offset);
+            const nextLocation = this.getLocation(position, offset, frozenInformation);
             if (!isEqualLocation(this.location, nextLocation)) {
               const previousLocation = this.location;
               this.location = nextLocation;
@@ -139,11 +148,14 @@ export class CursorListener extends ObservableDisposable implements ICursorListe
     );
   }
 
-  private getLocation(point: IPoint | null, offset: IOffset): ILocation | null {
+  private getLocation(point: IPoint | null, offset: IOffset, frozenInformation: IFrozenInformation): ILocation | null {
     if (point === null) return null;
 
-    const rowIndex = this.row.findIndex(point.y + offset.deltaY, this.rowFindOptions);
-    const columnIndex = this.column.findIndex(point.x + offset.deltaX, this.columnFindOptions);
+    const offsetX = point.x > frozenInformation.width ? offset.deltaX : 0;
+    const offsetY = point.y > frozenInformation.height ? offset.deltaY : 0;
+
+    const rowIndex = this.row.findIndex(point.y + offsetY, this.rowFindOptions);
+    const columnIndex = this.column.findIndex(point.x + offsetX, this.columnFindOptions);
     return { rowIndex, columnIndex };
   }
 }
