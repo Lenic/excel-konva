@@ -3,6 +3,7 @@ import type { IDataProvider, TCellChangePatch, TCellContent } from './sdk/data';
 import { filter, map, startWith } from 'rxjs';
 
 import { Container } from './container/core';
+import { registerContents } from './sdk/contents';
 import { registerCore, SheetConfig, UIElement, VIRTUAL_CONTENT } from './sdk/core';
 import { COLUMN_TAG, IAccumulatedDimensionManager, registerData, ROW_TAG } from './sdk/data';
 import { registerEvents } from './sdk/events';
@@ -27,8 +28,8 @@ async function bootstrap() {
     ['R3 C2', 'R3 C3', 'R3 C4', 'R3 C5', 'R3 C6', 'R3 C7', 'R3 C8', 'R3 C9', 'R3 C10'],
   ];
   const dataProvider: IDataProvider = {
-    get<T = unknown>(rowIndex: number, columnIndex: number): TCellContent<T> | undefined {
-      return data[rowIndex - 1]?.[columnIndex - 1];
+    get<T = unknown>(rowIndex: number, columnIndex: number): TCellContent<T> {
+      return data[rowIndex - 1]?.[columnIndex - 1] ?? null;
     },
     set<T = unknown>(patch: TCellChangePatch<T>): void {
       const { range } = patch;
@@ -56,6 +57,7 @@ async function bootstrap() {
   registerUI(container);
   registerEvents(container);
   registerRenderers(container);
+  registerContents(container);
 
   // Example initial set
   config.set({ rowCount: 1000, columnCount: 100, frozenRows: 3, frozenColumns: 4 });

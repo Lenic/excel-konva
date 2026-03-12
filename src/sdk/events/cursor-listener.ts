@@ -58,9 +58,9 @@ export class CursorListener extends ObservableDisposable implements ICursorListe
     this.column = column;
     this.disposeWithMe(() => void (this.columnFindOptions = createNewFindOptions()));
 
-    this.position = stage.getPointerPosition();
+    this.position = null;
     this.disposeWithMe(() => void (this.position = null));
-    this.location = this.getLocation(this.position);
+    this.location = null;
     this.disposeWithMe(() => void (this.location = null));
 
     this.change$ = this.buildChangePatch(events, scrollOffset, stage);
@@ -106,7 +106,7 @@ export class CursorListener extends ObservableDisposable implements ICursorListe
             ).pipe(
               auditTime(16, animationFrameScheduler),
               map((v) => (!v ? null : stage.getPointerPosition())),
-              startWith(stage.getPointerPosition()),
+              startWith(null),
             ),
       ),
       distinctUntilChanged(isEqualPoint),

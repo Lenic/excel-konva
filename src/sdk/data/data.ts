@@ -13,7 +13,7 @@ export class DataManager extends ObservableDisposable implements IDataManager {
   private provider: IDataProvider;
   private patchSubject: Subject<TCellChangePatch<any>>;
 
-  patch$: Observable<TCellChangePatch<any>>;
+  change$: Observable<TCellChangePatch<any>>;
 
   /**
    * Initializes a new instance of the DataManager class.
@@ -28,10 +28,10 @@ export class DataManager extends ObservableDisposable implements IDataManager {
     this.disposeWithMe(() => {
       this.patchSubject.complete();
     });
-    this.patch$ = this.patchSubject.asObservable();
+    this.change$ = this.patchSubject.asObservable();
   }
 
-  get<T = unknown>(rowIndex: number, columnIndex: number): TCellContent<T> | undefined {
+  get<T = unknown>(rowIndex: number, columnIndex: number): TCellContent<T> {
     this.checkDisposed();
 
     return this.provider.get(rowIndex, columnIndex);

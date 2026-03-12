@@ -1,9 +1,8 @@
 import type { IContainer } from '../../container';
 
+import { IContentRenderer } from '../contents';
 import { IKonvaItems, ISheetConfig } from '../core';
 import { IDataManager } from '../data';
-import { ICursorListener } from '../events';
-import { ICellTextPool, IRectPool } from '../pools';
 import { ICellBoxManager, IViewportManager } from '../ui';
 
 import { CellRenderer } from './cell-renderer';
@@ -24,14 +23,11 @@ export function registerRenderers(container: IContainer) {
 
   container.register(ICellRenderer).set((c, ctx) => {
     return new CellRenderer(
+      c.get(ICellBoxManager, ctx),
       c.get(IViewportManager, ctx),
       c.get(IKonvaItems, ctx),
-      c.get(IRectPool, ctx),
-      c.get(ICellTextPool, ctx),
-      c.get(ICellBoxManager, ctx),
       c.get(IDataManager, ctx),
-      c.get(IShapeStyleConfig, ctx),
-      c.get(ICursorListener, ctx),
+      c.getAll(IContentRenderer, ctx),
     );
   });
 }

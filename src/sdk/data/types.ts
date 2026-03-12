@@ -174,7 +174,7 @@ export interface ICellContent<T = unknown> {
   /**
    * The metadata type of the cell content (e.g., 'text', 'number', 'formula').
    */
-  type: string;
+  type: string[];
   /**
    * The actual data value stored in the cell.
    */
@@ -235,7 +235,7 @@ export interface IDataProvider {
    * @param columnIndex - The index of the column.
    * @returns The cell content, or undefined if the cell is empty.
    */
-  get<T = unknown>(rowIndex: number, columnIndex: number): TCellContent<T> | undefined;
+  get<T = unknown>(rowIndex: number, columnIndex: number): TCellContent<T>;
 
   /**
    * Applies a change patch to the cell data.
@@ -252,7 +252,7 @@ export interface IDataManager extends IDisposable {
   /**
    * An observable stream that emits patches representing real-time updates to the data.
    */
-  readonly patch$: Observable<TCellChangePatch>;
+  readonly change$: Observable<TCellChangePatch>;
 
   /**
    * Retrieves the content of a cell at the given row and column indices.
@@ -261,7 +261,7 @@ export interface IDataManager extends IDisposable {
    * @param columnIndex - The index of the column.
    * @returns The cell content, or undefined if the cell is empty.
    */
-  get<T = unknown>(rowIndex: number, columnIndex: number): TCellContent<T> | undefined;
+  get<T = unknown>(rowIndex: number, columnIndex: number): TCellContent<T>;
 
   /**
    * Updates the content of a cell or a range of cells.

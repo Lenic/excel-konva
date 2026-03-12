@@ -128,10 +128,47 @@ export interface IViewportManager extends Record<EFreezeMode, IViewport>, IDispo
 export const IViewportManager: TIdentifier<IViewportManager> = Symbol('IViewportManager');
 
 /**
+ * Represents a patch for when a specific row or column's dimension is updated.
+ */
+export interface ICellBoxDimensionChangePatch extends IChangePatch {
+  /**
+   * The type of dimension affected, either 'row' or 'column'.
+   */
+  type: 'row' | 'column';
+  /**
+   * The zero-based index of the row or column.
+   */
+  index: number;
+}
+
+/**
+ * Represents a patch for resetting all dimensions for a specific axis.
+ */
+export interface ICellBoxResetChangePatch {
+  /**
+   * Fixed type identifier for reset operations.
+   */
+  type: 'reset';
+  /**
+   * The dimension axis to be reset, either 'row' or 'column'.
+   */
+  property: 'row' | 'column';
+}
+
+/**
+ * Union type representing various patches for cell box dimension changes.
+ */
+export type TCellBoxChangePatch = ICellBoxDimensionChangePatch | ICellBoxResetChangePatch;
+
+/**
  * Manages the geometric bounding boxes of cells, providing layout information
  * for rendering and hit testing.
  */
 export interface ICellBoxManager extends IDisposable {
+  /**
+   * An observable stream that emits patches whenever cell box dimensions change.
+   */
+  change$: Observable<TCellBoxChangePatch>;
   /**
    * Retrieves the bounding box dimensions for a specific cell identified by
    * its row and column indices.

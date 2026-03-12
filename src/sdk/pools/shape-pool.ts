@@ -83,18 +83,15 @@ export class ShapePool<TConfig extends Konva.ShapeConfig = Konva.ShapeConfig, TS
         return (attrs?: Partial<TConfig>): TShape => {
           this.checkDisposed();
 
+          const config: Partial<TConfig> = { ...globalAttrs, ...attrs, visible: true, listening: false };
+
           if (this.shapes.length > 0) {
             const shape = this.shapes.dequeue()!;
-            shape.setAttrs({
-              ...globalAttrs,
-              ...attrs,
-              visible: true,
-              listening: false,
-            });
+            shape.setAttrs(config);
             return shape;
           }
 
-          const newShape = creator({ ...globalAttrs, ...attrs });
+          const newShape = creator(config);
           this.layer.add(newShape);
           return newShape;
         };

@@ -1,6 +1,8 @@
 import type { ICellRange } from '../core';
 import type { IAccumulatedDimensionManager, IDimensionManager } from '../data';
-import type { ICellBoxManager, IRectBox } from './types';
+import type { ICellBoxManager, IRectBox, TCellBoxChangePatch } from './types';
+
+import { type Observable, Subject } from 'rxjs';
 
 import { ObservableDisposable } from '../utils';
 
@@ -17,6 +19,9 @@ export class CellBoxManager extends ObservableDisposable implements ICellBoxMana
   private column: IDimensionManager;
   private rowA: IAccumulatedDimensionManager;
   private columnA: IAccumulatedDimensionManager;
+  private changeSubject: Subject<TCellBoxChangePatch>;
+
+  change$: Observable<TCellBoxChangePatch>;
 
   /**
    * Initializes a new instance of the CellBoxManager class.
@@ -38,6 +43,41 @@ export class CellBoxManager extends ObservableDisposable implements ICellBoxMana
     this.column = column;
     this.rowA = rowA;
     this.columnA = columnA;
+
+    this.changeSubject = new Subject<TCellBoxChangePatch>();
+    this.disposeWithMe(() => {
+      this.changeSubject.complete();
+    });
+    this.change$ = this.changeSubject.asObservable();
+
+    this.disposeWithMe(
+      this.rowA.change$.subscribe((patch) => {
+        if (patch.type === 'dimension') {
+          this.changeSubject.next({
+            type: 'row',
+            index: patch.index,
+            previous: patch.previous,
+            current: patch.current,
+          });
+        } else {
+          this.changeSubject.next({ type: 'reset', property: 'row' });
+        }
+      }),
+    );
+    this.disposeWithMe(
+      this.columnA.change$.subscribe((patch) => {
+        if (patch.type === 'dimension') {
+          this.changeSubject.next({
+            type: 'column',
+            index: patch.index,
+            previous: patch.previous,
+            current: patch.current,
+          });
+        } else {
+          this.changeSubject.next({ type: 'reset', property: 'column' });
+        }
+      }),
+    );
   }
 
   getCellBox(rowIndex: number, columnIndex: number): IRectBox {

@@ -1,17 +1,14 @@
+import type { IContentRenderer } from '../contents';
 import type { ICellRange, IKonvaItems } from '../core';
-import type { IDataManager, TCellContent } from '../data';
-import type { ICursorListener } from '../events';
-import type { IShapePool } from '../pools';
+import type { IDataManager } from '../data';
 import type { ICellBoxManager, IViewportManager } from '../ui';
-import type { IShapeStyleConfig } from './types';
-import type Konva from 'konva';
+import type { Observable } from 'rxjs';
 
-import { combineLatest, EMPTY, Observable, of, tap } from 'rxjs';
-import { combineLatestWith, filter, startWith } from 'rxjs';
-import { map, switchMap } from 'rxjs';
+import { combineLatest, EMPTY, filter, map, of, startWith, switchMap, tap } from 'rxjs';
 
+import { DEFAULT_TEXT, HEADER_TEXT } from '../contents';
 import { EFreezeMode } from '../core';
-import { getColumnLabel } from '../utils';
+import { isCellInRange } from '../utils';
 
 import { RenderListener } from './renderer';
 import { CollectionSubscription } from './subscription';
@@ -23,48 +20,37 @@ import { CollectionSubscription } from './subscription';
  * It optimizes rendering by only updating cells that enter or leave the viewport range.
  */
 export class CellRenderer extends RenderListener<void> {
+  private cellBox: ICellBoxManager;
   private viewportManager: IViewportManager;
   private konvaItems: IKonvaItems;
-  private rectPool: IShapePool<Konva.RectConfig, Konva.Rect>;
-  private textPool: IShapePool<Konva.TextConfig, Konva.Text>;
-  private cellBox: ICellBoxManager;
   private dataManager: IDataManager;
-  private shapeStyle: IShapeStyleConfig;
-  private cursorListener: ICursorListener;
+  private renderers: Map<string | symbol, IContentRenderer>;
 
   private subscriptions: Record<EFreezeMode, CollectionSubscription>;
 
   /**
    * Initializes a new instance of the CellRenderer class.
    *
+   * @param cellBox - The manager providing cell box information.
    * @param viewportManager - The manager providing viewport state and change events.
    * @param konvaItems - The Konva items including stage, layers, and groups.
-   * @param rectPool - The pool for Konva.Rect shapes.
-   * @param textPool - The pool for Konva.Text shapes.
-   * @param cellBox - The layout cache for cell dimensions.
    * @param dataManager - The data manager for cell data.
-   * @param shapeStyle - The shape style configuration.
+   * @param renderers - The renderers for cell contents.
    */
   constructor(
+    cellBox: ICellBoxManager,
     viewportManager: IViewportManager,
     konvaItems: IKonvaItems,
-    rectPool: IShapePool<Konva.RectConfig, Konva.Rect>,
-    textPool: IShapePool<Konva.TextConfig, Konva.Text>,
-    cellBox: ICellBoxManager,
     dataManager: IDataManager,
-    shapeStyle: IShapeStyleConfig,
-    cursorListener: ICursorListener,
+    renderers: Map<string | symbol, IContentRenderer>,
   ) {
     super();
 
+    this.cellBox = cellBox;
     this.viewportManager = viewportManager;
     this.konvaItems = konvaItems;
-    this.rectPool = rectPool;
-    this.textPool = textPool;
-    this.cellBox = cellBox;
     this.dataManager = dataManager;
-    this.shapeStyle = shapeStyle;
-    this.cursorListener = cursorListener;
+    this.renderers = renderers;
 
     this.subscriptions = {
       [EFreezeMode.NONE]: new CollectionSubscription(),
@@ -86,22 +72,16 @@ export class CellRenderer extends RenderListener<void> {
    * @returns An observable that triggers rendering updates.
    */
   protected build(): Observable<void> {
-    // Collect all viewport change observables (one for each freeze mode)
-    const viewportModes: EFreezeMode[] = [EFreezeMode.NONE, EFreezeMode.ROW, EFreezeMode.COLUMN, EFreezeMode.BOTH];
-
-    viewportModes.forEach((mode) => {
-      this.buildSingleViewport(mode).subscribe((mapper) => {
-        this.subscriptions[mode].update(mapper);
-      });
+    viewportModes.forEach((freezeMode) => {
+      this.buildSingleViewport(freezeMode);
     });
-
-    return of();
+    return EMPTY;
   }
 
-  private buildSingleViewport(mode: EFreezeMode) {
-    const viewport = this.viewportManager[mode];
-    const group = this.konvaItems.background.groups[mode];
+  private buildSingleViewport(freezeMode: EFreezeMode) {
+    const viewport = this.viewportManager[freezeMode];
 
+    const group = this.konvaItems.background.groups[freezeMode];
     this.disposeWithMe(
       viewport.change$
         .pipe(
@@ -120,144 +100,65 @@ export class CellRenderer extends RenderListener<void> {
         }),
     );
 
-    const offset$ = viewport.change$.pipe(
-      filter((v) => v.type === 'offset'),
-      map((v) => v.current),
-      startWith(viewport.offset),
-      this.withPublish(),
-    );
-
-    return viewport.change$.pipe(
-      filter((v) => v.type === 'range'),
-      map((v) => v.current),
-      startWith(viewport.range),
-      map((range: ICellRange) => {
-        const shape$Map = new Map<string, () => Observable<any>>();
-        for (let rowIndex = range.rowStartIndex; rowIndex <= range.rowEndIndex; rowIndex++) {
-          for (let columnIndex = range.columnStartIndex; columnIndex <= range.columnEndIndex; columnIndex++) {
-            const { x, y, width, height } = this.cellBox.getCellBox(rowIndex, columnIndex);
-
-            const getRect$ = () =>
-              combineLatest([this.rectPool.get$, this.shapeStyle.getRectAttrs$(mode, rowIndex, columnIndex)]).pipe(
-                switchMap(([getter, attrs]) =>
-                  new Observable<Konva.Rect>((observer) => {
-                    const rect = getter({ ...attrs, width, height });
-                    if (rect.parent !== group) {
-                      group.add(rect);
+    viewport.change$
+      .pipe(
+        filter((v) => v.type === 'range'),
+        map((v) => v.current),
+        startWith(viewport.range),
+        map((range: ICellRange) => {
+          const render$Map = new Map<string, () => Observable<any>>();
+          for (let rowIndex = range.rowStartIndex; rowIndex <= range.rowEndIndex; rowIndex++) {
+            for (let columnIndex = range.columnStartIndex; columnIndex <= range.columnEndIndex; columnIndex++) {
+              render$Map.set(`render:${freezeMode}:${rowIndex}:${columnIndex}`, () => {
+                return this.dataManager.change$.pipe(
+                  filter((patch) => isCellInRange(rowIndex, columnIndex, patch.range)),
+                  map(() => this.dataManager.get(rowIndex, columnIndex)),
+                  startWith(this.dataManager.get(rowIndex, columnIndex)),
+                  switchMap((content) => {
+                    const contentTypes = ['', rowIndex === 0 || columnIndex === 0 ? HEADER_TEXT : DEFAULT_TEXT];
+                    if (!(content === null || typeof content === 'string')) {
+                      contentTypes.push(...content.type);
                     }
-                    observer.next(rect);
 
-                    return () => {
-                      this.rectPool.reuse(rect);
-                    };
-                  }).pipe(
-                    combineLatestWith(offset$),
-                    map(([rect, offset]) =>
-                      rect.setAttrs({ x: x - offset.deltaX - group.x(), y: y - offset.deltaY - group.y() }),
-                    ),
-                    tap(() => {
-                      this.konvaItems.background.layer.batchDraw();
-                    }),
-                  ),
-                ),
-              );
-            shape$Map.set(`rect:${rowIndex}:${columnIndex}`, getRect$);
+                    const partialContext = { rowIndex, columnIndex, content, freezeMode, viewport, group };
+                    return this.cellBox.change$.pipe(
+                      filter((patch) => {
+                        if (patch.type === 'reset') return true;
+                        if (patch.type === 'row' && patch.index <= rowIndex) return true;
+                        if (patch.type === 'column' && patch.index <= columnIndex) return true;
 
-            let content$: Observable<TCellContent | undefined>;
-            if (rowIndex === 0) {
-              content$ = of(columnIndex === 0 ? '' : getColumnLabel(columnIndex - 1));
-            } else if (columnIndex === 0) {
-              content$ = of(rowIndex.toString());
-            } else {
-              content$ = this.dataManager.patch$.pipe(
-                filter(
-                  (v) =>
-                    rowIndex >= v.range.rowStartIndex &&
-                    rowIndex <= v.range.rowEndIndex &&
-                    columnIndex >= v.range.columnStartIndex &&
-                    columnIndex <= v.range.columnEndIndex,
-                ),
-                map(() => this.dataManager.get(rowIndex, columnIndex)),
-                startWith(this.dataManager.get(rowIndex, columnIndex)),
-              );
-            }
-
-            const getText$ = () =>
-              combineLatest([this.textPool.get$, this.shapeStyle.getTextAttrs$(mode, rowIndex, columnIndex)]).pipe(
-                switchMap(([getter, attrs]) =>
-                  new Observable<Konva.Text>((observer) => {
-                    const text = getter({ ...attrs, width, height });
-                    if (text.parent !== group) {
-                      group.add(text);
-                    }
-                    observer.next(text);
-
-                    return () => {
-                      this.textPool.reuse(text);
-                    };
-                  }).pipe(
-                    combineLatestWith(offset$, content$),
-                    map(([text, offset, content]) =>
-                      text.setAttrs({
-                        x: x - offset.deltaX - group.x(),
-                        y: y - offset.deltaY - group.y(),
-                        text: content as string,
+                        return false;
                       }),
-                    ),
-                    tap(() => {
-                      this.konvaItems.background.layer.batchDraw();
-                    }),
-                  ),
-                ),
-              );
-            shape$Map.set(`text:${rowIndex}:${columnIndex}`, getText$);
+                      map(() => this.cellBox.getCellBox(rowIndex, columnIndex)),
+                      startWith(this.cellBox.getCellBox(rowIndex, columnIndex)),
+                      switchMap((cellBox) => {
+                        const renderObservables = contentTypes.map(
+                          (contentType) =>
+                            this.renderers.get(contentType)?.render({ ...partialContext, cellBox }) ?? of(null),
+                        );
 
-            const el$ = combineLatest([
-              new Observable<() => HTMLDivElement>((observer) => {
-                let el: HTMLDivElement | null = null;
-                const createEl = () => {
-                  if (el) return el;
-
-                  el = document.createElement('div');
-                  el.style.position = 'absolute';
-                  el.style.width = `30px`;
-                  el.style.height = `20px`;
-                  el.style.background = 'orange';
-
-                  this.konvaItems.stage.container().appendChild(el);
-                  return el;
-                };
-                observer.next(createEl);
-
-                return () => {
-                  el?.remove();
-                  el = null;
-                };
-              }),
-              offset$,
-            ]).pipe(
-              map(([getter, offset]) => {
-                const current = getter();
-                current.style.top = `${y - offset.deltaY + 5}px`;
-                current.style.left = `${x - offset.deltaX + width - 36}px`;
-                return current;
-              }),
-            );
-
-            const getEditor$ = () =>
-              this.cursorListener.change$.pipe(
-                filter((v) => v.type === 'location'),
-                map((v) => v.current),
-                startWith(this.cursorListener.location),
-                switchMap((location) =>
-                  location?.rowIndex === rowIndex && location.columnIndex === columnIndex ? el$ : EMPTY,
-                ),
-              );
-            shape$Map.set(`editor:${rowIndex}:${columnIndex}`, getEditor$);
+                        return combineLatest(renderObservables).pipe(
+                          tap(() => {
+                            this.konvaItems.background.layer.batchDraw();
+                          }),
+                        );
+                      }),
+                      this.withDestroy(),
+                    );
+                  }),
+                );
+              });
+            }
           }
-        }
-        return shape$Map;
-      }),
-    );
+          return render$Map;
+        }),
+        this.withDestroy(),
+      )
+      .subscribe((mapper) => {
+        this.subscriptions[freezeMode].update(mapper);
+      });
   }
 }
+
+// Collect all viewport change observables (one for each freeze mode)
+const viewportModes: EFreezeMode[] = [EFreezeMode.NONE, EFreezeMode.ROW, EFreezeMode.COLUMN, EFreezeMode.BOTH];
