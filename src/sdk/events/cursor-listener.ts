@@ -7,7 +7,6 @@ import type Konva from 'konva';
 import {
   animationFrameScheduler,
   auditTime,
-  BehaviorSubject,
   combineLatest,
   combineLatestWith,
   concatMap,
@@ -22,10 +21,11 @@ import {
   switchMap,
 } from 'rxjs';
 
-import { getDefaultValue, isEqualLocation, isEqualPoint, ObservableDisposable } from '../utils';
+import { getDefaultValue, isEqualLocation, isEqualPoint } from '../utils';
 
-export class CursorListener extends ObservableDisposable implements ICursorListener {
-  private notifySubject: BehaviorSubject<boolean>;
+import { BaseListener } from './base-listener';
+
+export class CursorListener extends BaseListener implements ICursorListener {
   private row: IAccumulatedDimensionManager;
   private column: IAccumulatedDimensionManager;
   private rowFindOptions: IAccumulatedFindOptions;
@@ -51,11 +51,6 @@ export class CursorListener extends ObservableDisposable implements ICursorListe
       () => void (this.frozenInformation = getDefaultValue<IInformationManager<IFrozenInformation>>()),
     );
 
-    this.notifySubject = new BehaviorSubject<boolean>(false);
-    this.disposeWithMe(() => {
-      this.notifySubject.complete();
-    });
-
     this.rowFindOptions = createNewFindOptions();
     this.disposeWithMe(() => void (this.rowFindOptions = getDefaultValue<IAccumulatedFindOptions>()));
     this.columnFindOptions = createNewFindOptions();
@@ -75,14 +70,6 @@ export class CursorListener extends ObservableDisposable implements ICursorListe
     this.disposeWithMe(this.change$.subscribe());
   }
 
-  startListening(): () => void {
-    this.notifySubject.next(true);
-
-    return () => {
-      this.notifySubject.next(false);
-    };
-  }
-
   private buildChangePatch(events: IStageMouseEvent, scrollOffset: IScrollOffset, stage: Konva.Stage) {
     // Stop processing while scrolling
     const isScrolling$ = merge(
@@ -99,7 +86,7 @@ export class CursorListener extends ObservableDisposable implements ICursorListe
       distinctUntilChanged(),
     );
 
-    const canProcess$ = combineLatest([this.notifySubject, isScrolling$, isPressed$]).pipe(
+    const canProcess$ = combineLatest([this.activeSubject, isScrolling$, isPressed$]).pipe(
       map(([active, scrolling, pressed]) => active && !scrolling && !pressed),
       distinctUntilChanged(),
     );
