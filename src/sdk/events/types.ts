@@ -144,3 +144,8 @@ export interface ICursorListener extends IEventListener {
  * The dependency injection identifier for the mouse move listener.
  */
 export const ICursorListener: TIdentifier<ICursorListener> = Symbol('ICursorListener');
+
+/**
+ * The dependency injection identifier for the resize item listener.
+ */
+export const IResizeItemListener: TIdentifier<IEventListener> = Symbol('IResizeItemListener');

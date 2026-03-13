@@ -6,7 +6,7 @@ import { Container } from './container/core';
 import { registerContents } from './sdk/contents';
 import { registerCore, SheetConfig, UIElement, VIRTUAL_CONTENT } from './sdk/core';
 import { COLUMN_TAG, IAccumulatedDimensionManager, registerData, ROW_TAG } from './sdk/data';
-import { registerEvents } from './sdk/events';
+import { IResizeItemListener, registerEvents } from './sdk/events';
 import { ICursorListener, IStageClickListener, IStageDragListener } from './sdk/events';
 import { registerPools } from './sdk/pools';
 import { ICellRenderer, registerRenderers } from './sdk/renderers';
@@ -66,6 +66,7 @@ async function bootstrap() {
   container.get(IStageClickListener).startListening();
   container.get(IStageDragListener).startListening();
   container.get(ICursorListener).startListening();
+  container.get(IResizeItemListener).startListening();
 
   // Start renderers
   container.get(ICellRenderer).start();

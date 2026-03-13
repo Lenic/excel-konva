@@ -1,6 +1,6 @@
 import type { IContainer } from '../../container';
 
-import { IKonvaItems, IScrollOffset } from '../core';
+import { IKonvaItems, IScrollOffset, ISheetConfig } from '../core';
 import { COLUMN_TAG, IAccumulatedDimensionManager, ROW_TAG } from '../data';
 import { IFrozenInformationManager } from '../ui';
 
@@ -8,8 +8,16 @@ import { StageClickListener } from './click-listener';
 import { CursorListener } from './cursor-listener';
 import { StageDragListener } from './drag-listener';
 import { StageMouseEvent } from './mouse-event';
+import { ResizeItemListener } from './resize-item-listener';
 import { SelectionStore } from './selection-store';
-import { ICursorListener, ISelectionStore, IStageClickListener, IStageDragListener, IStageMouseEvent } from './types';
+import {
+  ICursorListener,
+  IResizeItemListener,
+  ISelectionStore,
+  IStageClickListener,
+  IStageDragListener,
+  IStageMouseEvent,
+} from './types';
 
 export * from './types';
 
@@ -41,6 +49,16 @@ export function registerEvents(container: IContainer) {
       c.get(IStageMouseEvent, ctx),
       c.get(IScrollOffset, ctx),
       c.get(IFrozenInformationManager, ctx),
+    );
+  });
+
+  container.register(IResizeItemListener).set((c, ctx) => {
+    return new ResizeItemListener(
+      c.get(IKonvaItems, ctx),
+      c.get(ICursorListener, ctx),
+      c.get(IAccumulatedDimensionManager, ROW_TAG, ctx),
+      c.get(IAccumulatedDimensionManager, COLUMN_TAG, ctx),
+      c.get(ISheetConfig, ctx).get$('resizeTolerance'),
     );
   });
 }
