@@ -90,7 +90,7 @@ export class CursorListener extends BaseListener implements ICursorListener {
           ? of(null)
           : merge(
               fromEvent(stage.container(), 'mouseleave').pipe(map(() => null)),
-              events.mouseMove$.pipe(map((e) => `${e.evt.clientX},${e.evt.clientY}`)),
+              events.mouseMove$.pipe(map(() => true)),
             ).pipe(
               auditTime(16, animationFrameScheduler),
               map((v) => (!v ? null : stage.getPointerPosition())),
