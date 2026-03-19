@@ -71,7 +71,6 @@ export class CursorListener extends BaseListener implements ICursorListener {
   }
 
   private buildChangePatch(events: IStageMouseEvent, scrollOffset: IScrollOffset, stage: Konva.Stage) {
-    // Stop processing while scrolling
     const isScrolling$ = merge(
       scrollOffset.change$.pipe(map(() => true)),
       scrollOffset.change$.pipe(
@@ -80,14 +79,8 @@ export class CursorListener extends BaseListener implements ICursorListener {
       ),
     ).pipe(startWith(false), distinctUntilChanged());
 
-    // Stop processing while mouse is pressed
-    const isPressed$ = merge(events.mousedown$.pipe(map(() => true)), events.mouseUp$.pipe(map(() => false))).pipe(
-      startWith(false),
-      distinctUntilChanged(),
-    );
-
-    const canProcess$ = combineLatest([this.activeSubject, isScrolling$, isPressed$]).pipe(
-      map(([active, scrolling, pressed]) => active && !scrolling && !pressed),
+    const canProcess$ = combineLatest([this.activeSubject, isScrolling$]).pipe(
+      map(([active, scrolling]) => active && !scrolling),
       distinctUntilChanged(),
     );
 

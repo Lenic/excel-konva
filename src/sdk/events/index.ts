@@ -4,20 +4,12 @@ import { IKonvaItems, IScrollOffset, ISheetConfig } from '../core';
 import { COLUMN_TAG, IAccumulatedDimensionManager, ROW_TAG } from '../data';
 import { IFrozenInformationManager } from '../ui';
 
-import { StageClickListener } from './click-listener';
 import { CursorListener } from './cursor-listener';
 import { StageDragListener } from './drag-listener';
 import { StageMouseEvent } from './mouse-event';
 import { ResizeItemListener } from './resize-item-listener';
 import { SelectionStore } from './selection-store';
-import {
-  ICursorListener,
-  IResizeItemListener,
-  ISelectionStore,
-  IStageClickListener,
-  IStageDragListener,
-  IStageMouseEvent,
-} from './types';
+import { ICursorListener, IResizeItemListener, ISelectionStore, IStageDragListener, IStageMouseEvent } from './types';
 
 export * from './types';
 
@@ -31,10 +23,6 @@ export function registerEvents(container: IContainer) {
 
   container.register(IStageMouseEvent).set((c, ctx) => {
     return new StageMouseEvent(c.get(IKonvaItems, ctx));
-  });
-
-  container.register(IStageClickListener).set((c, ctx) => {
-    return new StageClickListener(c.get(ISelectionStore, ctx), c.get(IStageMouseEvent, ctx));
   });
 
   container.register(IStageDragListener).set((c, ctx) => {

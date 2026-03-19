@@ -65,7 +65,6 @@ export interface IStageMouseEvent extends IDisposable {
   mousedown$: Observable<Konva.KonvaEventObject<MouseEvent>>;
   mouseMove$: Observable<Konva.KonvaEventObject<MouseEvent>>;
   mouseUp$: Observable<Konva.KonvaEventObject<MouseEvent>>;
-  typedMouseDownLeft$: Observable<TMousedownEvent>;
   dblclick$: Observable<Konva.KonvaEventObject<MouseEvent>>;
 }
 
@@ -93,7 +92,6 @@ export interface IEventListener extends IDisposable {
   startListening(): () => void;
 }
 
-export const IStageClickListener: TIdentifier<IEventListener> = Symbol('IStageClickListener');
 export const IStageDragListener: TIdentifier<IEventListener> = Symbol('IStageDragListener');
 
 /**

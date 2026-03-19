@@ -7,7 +7,7 @@ import { registerContents } from './sdk/contents';
 import { registerCore, SheetConfig, UIElement, VIRTUAL_CONTENT } from './sdk/core';
 import { COLUMN_TAG, IAccumulatedDimensionManager, registerData, ROW_TAG } from './sdk/data';
 import { IResizeItemListener, registerEvents } from './sdk/events';
-import { ICursorListener, IStageClickListener, IStageDragListener } from './sdk/events';
+import { ICursorListener, IStageDragListener } from './sdk/events';
 import { registerPools } from './sdk/pools';
 import { ICellRenderer, registerRenderers } from './sdk/renderers';
 import { IScrollableRangeManager, registerUI } from './sdk/ui';
@@ -63,7 +63,6 @@ async function bootstrap() {
   config.set({ rowCount: 1000, columnCount: 100, frozenRows: 3, frozenColumns: 4 });
 
   // Start listeners
-  container.get(IStageClickListener).startListening();
   container.get(IStageDragListener).startListening();
   container.get(ICursorListener).startListening();
   container.get(IResizeItemListener).startListening();
