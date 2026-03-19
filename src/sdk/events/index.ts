@@ -1,8 +1,8 @@
 import type { IContainer } from '../../container';
 
 import { IKonvaItems, IScrollOffset, ISheetConfig } from '../core';
-import { COLUMN_TAG, IAccumulatedDimensionManager, ROW_TAG } from '../data';
-import { IFrozenInformationManager } from '../ui';
+import { COLUMN_TAG, IAccumulatedDimensionManager, IDimensionManager, ROW_TAG } from '../data';
+import { ICellBoxManager, IFrozenInformationManager, ISheetDimension } from '../ui';
 
 import { CursorListener } from './cursor-listener';
 import { StageDragListener } from './drag-listener';
@@ -44,9 +44,14 @@ export function registerEvents(container: IContainer) {
     return new ResizeItemListener(
       c.get(IKonvaItems, ctx),
       c.get(ICursorListener, ctx),
+      c.get(IDimensionManager, ROW_TAG, ctx),
+      c.get(IDimensionManager, COLUMN_TAG, ctx),
       c.get(IAccumulatedDimensionManager, ROW_TAG, ctx),
       c.get(IAccumulatedDimensionManager, COLUMN_TAG, ctx),
       c.get(ISheetConfig, ctx).get$('resizeTolerance'),
+      c.get(IStageMouseEvent, ctx),
+      c.get(ISheetDimension, ctx),
+      c.get(ICellBoxManager, ctx),
     );
   });
 }
