@@ -86,6 +86,9 @@ export class ResizeItemListener extends BaseListener {
     this.cursorListener = cursorListener;
     this.sheetDimension = sheetDimension;
 
+    window.column = column;
+    window.row = row;
+
     this.tolerance = 0;
     this.disposeWithMe(resizeTolerance$.subscribe((v) => void (this.tolerance = v)));
 
@@ -103,8 +106,14 @@ export class ResizeItemListener extends BaseListener {
                 filter((v) => v.type === 'point'),
                 map((v) => ({ type: 'move', pos: v.current }) as const),
               ),
-              this.mouseEvents.mousedown$.pipe(map(() => mousedownEvent)),
-              this.mouseEvents.mouseUp$.pipe(map(() => mouseupEvent)),
+              this.mouseEvents.mousedown$.pipe(
+                tap(() => void this.konvaItems.resizeLine.visible(true)),
+                map(() => mousedownEvent),
+              ),
+              this.mouseEvents.mouseUp$.pipe(
+                tap(() => void this.konvaItems.resizeLine.visible(false)),
+                map(() => mouseupEvent),
+              ),
             ).pipe(
               scan(
                 (state: IResizeState, event) => {
@@ -121,7 +130,6 @@ export class ResizeItemListener extends BaseListener {
               ),
               distinctUntilChanged(),
               switchMap((state) => {
-                console.log('state', state.target);
                 const cursor = state.target?.cursor ?? DEFAULT_CURSOR;
                 if (!state.isDragging && container.style.cursor !== cursor) {
                   container.style.cursor = cursor;
@@ -182,41 +190,32 @@ export class ResizeItemListener extends BaseListener {
       map((v) => v.current),
       startWith(this.cursorListener.position),
       tap((position) => {
-        if (!position) {
-          this.konvaItems.resizeLine.visible(false);
+        if (!position) return;
+
+        if (target.key === 'x') {
+          const x = Math.round(position.x);
+          this.konvaItems.resizeLine.points([x, 0, x, this.sheetDimension.height]);
         } else {
-          if (target.key === 'x') {
-            this.konvaItems.resizeLine.setAttrs({
-              visible: true,
-              points: [position.x, 0, position.x, this.sheetDimension.height],
-            });
-          } else {
-            this.konvaItems.resizeLine.setAttrs({
-              visible: true,
-              points: [0, position.y, this.sheetDimension.width, position.y],
-            });
-          }
+          const y = Math.round(position.y);
+          this.konvaItems.resizeLine.points([0, y, this.sheetDimension.width, y]);
         }
 
         this.konvaItems.selection.layer.batchDraw();
       }),
       finalize(() => {
-        if (this.konvaItems.resizeLine.visible()) {
-          if (target.key === 'x') {
-            const endValue = this.cursorListener.position?.x ?? -1;
-            if (endValue !== -1) {
-              const beginValue = this.cell.getCellBox(0, target.index).x;
-              this.column.set(target.index, endValue - beginValue);
-            }
-          } else {
-            const endValue = this.cursorListener.position?.y ?? -1;
-            if (endValue !== -1) {
-              const beginValue = this.cell.getCellBox(target.index, 0).y;
-              this.row.set(target.index, endValue - beginValue);
-            }
+        if (target.key === 'x') {
+          const endValue = this.cursorListener.position?.x ?? -1;
+          if (endValue !== -1) {
+            const beginValue = this.cell.getCellBox(0, target.index).x;
+            this.column.set(target.index, Math.round(endValue - beginValue));
+          }
+        } else {
+          const endValue = this.cursorListener.position?.y ?? -1;
+          if (endValue !== -1) {
+            const beginValue = this.cell.getCellBox(target.index, 0).y;
+            this.row.set(target.index, Math.round(endValue - beginValue));
           }
         }
-        this.konvaItems.resizeLine.visible(false);
         this.konvaItems.selection.layer.batchDraw();
       }),
     );
