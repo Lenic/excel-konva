@@ -207,13 +207,13 @@ export class ResizeItemListener extends BaseListener {
           const endValue = this.cursorListener.position?.x ?? -1;
           if (endValue !== -1) {
             const beginValue = this.cell.getCellBox(0, target.index).x;
-            this.column.set(target.index, Math.round(endValue - beginValue));
+            this.column.set(target.index, endValue - beginValue);
           }
         } else {
           const endValue = this.cursorListener.position?.y ?? -1;
           if (endValue !== -1) {
             const beginValue = this.cell.getCellBox(target.index, 0).y;
-            this.row.set(target.index, Math.round(endValue - beginValue));
+            this.row.set(target.index, endValue - beginValue);
           }
         }
         this.konvaItems.selection.layer.batchDraw();

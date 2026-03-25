@@ -23,10 +23,10 @@ export class ScrollOffset extends ObservableDisposable implements IScrollOffset 
   constructor(el: HTMLElement) {
     super();
 
-    this.top = el.scrollTop;
+    this.top = Math.round(el.scrollTop);
     this.disposeWithMe(() => void (this.top = 0));
 
-    this.left = el.scrollLeft;
+    this.left = Math.round(el.scrollLeft);
     this.disposeWithMe(() => void (this.left = 0));
 
     this.offset = { deltaX: this.left, deltaY: this.top };
@@ -34,7 +34,7 @@ export class ScrollOffset extends ObservableDisposable implements IScrollOffset 
 
     this.change$ = fromEvent(el, 'scroll').pipe(
       auditTime(16, animationFrameScheduler),
-      map(() => ({ deltaX: el.scrollLeft, deltaY: el.scrollTop }) as IOffset),
+      map(() => ({ deltaX: Math.round(el.scrollLeft), deltaY: Math.round(el.scrollTop) }) as IOffset),
       distinctUntilChanged((x, y) => x.deltaX === y.deltaX && x.deltaY === y.deltaY),
       map((delta) => {
         const topChanged = this.top !== delta.deltaY;

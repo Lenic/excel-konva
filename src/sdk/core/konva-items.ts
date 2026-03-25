@@ -47,7 +47,10 @@ export class KonvaItems extends ObservableDisposable implements IKonvaItems {
     });
     this.disposeWithMe(
       containerResize$.pipe(auditTime(16, animationFrameScheduler)).subscribe((dim) => {
-        this.stage.setAttrs(dim);
+        this.stage.setAttrs({
+          width: Math.round(dim.width),
+          height: Math.round(dim.height),
+        });
       }),
     );
 
@@ -63,8 +66,8 @@ export class KonvaItems extends ObservableDisposable implements IKonvaItems {
           }),
         )
         .subscribe((e) => {
-          scrollContainer.scrollTop = Math.max(0, scrollContainer.scrollTop + e.evt.deltaY);
-          scrollContainer.scrollLeft = Math.max(0, scrollContainer.scrollLeft + e.evt.deltaX);
+          scrollContainer.scrollTop = Math.round(Math.max(0, scrollContainer.scrollTop + e.evt.deltaY));
+          scrollContainer.scrollLeft = Math.round(Math.max(0, scrollContainer.scrollLeft + e.evt.deltaX));
         }),
     );
 

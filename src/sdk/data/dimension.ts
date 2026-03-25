@@ -72,17 +72,21 @@ export class DimensionManager extends ObservableDisposable implements IDimension
   set(index: number, value?: number): void {
     this.checkDisposed();
 
-    if (typeof value === 'number' && value < this.options.minimalDimension) return;
+    let currentValue = value;
+    if (typeof currentValue === 'number') {
+      currentValue = Math.round(currentValue);
+      if (currentValue < this.options.minimalDimension) return;
+    }
 
     const oldValue = this.store.get(index);
-    if (oldValue === value) return;
+    if (oldValue === currentValue) return;
 
     const defaultValue = index === 0 ? this.options.headerDimension : this.options.defaultDimension;
     const previous = oldValue ?? defaultValue;
-    const current = value ?? defaultValue;
+    const current = currentValue ?? defaultValue;
 
-    if (typeof value === 'number') {
-      this.store.set(index, value);
+    if (typeof currentValue === 'number') {
+      this.store.set(index, currentValue);
     } else {
       this.store.delete(index);
     }
