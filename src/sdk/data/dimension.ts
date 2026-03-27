@@ -74,7 +74,7 @@ export class DimensionManager extends ObservableDisposable implements IDimension
 
     let currentValue = value;
     if (typeof currentValue === 'number') {
-      currentValue = Math.round(currentValue);
+      currentValue = Math.floor(currentValue);
       if (currentValue < this.options.minimalDimension) return;
     }
 

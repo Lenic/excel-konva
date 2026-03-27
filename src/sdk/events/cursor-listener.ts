@@ -98,7 +98,7 @@ export class CursorListener extends BaseListener implements ICursorListener {
             ),
       ),
       distinctUntilChanged(isEqualPoint),
-      map((v) => (!v ? null : ({ x: Math.round(v.x), y: Math.round(v.y) } as IPoint))),
+      map((v) => (!v ? null : ({ x: Math.floor(v.x), y: Math.floor(v.y) } as IPoint))),
       combineLatestWith(
         scrollOffset.change$.pipe(
           map(() => scrollOffset.offset),

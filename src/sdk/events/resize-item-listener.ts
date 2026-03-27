@@ -193,10 +193,10 @@ export class ResizeItemListener extends BaseListener {
         if (!position) return;
 
         if (target.key === 'x') {
-          const x = Math.round(position.x);
+          const x = Math.floor(position.x);
           this.konvaItems.resizeLine.points([x, 0, x, this.sheetDimension.height]);
         } else {
-          const y = Math.round(position.y);
+          const y = Math.floor(position.y);
           this.konvaItems.resizeLine.points([0, y, this.sheetDimension.width, y]);
         }
 
