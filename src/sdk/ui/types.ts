@@ -198,6 +198,10 @@ export const ICellBoxManager: TIdentifier<ICellBoxManager> = Symbol('ICellBoxMan
  */
 export interface IInformationManager<T> extends IDisposable {
   /**
+   * Current value
+   */
+  value: T;
+  /**
    * An observable stream that emits the current state or information.
    */
   value$: Observable<T>;

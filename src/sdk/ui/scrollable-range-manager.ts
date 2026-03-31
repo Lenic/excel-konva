@@ -15,6 +15,7 @@ export class ScrollableRangeManager extends ObservableDisposable implements IInf
   private columnFindEndOptions: IAccumulatedFindOptions;
   private columnFindBeginOptions: IAccumulatedFindOptions;
 
+  value: IScrollableRange;
   value$: Observable<IScrollableRange>;
 
   constructor(
@@ -25,6 +26,16 @@ export class ScrollableRangeManager extends ObservableDisposable implements IInf
     column: IAccumulatedDimensionManager,
   ) {
     super();
+
+    this.value = {
+      rowStartIndex: 0,
+      rowEndIndex: 0,
+      columnStartIndex: 0,
+      columnEndIndex: 0,
+      verticalKey: '',
+      horizontalKey: '',
+    };
+    this.disposeWithMe(() => void (this.value = getDefaultValue<IScrollableRange>()));
 
     this.rowFindEndOptions = createNewFindOptions(-1);
     this.disposeWithMe(() => void (this.rowFindEndOptions = getDefaultValue<IAccumulatedFindOptions>()));
@@ -104,7 +115,7 @@ export class ScrollableRangeManager extends ObservableDisposable implements IInf
       ),
       this.withPublish(),
     );
-    this.disposeWithMe(this.value$.subscribe());
+    this.disposeWithMe(this.value$.subscribe((value) => void (this.value = value)));
   }
 }
 
