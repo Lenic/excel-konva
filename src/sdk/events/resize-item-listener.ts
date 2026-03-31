@@ -1,8 +1,7 @@
-import type { IKonvaItems, ILocation, IPoint } from '../core';
+import type { IKonvaItems, ILocation, IPoint, IScrollOffset, ISheetConfig } from '../core';
 import type { IAccumulatedDimensionManager, IDimensionManager } from '../data';
-import type { ICellBoxManager, ISheetDimension } from '../ui';
+import type { IFrozenInformation, IInformationManager, ISheetDimension } from '../ui';
 import type { ICursorListener, IStageMouseEvent } from './types';
-import type { Observable } from 'rxjs';
 
 import { distinctUntilChanged, EMPTY, filter, finalize, map, merge, scan, startWith, switchMap, tap } from 'rxjs';
 
@@ -13,84 +12,59 @@ import { BaseListener } from './base-listener';
  * It monitors cursor movement and updates the cursor icon when hovering near boundaries.
  */
 export class ResizeItemListener extends BaseListener {
-  /**
-   * Mouse events service for monitoring cursor trajectory and events.
-   */
-  private mouseEvents: IStageMouseEvent;
-
-  /**
-   * The sensitivity range (in pixels) for triggering resize boundaries.
-   */
-  private tolerance: number;
-
-  /**
-   * Collection of Konva objects, used to access the stage container for cursor updates.
-   */
-  private konvaItems: IKonvaItems;
-
-  /**
-   * Service tracking cursor coordinates and grid-relative location.
-   */
-  private cursorListener: ICursorListener;
-
   private row: IDimensionManager;
+  private scoller: IScrollOffset;
+  private konvaItems: IKonvaItems;
   private column: IDimensionManager;
-
-  /**
-   * Manager for calculating accumulated row heights and offsets.
-   */
-  private rowA: IAccumulatedDimensionManager;
-
-  /**
-   * Manager for calculating accumulated column widths and offsets.
-   */
-  private columnA: IAccumulatedDimensionManager;
-
-  private cell: ICellBoxManager;
-
-  /**
-   * Manager for calculating accumulated sheet dimensions and offsets.
-   */
+  private sheetConfig: ISheetConfig;
+  private mouseEvents: IStageMouseEvent;
   private sheetDimension: ISheetDimension;
+  private cursorListener: ICursorListener;
+  private rowA: IAccumulatedDimensionManager;
+  private columnA: IAccumulatedDimensionManager;
+  private frozenInformation: IInformationManager<IFrozenInformation>;
 
   /**
    * Initializes a new instance of the ResizeItemListener.
    *
+   * @param row - Manager for handling row dimensions.
+   * @param scoller - Service for handling scroll offsets.
    * @param konvaItems - Collection of Konva objects for component management.
+   * @param column - Manager for handling column dimensions.
+   * @param sheetConfig - Configuration for the sheet.
+   * @param mouseEvents - Service for handling mouse events.
+   * @param sheetDimension - Manager for handling sheet dimensions.
    * @param cursorListener - Service for monitoring cursor trajectory and events.
    * @param rowA - Manager for handling row-based accumulated dimensions.
    * @param columnA - Manager for handling column-based accumulated dimensions.
-   * @param resizeTolerance$ - Observable stream providing the boundary detection sensitivity.
+   * @param frozenInformation - Manager for handling frozen information.
    */
   constructor(
-    konvaItems: IKonvaItems,
-    cursorListener: ICursorListener,
     row: IDimensionManager,
+    scoller: IScrollOffset,
+    konvaItems: IKonvaItems,
     column: IDimensionManager,
-    rowA: IAccumulatedDimensionManager,
-    columnA: IAccumulatedDimensionManager,
-    resizeTolerance$: Observable<number>,
+    sheetConfig: ISheetConfig,
     mouseEvents: IStageMouseEvent,
     sheetDimension: ISheetDimension,
-    cell: ICellBoxManager,
+    cursorListener: ICursorListener,
+    rowA: IAccumulatedDimensionManager,
+    columnA: IAccumulatedDimensionManager,
+    frozenInformation: IInformationManager<IFrozenInformation>,
   ) {
     super();
 
-    this.cell = cell;
     this.row = row;
-    this.column = column;
     this.rowA = rowA;
+    this.column = column;
     this.columnA = columnA;
+    this.scoller = scoller;
     this.konvaItems = konvaItems;
     this.mouseEvents = mouseEvents;
+    this.sheetConfig = sheetConfig;
     this.cursorListener = cursorListener;
     this.sheetDimension = sheetDimension;
-
-    window.column = column;
-    window.row = row;
-
-    this.tolerance = 0;
-    this.disposeWithMe(resizeTolerance$.subscribe((v) => void (this.tolerance = v)));
+    this.frozenInformation = frozenInformation;
 
     const container = this.konvaItems.stage.container();
     this.disposeWithMe(
@@ -99,54 +73,101 @@ export class ResizeItemListener extends BaseListener {
           switchMap((active) => {
             if (!active) return EMPTY;
 
-            const mouseupEvent = { type: 'up' } as const;
-            const mousedownEvent = { type: 'down' } as const;
-            return merge(
+            const state$ = merge(
               this.cursorListener.change$.pipe(
                 filter((v) => v.type === 'point'),
                 map((v) => ({ type: 'move', pos: v.current }) as const),
               ),
               this.mouseEvents.mousedown$.pipe(
-                tap(() => void this.konvaItems.resizeLine.visible(true)),
-                map(() => mousedownEvent),
+                tap(() => {
+                  this.konvaItems.resizeLine.visible(true);
+                  this.konvaItems.selection.layer.batchDraw();
+                }),
+                map(() => ({ type: 'down' }) as const),
               ),
               this.mouseEvents.mouseUp$.pipe(
-                tap(() => void this.konvaItems.resizeLine.visible(false)),
-                map(() => mouseupEvent),
+                tap(() => {
+                  this.konvaItems.resizeLine.visible(false);
+                  this.konvaItems.selection.layer.batchDraw();
+                }),
+                map(() => {
+                  const { position } = this.cursorListener;
+                  if (!position) {
+                    throw new Error('[ResizeItemListener]: position is not found.');
+                  }
+                  return { type: 'up', pos: position } as const;
+                }),
               ),
             ).pipe(
               scan(
                 (state: IResizeState, event) => {
-                  if (state.isDragging && event.type === 'up') return { ...state, isDragging: false };
-                  if (!state.isDragging && event.type === 'down' && state.target) return { ...state, isDragging: true };
+                  if (event.type === 'up') {
+                    let nextTarget = state.target;
+                    if (nextTarget) {
+                      const { location } = this.cursorListener;
+                      if (nextTarget.key === 'x' && location?.rowIndex === 0) {
+                        nextTarget = { ...nextTarget, beginValue: event.pos.x };
+                      } else if (nextTarget.key === 'y' && location?.columnIndex === 0) {
+                        nextTarget = { ...nextTarget, beginValue: event.pos.y };
+                      } else {
+                        nextTarget = null;
+                      }
+                    }
+
+                    return {
+                      ...state,
+                      isDragging: false,
+                      target: nextTarget,
+                    };
+                  }
+
+                  if (event.type === 'down' && state.target) {
+                    return {
+                      ...state,
+                      isDragging: true,
+                    };
+                  }
 
                   if (!state.isDragging && event.type === 'move') {
-                    return { ...state, target: this.getTargetInformation(event.pos, this.cursorListener.location) };
+                    return {
+                      ...state,
+                      target: this.getTargetInformation(event.pos, this.cursorListener.location),
+                    };
                   }
 
                   return state;
                 },
                 { isDragging: false, target: null } as IResizeState,
               ),
+              distinctUntilChanged((x, y) => {
+                if (x === y) return true;
+                if (x.isDragging !== y.isDragging) return false;
+                if (x.target === y.target) return true;
+                if (!x.target || !y.target) return false;
+
+                const prev = x.target;
+                const curr = y.target;
+                return prev.cursor === curr.cursor && prev.index === curr.index && prev.key === curr.key;
+              }),
+              this.withPublish(),
+            );
+
+            const cursor$ = state$.pipe(
+              map((state) => state.target?.cursor ?? DEFAULT_CURSOR),
               distinctUntilChanged(),
-              switchMap((state) => {
-                const cursor = state.target?.cursor ?? DEFAULT_CURSOR;
-                if (!state.isDragging && container.style.cursor !== cursor) {
-                  container.style.cursor = cursor;
-                } else if (state.isDragging && container.style.cursor !== cursor) {
-                  container.style.cursor = cursor;
-                }
-
-                if (state.isDragging && state.target) {
-                  return this.onResizeItem(state.target);
-                }
-
-                return EMPTY;
+              tap((cursor) => {
+                container.style.cursor = cursor;
               }),
               finalize(() => {
                 container.style.cursor = DEFAULT_CURSOR;
               }),
             );
+
+            const resize$ = state$.pipe(
+              switchMap((v) => (v.isDragging && v.target ? this.onResizeItem(v.target) : EMPTY)),
+            );
+
+            return merge(cursor$, resize$);
           }),
         )
         .subscribe(),
@@ -156,35 +177,71 @@ export class ResizeItemListener extends BaseListener {
   private getTargetInformation(point: IPoint | null, location: ILocation | null): ITargetInformation | null {
     if (!point || !location) return null;
 
-    const targetRowIndex =
-      location.rowIndex === 0 ? this.getTargetIndex(point.x, this.columnA, location.columnIndex) : -1;
-    const targetColumnIndex =
-      location.columnIndex === 0 ? this.getTargetIndex(point.y, this.rowA, location.rowIndex) : -1;
+    let topValue = -1;
+    let targetRowIndex = -1;
+    if (location.columnIndex === 0) {
+      [targetRowIndex, topValue] = this.correctItemIndex(
+        point.y <= this.frozenInformation.value.height ? point.y : point.y + this.scoller.top,
+        this.rowA,
+        location.rowIndex,
+      );
+    }
+
+    let leftValue = -1;
+    let targetColumnIndex = -1;
+    if (location.rowIndex === 0) {
+      [targetColumnIndex, leftValue] = this.correctItemIndex(
+        point.x <= this.frozenInformation.value.width ? point.x : point.x + this.scoller.left,
+        this.columnA,
+        location.columnIndex,
+      );
+    }
 
     if (targetRowIndex !== -1 && targetColumnIndex === -1) {
-      return { index: targetRowIndex, key: 'x', cursor: COLUMN_RESIZE_CURSOR };
+      return {
+        index: targetRowIndex,
+        key: 'y',
+        cursor: ROW_RESIZE_CURSOR,
+        beginValue: point.y,
+        edgeValue: topValue,
+      };
     }
 
     if (targetColumnIndex !== -1 && targetRowIndex === -1) {
-      return { index: targetColumnIndex, key: 'y', cursor: ROW_RESIZE_CURSOR };
+      return {
+        index: targetColumnIndex,
+        key: 'x',
+        cursor: COLUMN_RESIZE_CURSOR,
+        beginValue: point.x,
+        edgeValue: leftValue,
+      };
     }
 
     return null;
   }
 
-  private getTargetIndex(value: number, dimension: IAccumulatedDimensionManager, index: number): number {
+  private correctItemIndex(
+    value: number,
+    dimension: IAccumulatedDimensionManager,
+    index: number,
+  ): [targetIndex: number, edgeValue: number] {
+    const tolerance = this.sheetConfig.options.resizeTolerance;
+    if (index === 0 && value <= tolerance) return [-1, 0];
+
+    const previous = index - 1;
     const start = dimension.get(index);
-    if (value >= start - this.tolerance && value <= start + this.tolerance) return index - 1;
+    if (value >= start && value <= start + tolerance) return [previous, previous < 0 ? 0 : dimension.get(previous)];
 
     const end = dimension.get(index + 1);
-    if (value >= end - this.tolerance && value <= end + this.tolerance) return index;
+    if (value >= end - tolerance && value <= end) return [index, start];
 
-    return -1;
+    return [-1, 0];
   }
 
   private onResizeItem(target: ITargetInformation) {
     this.konvaItems.resizeLine.moveToTop();
 
+    let lastValue = -1;
     return this.cursorListener.change$.pipe(
       filter((v) => v.type === 'point'),
       map((v) => v.current),
@@ -193,29 +250,36 @@ export class ResizeItemListener extends BaseListener {
         if (!position) return;
 
         if (target.key === 'x') {
-          const x = Math.floor(position.x);
-          this.konvaItems.resizeLine.points([x, 0, x, this.sheetDimension.height]);
+          if (position.x - target.edgeValue >= this.sheetConfig.options.minimalColumnWidth) {
+            lastValue = position.x;
+            this.konvaItems.resizeLine.points([position.x, 0, position.x, this.sheetDimension.height]);
+            this.konvaItems.selection.layer.batchDraw();
+          }
         } else {
-          const y = Math.floor(position.y);
-          this.konvaItems.resizeLine.points([0, y, this.sheetDimension.width, y]);
+          if (position.y - target.edgeValue >= this.sheetConfig.options.minimalRowHeight) {
+            lastValue = position.y;
+            this.konvaItems.resizeLine.points([0, position.y, this.sheetDimension.width, position.y]);
+            this.konvaItems.selection.layer.batchDraw();
+          }
         }
-
-        this.konvaItems.selection.layer.batchDraw();
       }),
       finalize(() => {
+        if (lastValue === -1) return;
+
         if (target.key === 'x') {
-          const endValue = this.cursorListener.position?.x ?? -1;
-          if (endValue !== -1) {
-            const beginValue = this.cell.getCellBox(0, target.index).x;
-            this.column.set(target.index, endValue - beginValue);
-          }
+          const width = this.column.get(target.index);
+          this.column.set(
+            target.index,
+            Math.max(this.sheetConfig.options.minimalColumnWidth, width + (lastValue - target.beginValue)),
+          );
         } else {
-          const endValue = this.cursorListener.position?.y ?? -1;
-          if (endValue !== -1) {
-            const beginValue = this.cell.getCellBox(target.index, 0).y;
-            this.row.set(target.index, endValue - beginValue);
-          }
+          const height = this.row.get(target.index);
+          this.row.set(
+            target.index,
+            Math.max(this.sheetConfig.options.minimalRowHeight, height + (lastValue - target.beginValue)),
+          );
         }
+        lastValue = -1;
         this.konvaItems.selection.layer.batchDraw();
       }),
     );
@@ -226,6 +290,8 @@ interface ITargetInformation {
   index: number;
   key: keyof IPoint;
   cursor: string;
+  beginValue: number;
+  edgeValue: number;
 }
 
 interface IResizeState {
