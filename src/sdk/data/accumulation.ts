@@ -46,7 +46,11 @@ export class AccumulatedDimensionManager extends ObservableDisposable implements
     this.disposeWithMe(this.list);
     this.disposeWithMe(
       this.change$.subscribe((patch) => {
-        this.list.truncate(patch.type === 'options' ? 0 : patch.type === 'dimension' ? patch.index : patch.current - 1);
+        const index = patch.type === 'options' ? 0 : patch.type === 'dimension' ? patch.index : patch.current - 1;
+        this.list.truncate(index);
+        if (index === 0) {
+          this.list.push(0);
+        }
       }),
     );
 
