@@ -180,20 +180,24 @@ export class ResizeItemListener extends BaseListener {
     let topValue = -1;
     let targetRowIndex = -1;
     if (location.columnIndex === 0) {
+      const isInFrozenRegion = point.y <= this.frozenInformation.value.height;
       [targetRowIndex, topValue] = this.correctItemIndex(
-        point.y <= this.frozenInformation.value.height ? point.y : point.y + this.scoller.top,
+        isInFrozenRegion ? point.y : point.y + this.scoller.top,
         this.rowA,
         location.rowIndex,
+        isInFrozenRegion ? 0 : this.scoller.top,
       );
     }
 
     let leftValue = -1;
     let targetColumnIndex = -1;
     if (location.rowIndex === 0) {
+      const isInFrozenRegion = point.x <= this.frozenInformation.value.width;
       [targetColumnIndex, leftValue] = this.correctItemIndex(
-        point.x <= this.frozenInformation.value.width ? point.x : point.x + this.scoller.left,
+        isInFrozenRegion ? point.x : point.x + this.scoller.left,
         this.columnA,
         location.columnIndex,
+        isInFrozenRegion ? 0 : this.scoller.left,
       );
     }
 
@@ -224,16 +228,18 @@ export class ResizeItemListener extends BaseListener {
     value: number,
     dimension: IAccumulatedDimensionManager,
     index: number,
+    correction: number,
   ): [targetIndex: number, edgeValue: number] {
     const tolerance = this.sheetConfig.options.resizeTolerance;
     if (index === 0 && value <= tolerance) return [-1, 0];
 
     const previous = index - 1;
     const start = dimension.get(index);
-    if (value >= start && value <= start + tolerance) return [previous, previous < 0 ? 0 : dimension.get(previous)];
+    if (value >= start && value <= start + tolerance)
+      return [previous, previous < 0 ? 0 : dimension.get(previous) - correction];
 
     const end = dimension.get(index + 1);
-    if (value >= end - tolerance && value <= end) return [index, start];
+    if (value >= end - tolerance && value <= end) return [index, start - correction];
 
     return [-1, 0];
   }
