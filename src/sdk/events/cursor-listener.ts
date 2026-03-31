@@ -7,21 +7,21 @@ import type Konva from 'konva';
 import {
   animationFrameScheduler,
   auditTime,
-  combineLatest,
   combineLatestWith,
-  concatMap,
   debounceTime,
   distinctUntilChanged,
+  EMPTY,
   fromEvent,
   map,
   merge,
+  mergeWith,
   Observable,
-  of,
   startWith,
   switchMap,
+  tap,
 } from 'rxjs';
 
-import { getDefaultValue, isEqualLocation, isEqualPoint } from '../utils';
+import { createNewFindOptions, getDefaultValue, isEqualLocation, isEqualPoint } from '../utils';
 
 import { BaseListener } from './base-listener';
 
@@ -57,9 +57,7 @@ export class CursorListener extends BaseListener implements ICursorListener {
     this.disposeWithMe(() => void (this.columnFindOptions = getDefaultValue<IAccumulatedFindOptions>()));
 
     this.row = row;
-    this.disposeWithMe(() => void (this.rowFindOptions = createNewFindOptions()));
     this.column = column;
-    this.disposeWithMe(() => void (this.columnFindOptions = createNewFindOptions()));
 
     this.position = null;
     this.disposeWithMe(() => void (this.position = null));
@@ -79,52 +77,56 @@ export class CursorListener extends BaseListener implements ICursorListener {
       ),
     ).pipe(startWith(false), distinctUntilChanged());
 
-    const canProcess$ = combineLatest([this.activeSubject, isScrolling$]).pipe(
-      map(([active, scrolling]) => active && !scrolling),
-      distinctUntilChanged(),
-    );
+    return this.activeSubject.pipe(
+      switchMap((active) => {
+        if (!active) return EMPTY;
 
-    return canProcess$.pipe(
-      switchMap((can) =>
-        !can
-          ? of(null)
-          : merge(
-              fromEvent(stage.container(), 'mouseleave').pipe(map(() => null)),
-              events.mouseMove$.pipe(map(() => true)),
-            ).pipe(
-              auditTime(16, animationFrameScheduler),
-              map((v) => (!v ? null : stage.getPointerPosition())),
-              startWith(null),
-            ),
-      ),
-      distinctUntilChanged(isEqualPoint),
-      map((v) => (!v ? null : ({ x: Math.floor(v.x), y: Math.floor(v.y) } as IPoint))),
-      combineLatestWith(
-        scrollOffset.change$.pipe(
-          map(() => scrollOffset.offset),
-          startWith(scrollOffset.offset),
-        ),
-        this.frozenInformation.value$,
-      ),
-      concatMap(
-        ([position, offset, frozenInformation]) =>
-          new Observable<TMouseMoveChangePatch>((observer) => {
-            if (!isEqualPoint(position, this.position)) {
-              const previousPosition = this.position;
-              this.position = position;
-              observer.next({ type: 'point', previous: previousPosition, current: position });
-            }
+        return new Observable<TMouseMoveChangePatch>((observer) => {
+          const position$ = events.mouseMove$.pipe(
+            auditTime(16, animationFrameScheduler),
+            map(() => stage.getPointerPosition()),
+            mergeWith(fromEvent(stage.container(), 'mouseleave').pipe(map(() => null))),
+            map((v): IPoint | null => (!v ? null : { x: Math.floor(v.x), y: Math.floor(v.y) })),
+            distinctUntilChanged(isEqualPoint),
+            map((position) => {
+              if (!isEqualPoint(position, this.position)) {
+                const previousPosition = this.position;
+                this.position = position;
 
-            const nextLocation = this.getLocation(position, offset, frozenInformation);
-            if (!isEqualLocation(this.location, nextLocation)) {
-              const previousLocation = this.location;
-              this.location = nextLocation;
-              observer.next({ type: 'location', previous: previousLocation, current: this.location });
-            }
+                observer.next({ type: 'point', previous: previousPosition, current: position });
+              }
+              return this.position;
+            }),
+          );
 
-            observer.complete();
-          }),
-      ),
+          const subscription = position$
+            .pipe(
+              combineLatestWith(isScrolling$),
+              map(([position, scrolling]) => (scrolling ? null : position)),
+              distinctUntilChanged(isEqualPoint),
+              combineLatestWith(
+                scrollOffset.change$.pipe(
+                  map(() => scrollOffset.offset),
+                  startWith(scrollOffset.offset),
+                ),
+                this.frozenInformation.value$,
+              ),
+              tap(([position, offset, frozenInformation]) => {
+                const nextLocation = this.getLocation(position, offset, frozenInformation);
+                if (!isEqualLocation(this.location, nextLocation)) {
+                  const previousLocation = this.location;
+                  this.location = nextLocation;
+                  observer.next({ type: 'location', previous: previousLocation, current: this.location });
+                }
+              }),
+            )
+            .subscribe();
+
+          return () => {
+            subscription.unsubscribe();
+          };
+        });
+      }),
       this.withShare(),
     );
   }
@@ -139,8 +141,4 @@ export class CursorListener extends BaseListener implements ICursorListener {
     const columnIndex = this.column.findIndex(point.x + offsetX, this.columnFindOptions);
     return { rowIndex, columnIndex };
   }
-}
-
-function createNewFindOptions(): IAccumulatedFindOptions {
-  return { cache: { index: -1, offset: -1 } };
 }

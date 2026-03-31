@@ -5,7 +5,7 @@ import type { Observable } from 'rxjs';
 
 import { combineLatest, distinctUntilChanged, map, scan, startWith } from 'rxjs';
 
-import { getDefaultValue, ObservableDisposable } from '../utils';
+import { createNewFindOptions, getDefaultValue, ObservableDisposable } from '../utils';
 
 type TIndex = [startIndex: number, endIndex: number, key: string];
 
@@ -117,8 +117,4 @@ export class ScrollableRangeManager extends ObservableDisposable implements IInf
     );
     this.disposeWithMe(this.value$.subscribe((value) => void (this.value = value)));
   }
-}
-
-function createNewFindOptions(exact = 0): IAccumulatedFindOptions {
-  return { cache: { index: -1, offset: -1 }, exact };
 }
