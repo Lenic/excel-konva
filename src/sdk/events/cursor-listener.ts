@@ -54,8 +54,21 @@ export class CursorListener extends BaseListener implements ICursorListener {
 
     this.rowFindOptions = createNewFindOptions();
     this.disposeWithMe(() => void (this.rowFindOptions = getDefaultValue<IAccumulatedFindOptions>()));
+    this.disposeWithMe(
+      row.change$.subscribe((patch) => {
+        if (patch.type === 'dimension' && patch.current > (this.rowFindOptions.cache?.index ?? 0)) return;
+        this.rowFindOptions = createNewFindOptions();
+      }),
+    );
+
     this.columnFindOptions = createNewFindOptions();
     this.disposeWithMe(() => void (this.columnFindOptions = getDefaultValue<IAccumulatedFindOptions>()));
+    this.disposeWithMe(
+      column.change$.subscribe((patch) => {
+        if (patch.type === 'dimension' && patch.current > (this.columnFindOptions.cache?.index ?? 0)) return;
+        this.columnFindOptions = createNewFindOptions();
+      }),
+    );
 
     this.row = row;
     this.column = column;
