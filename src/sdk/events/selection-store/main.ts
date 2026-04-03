@@ -1,19 +1,19 @@
 import type { ILocation } from '../../core';
-import type { ISelectionRegion, ISelectionRegionUpdater, ISelectionStore } from './types';
+import type { ISelectionRegion, ISelectionRegionUpdater, ISelectionStore, TSelectionRegionChangePatch } from './types';
 import type { TSelectionStoreAction } from './types.internal';
 import type { Observable } from 'rxjs';
 
-import { distinctUntilChanged, scan, startWith, Subject } from 'rxjs';
+import { filter, map, scan, Subject } from 'rxjs';
 
 import { getDefaultValue, isSameRange, ObservableDisposable } from '../../utils';
 
 import { SelectionRegionUpdater } from './updater';
 
 export class SelectionStore extends ObservableDisposable implements ISelectionStore {
-  private subject: Subject<TSelectionStoreAction>;
+  private readonly subject: Subject<TSelectionStoreAction>;
 
   value: ISelectionRegion[];
-  value$: Observable<ISelectionRegion[]>;
+  readonly change$: Observable<TSelectionRegionChangePatch>;
 
   constructor() {
     super();
@@ -26,8 +26,28 @@ export class SelectionStore extends ObservableDisposable implements ISelectionSt
     this.value = [];
     this.disposeWithMe(() => void (this.value = getDefaultValue<ISelectionRegion[]>()));
 
-    this.value$ = this.build();
-    this.disposeWithMe(this.value$.subscribe((list) => void (this.value = list)));
+    this.change$ = this.subject.pipe(
+      scan(
+        (acc, payload) => {
+          const previous = acc.current;
+          const [current, action] = this.reduce(previous, payload);
+          return !action ? acc : { previous, current, action };
+        },
+        {
+          previous: [] as ISelectionRegion[],
+          current: [] as ISelectionRegion[],
+          action: { type: 'reset', previous: [], current: [] } as TSelectionRegionChangePatch,
+        },
+      ),
+      filter(({ previous, current }) => previous !== current), // Only emit if the state actually changed
+      map(({ current, action }) => {
+        this.value = current;
+        return action;
+      }),
+      this.withPublish(),
+    );
+
+    this.disposeWithMe(this.change$.subscribe());
   }
 
   create(startLocation: ILocation, isMultiSelect: boolean): ISelectionRegionUpdater {
@@ -35,7 +55,7 @@ export class SelectionStore extends ObservableDisposable implements ISelectionSt
       if (!isMultiSelect && action.type === 'add') {
         this.subject.next({ type: 'reset', regions: [action.region] });
       } else if (!isMultiSelect && action.type === 'distinct') {
-        // do nothing
+        // No-op for non-multi-select on completion
       } else {
         this.subject.next(action);
       }
@@ -46,49 +66,50 @@ export class SelectionStore extends ObservableDisposable implements ISelectionSt
     this.subject.next({ type: 'reset', regions });
   }
 
-  private build() {
-    return this.subject.pipe(
-      startWith({ type: 'reset' } as TSelectionStoreAction),
-      scan((list, action) => {
-        switch (action.type) {
-          case 'add': {
-            return [...list, action.region];
-          }
+  private reduce(
+    list: ISelectionRegion[],
+    action: TSelectionStoreAction,
+  ): [ISelectionRegion[], TSelectionRegionChangePatch | null] {
+    switch (action.type) {
+      case 'add': {
+        return [[...list, action.region], { type: 'add', region: action.region }];
+      }
 
-          case 'update': {
-            const index = list.findIndex((v) => v.id === action.region.id);
-            if (index === -1) {
-              throw new Error('[SelectionStore] update action: region not found');
-            }
-            return [...list.slice(0, index), action.region, ...list.slice(index + 1)];
-          }
-
-          case 'delete':
-          case 'distinct': {
-            const index = list.findIndex((v) => v.id === action.id);
-            if (index === -1) return list;
-
-            if (action.type === 'delete') {
-              return [...list.slice(0, index), ...list.slice(index + 1)];
-            }
-
-            const target = list[index];
-            const filteredList = list.filter(
-              (item) => item === target || (item.id !== action.id && !isSameSelection(item, target)),
-            );
-            return filteredList.length !== list.length ? filteredList : list;
-          }
-
-          case 'reset':
-            return action.regions ?? [];
-
-          default:
-            return list;
+      case 'update': {
+        const index = list.findIndex((v) => v.id === action.region.id);
+        if (index === -1) {
+          throw new Error('[SelectionStore] update action: region not found');
         }
-      }, this.value),
-      distinctUntilChanged(),
-      this.withPublish(),
-    );
+        return [
+          [...list.slice(0, index), action.region, ...list.slice(index + 1)],
+          { type: 'update', previous: list[index], current: action.region },
+        ];
+      }
+
+      case 'delete':
+      case 'distinct': {
+        const index = list.findIndex((v) => v.id === action.id);
+        if (index === -1) return [list, null];
+
+        if (action.type === 'delete') {
+          return [[...list.slice(0, index), ...list.slice(index + 1)], { type: 'remove', region: list[index] }];
+        }
+
+        const target = list[index];
+        const filteredList = list.filter((item) => item !== target && !isSameSelection(item, target));
+        return filteredList.length !== list.length
+          ? [filteredList, { type: 'reset', previous: list, current: filteredList }]
+          : [list, null];
+      }
+
+      case 'reset': {
+        const regions = action.regions ?? [];
+        return [regions, { type: 'reset', previous: list, current: regions }];
+      }
+
+      default:
+        return [list, null];
+    }
   }
 }
 

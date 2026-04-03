@@ -67,7 +67,7 @@ async function bootstrap() {
   container.get(ICursorListener).startListening();
   container.get(IResizeItemListener).startListening();
 
-  container.get(ISelectionStore).value$.subscribe((v) => console.log(v));
+  container.get(ISelectionStore).change$.subscribe((v) => console.log(v));
 
   // Start renderers
   container.get(ICellRenderer).start();

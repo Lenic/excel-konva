@@ -133,6 +133,16 @@ export interface IChangePatch<T = number> {
 }
 
 /**
+ * Tracks value changes over time and emits change patches.
+ */
+export interface IChangeTracker<TPatch> extends IDisposable {
+  /**
+   * Stream of change patches (previous -> current).
+   */
+  readonly change$: Observable<TPatch>;
+}
+
+/**
  * Scroll offset
  */
 export interface IOffset {
