@@ -1,7 +1,8 @@
 import type { IShapePool } from './types';
 import type Konva from 'konva';
+import type { Observable } from 'rxjs';
 
-import { map, type Observable } from 'rxjs';
+import { map } from 'rxjs';
 
 import { ObservableDisposable, Queue } from '../utils';
 
