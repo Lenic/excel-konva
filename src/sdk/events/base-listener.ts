@@ -23,7 +23,7 @@ export abstract class BaseListener extends ObservableDisposable implements IEven
   constructor() {
     super();
 
-    this.activeSubject = new BehaviorSubject<boolean>(false);
+    this.activeSubject = new BehaviorSubject(false);
     this.disposeWithMe(() => {
       this.activeSubject.complete();
     });
