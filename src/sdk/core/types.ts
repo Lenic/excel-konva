@@ -179,6 +179,24 @@ export const EFreezeMode = {
 export type EFreezeMode = (typeof EFreezeMode)[keyof typeof EFreezeMode];
 
 /**
+ * A generic interface for handling and exposing observable value.
+ */
+export interface IObservableValue<TObservable, TValue = TObservable> extends IDisposable {
+  /**
+   * Current value
+   *
+   * - The current value is always the newest value.
+   */
+  value: TValue;
+  /**
+   * An observable stream that emits the current state or information.
+   *
+   * - The observable stream emits the newest value after the `value` property is set.
+   */
+  value$: Observable<TObservable>;
+}
+
+/**
  * Single offset change patch
  */
 export interface ISingleOffsetChangePatch extends IChangePatch {

@@ -1,6 +1,5 @@
 import type { IDisposable, TIdentifier } from '../../container';
-import type { ICellRange, IChangePatch, IDimension, IOffset, IPoint } from '../core';
-import type { EFreezeMode } from '../core';
+import type { EFreezeMode, ICellRange, IChangePatch, IDimension, IObservableValue, IOffset, IPoint } from '../core';
 import type { Observable } from 'rxjs';
 
 /**
@@ -194,20 +193,6 @@ export interface ICellBoxManager extends IDisposable {
 export const ICellBoxManager: TIdentifier<ICellBoxManager> = Symbol('ICellBoxManager');
 
 /**
- * A generic manager interface for handling and exposing observable state information.
- */
-export interface IInformationManager<T> extends IDisposable {
-  /**
-   * Current value
-   */
-  value: T;
-  /**
-   * An observable stream that emits the current state or information.
-   */
-  value$: Observable<T>;
-}
-
-/**
  * Defines a specific cell range with associated vertical and horizontal scroll keys,
  * used for managing scrollable viewports.
  */
@@ -225,7 +210,7 @@ export interface IScrollableRange extends ICellRange {
 /**
  * Dependency injection identifier for the IScrollableRangeManager service.
  */
-export const IScrollableRangeManager: TIdentifier<IInformationManager<IScrollableRange>> =
+export const IScrollableRangeManager: TIdentifier<IObservableValue<IScrollableRange>> =
   Symbol('IScrollableRangeManager');
 
 /**
@@ -245,5 +230,5 @@ export interface IFrozenInformation extends IDimension {
 /**
  * Dependency injection identifier for the IFrozenInformationManager service.
  */
-export const IFrozenInformationManager: TIdentifier<IInformationManager<IFrozenInformation>> =
+export const IFrozenInformationManager: TIdentifier<IObservableValue<IFrozenInformation>> =
   Symbol('IFrozenInformationManager');

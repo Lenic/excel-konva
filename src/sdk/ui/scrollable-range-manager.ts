@@ -1,6 +1,6 @@
-import type { IDimension, IScrollOffset } from '../core';
+import type { IDimension, IObservableValue, IScrollOffset } from '../core';
 import type { IAccumulatedDimensionManager, IAccumulatedFindOptions } from '../data';
-import type { IInformationManager, IScrollableRange, ISheetDimension } from './types';
+import type { IScrollableRange, ISheetDimension } from './types';
 import type { Observable } from 'rxjs';
 
 import { combineLatest, distinctUntilChanged, map, scan, startWith } from 'rxjs';
@@ -9,7 +9,7 @@ import { createNewFindOptions, getDefaultValue, ObservableDisposable } from '../
 
 type TIndex = [startIndex: number, endIndex: number, key: string];
 
-export class ScrollableRangeManager extends ObservableDisposable implements IInformationManager<IScrollableRange> {
+export class ScrollableRangeManager extends ObservableDisposable implements IObservableValue<IScrollableRange> {
   private rowFindEndOptions: IAccumulatedFindOptions;
   private rowFindBeginOptions: IAccumulatedFindOptions;
   private columnFindEndOptions: IAccumulatedFindOptions;
@@ -19,7 +19,7 @@ export class ScrollableRangeManager extends ObservableDisposable implements IInf
   value$: Observable<IScrollableRange>;
 
   constructor(
-    frozenDimension: IInformationManager<IDimension>,
+    frozenDimension: IObservableValue<IDimension>,
     offset: IScrollOffset,
     sheet: ISheetDimension,
     row: IAccumulatedDimensionManager,

@@ -1,6 +1,6 @@
-import type { IKonvaItems, ILocation, IPoint, IScrollOffset, ISheetConfig } from '../core';
+import type { IKonvaItems, ILocation, IObservableValue, IPoint, IScrollOffset, ISheetConfig } from '../core';
 import type { IAccumulatedDimensionManager, IDimensionManager } from '../data';
-import type { IFrozenInformation, IInformationManager, ISheetDimension } from '../ui';
+import type { IFrozenInformation, ISheetDimension } from '../ui';
 import type { ICursorListener, IStageMouseEvent } from './types';
 
 import { distinctUntilChanged, EMPTY, filter, finalize, map, merge, scan, startWith, switchMap, tap } from 'rxjs';
@@ -22,7 +22,7 @@ export class ResizeItemListener extends BaseListener {
   private cursorListener: ICursorListener;
   private rowA: IAccumulatedDimensionManager;
   private columnA: IAccumulatedDimensionManager;
-  private frozenInformation: IInformationManager<IFrozenInformation>;
+  private frozenInformation: IObservableValue<IFrozenInformation>;
 
   /**
    * Initializes a new instance of the ResizeItemListener.
@@ -50,7 +50,7 @@ export class ResizeItemListener extends BaseListener {
     cursorListener: ICursorListener,
     rowA: IAccumulatedDimensionManager,
     columnA: IAccumulatedDimensionManager,
-    frozenInformation: IInformationManager<IFrozenInformation>,
+    frozenInformation: IObservableValue<IFrozenInformation>,
   ) {
     super();
 

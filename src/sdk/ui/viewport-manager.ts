@@ -1,7 +1,6 @@
-import type { ICellRange, IDimension, IOffset, IScrollOffset } from '../core';
+import type { ICellRange, IDimension, IObservableValue, IOffset, IScrollOffset } from '../core';
 import type {
   IFrozenInformation,
-  IInformationManager,
   IRectBox,
   IScrollableRange,
   ISheetDimension,
@@ -37,8 +36,8 @@ export class ViewportManager extends ObservableDisposable implements IViewportMa
   constructor(
     offset: IScrollOffset,
     sheet: ISheetDimension,
-    scrollableRange: IInformationManager<IScrollableRange>,
-    frozenInformation: IInformationManager<IFrozenInformation>,
+    scrollableRange: IObservableValue<IScrollableRange>,
+    frozenInformation: IObservableValue<IFrozenInformation>,
   ) {
     super();
 

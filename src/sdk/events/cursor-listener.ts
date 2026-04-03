@@ -1,6 +1,6 @@
-import type { ILocation, IOffset, IPoint, IScrollOffset } from '../core';
+import type { ILocation, IObservableValue, IOffset, IPoint, IScrollOffset } from '../core';
 import type { IAccumulatedDimensionManager, IAccumulatedFindOptions } from '../data';
-import type { IFrozenInformation, IInformationManager } from '../ui';
+import type { IFrozenInformation } from '../ui';
 import type { ICursorListener, IStageMouseEvent, TMouseMoveChangePatch } from './types';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
@@ -31,7 +31,7 @@ export class CursorListener extends BaseListener implements ICursorListener {
   private column: IAccumulatedDimensionManager;
   private rowFindOptions: IAccumulatedFindOptions;
   private columnFindOptions: IAccumulatedFindOptions;
-  private frozenInformation: IInformationManager<IFrozenInformation>;
+  private frozenInformation: IObservableValue<IFrozenInformation>;
 
   position: IPoint | null;
   location: ILocation | null;
@@ -43,14 +43,12 @@ export class CursorListener extends BaseListener implements ICursorListener {
     column: IAccumulatedDimensionManager,
     events: IStageMouseEvent,
     scrollOffset: IScrollOffset,
-    frozenInformation: IInformationManager<IFrozenInformation>,
+    frozenInformation: IObservableValue<IFrozenInformation>,
   ) {
     super();
 
     this.frozenInformation = frozenInformation;
-    this.disposeWithMe(
-      () => void (this.frozenInformation = getDefaultValue<IInformationManager<IFrozenInformation>>()),
-    );
+    this.disposeWithMe(() => void (this.frozenInformation = getDefaultValue<IObservableValue<IFrozenInformation>>()));
 
     this.rowFindOptions = createNewFindOptions();
     this.disposeWithMe(() => void (this.rowFindOptions = getDefaultValue<IAccumulatedFindOptions>()));

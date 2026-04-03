@@ -1,12 +1,13 @@
+import type { IObservableValue } from '../core';
 import type { IAccumulatedDimensionManager } from '../data';
-import type { IFrozenInformation, IInformationManager } from './types';
+import type { IFrozenInformation } from './types';
 import type { Observable } from 'rxjs';
 
 import { combineLatest, distinctUntilChanged, map, startWith } from 'rxjs';
 
 import { getDefaultValue, ObservableDisposable } from '../utils';
 
-export class FrozenInformationManager extends ObservableDisposable implements IInformationManager<IFrozenInformation> {
+export class FrozenInformationManager extends ObservableDisposable implements IObservableValue<IFrozenInformation> {
   value: IFrozenInformation;
   value$: Observable<IFrozenInformation>;
 
