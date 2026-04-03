@@ -5,5 +5,6 @@ export * from './disposable';
 export * from './equal';
 export * from './find-options';
 export * from './queue';
+export * from './range';
 export * from './search';
 export * from './truncatable-list';

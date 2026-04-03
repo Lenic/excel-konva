@@ -57,18 +57,17 @@ export function diffRanges(previous: ICellRange, current: ICellRange): IRangeDif
 }
 
 /**
- * Check if a cell is within a specific range
+ * Check if two cell ranges are the same
  *
- * @param range - The cell range to check
- * @param rowIndex - The row index of the cell
- * @param columnIndex - The column index of the cell
- * @returns True if the cell is within the range, otherwise false
+ * @param a - The first cell range
+ * @param b - The second cell range
+ * @returns True if the two cell ranges are the same, otherwise false
  */
-export function isCellInRange(range: ICellRange, rowIndex: number, columnIndex: number): boolean {
+export function isSameRange(a: ICellRange, b: ICellRange): boolean {
   return (
-    rowIndex >= range.rowStartIndex &&
-    rowIndex <= range.rowEndIndex &&
-    columnIndex >= range.columnStartIndex &&
-    columnIndex <= range.columnEndIndex
+    a.rowStartIndex === b.rowStartIndex &&
+    a.rowEndIndex === b.rowEndIndex &&
+    a.columnStartIndex === b.columnStartIndex &&
+    a.columnEndIndex === b.columnEndIndex
   );
 }

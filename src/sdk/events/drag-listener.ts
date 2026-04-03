@@ -1,38 +1,43 @@
-import type { IEventListener, ISelectionStore, IStageMouseEvent } from './types';
+import type { ILocation } from '../core';
+import type { ISelectionStore } from './selection-store';
+import type { ICursorListener, IEventListener, IStageMouseEvent } from './types';
 
-import { ObservableDisposable } from '../utils';
+import { filter, finalize, map, switchMap, takeUntil, takeWhile } from 'rxjs';
 
-/**
- * Listener for stage drag events to handle rectangular selection
- */
-export class StageDragListener extends ObservableDisposable implements IEventListener {
-  private _selectionStore: ISelectionStore;
-  private stageMouseEvent: IStageMouseEvent;
+import { BaseListener } from './base-listener';
 
-  /**
-   * Initializes a new instance of the StageDragListener class.
-   *
-   * @param selectionStore - The store for managing selections
-   * @param stageMouseEvent - The service providing mouse event observables
-   */
-  constructor(selectionStore: ISelectionStore, stageMouseEvent: IStageMouseEvent) {
+export class StageDragListener extends BaseListener implements IEventListener {
+  private events: IStageMouseEvent;
+  private selectionStore: ISelectionStore;
+  private cursorListener: ICursorListener;
+
+  constructor(events: IStageMouseEvent, cursorListener: ICursorListener, selectionStore: ISelectionStore) {
     super();
-    this._selectionStore = selectionStore;
-    this.stageMouseEvent = stageMouseEvent;
+
+    this.events = events;
+    this.cursorListener = cursorListener;
+    this.selectionStore = selectionStore;
+
+    this.disposeWithMe(this.build().subscribe());
   }
 
-  /**
-   * Starts listening to drag-related events
-   */
-  startListening(): () => void {
-    // Simplified drag implementation for now
-    const sub = this.stageMouseEvent.mousedown$.subscribe(() => {
-      console.log('Drag started, selections:', this._selectionStore.list.length);
-    });
+  private build() {
+    return this.events.mousedown$.pipe(
+      filter((e) => e.evt.button === 0),
+      map((e) => [this.cursorListener.location, e.evt.ctrlKey || e.evt.metaKey] as const),
+      filter((v): v is [ILocation, boolean] => v[0] != null),
+      switchMap(([location, isMultipleSelect]) => {
+        const selectionUpdater = this.selectionStore.create(location, isMultipleSelect);
 
-    this.disposeWithMe(sub);
-    return () => {
-      sub.unsubscribe();
-    };
+        return this.cursorListener.change$.pipe(
+          filter((v) => v.type === 'location'),
+          map((v) => v.current),
+          takeUntil(this.events.mouseUp$),
+          takeWhile((v) => v != null),
+          map((nextLocation) => selectionUpdater.update(nextLocation)),
+          finalize(() => selectionUpdater.complete()),
+        );
+      }),
+    );
   }
 }

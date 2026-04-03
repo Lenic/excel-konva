@@ -1,5 +1,5 @@
 import type { IDisposable, TIdentifier } from '../../container';
-import type { ICellRange, IChangePatch, ILocation, IPoint } from '../core';
+import type { IChangePatch, ILocation, IPoint } from '../core';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
@@ -27,38 +27,6 @@ export const EBoundaryTypes = {
 export type EBoundaryTypes = (typeof EBoundaryTypes)[keyof typeof EBoundaryTypes];
 
 /**
- * Selection region information
- */
-export interface ISelectionRegion {
-  id: number;
-  range: ICellRange;
-  activeCell: ILocation;
-}
-
-/**
- * Data associated with selection events
- */
-export interface ISelectionRegionEventData extends ISelectionRegion {
-  isMultiSelect: boolean;
-}
-
-/**
- * Typed mouse down event union
- */
-export type TMousedownEvent =
-  | { mousedownType: typeof EMousedownTypes.Empty; event: Konva.KonvaEventObject<MouseEvent> }
-  | {
-      mousedownType: typeof EMousedownTypes.CellClick;
-      event: Konva.KonvaEventObject<MouseEvent>;
-      data: ISelectionRegionEventData;
-    }
-  | {
-      mousedownType: typeof EMousedownTypes.SelectRegion;
-      event: Konva.KonvaEventObject<MouseEvent>;
-      data: ISelectionRegionEventData;
-    };
-
-/**
  * Stage mouse events interface
  */
 export interface IStageMouseEvent extends IDisposable {
@@ -69,21 +37,6 @@ export interface IStageMouseEvent extends IDisposable {
 }
 
 export const IStageMouseEvent: TIdentifier<IStageMouseEvent> = Symbol('IStageMouseEvent');
-
-/**
- * Interface for storing and managing selection state
- */
-export interface ISelectionStore extends IDisposable {
-  readonly list: ISelectionRegion[];
-  readonly list$: Observable<ISelectionRegion[]>;
-  toggle(region: ISelectionRegion): void;
-  update(region: ISelectionRegion): void;
-  confirm(id: number): void;
-  clear(): void;
-  override(regions: ISelectionRegion[]): void;
-}
-
-export const ISelectionStore: TIdentifier<ISelectionStore> = Symbol('ISelectionStore');
 
 /**
  * Basic event listener interface
