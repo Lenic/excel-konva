@@ -268,6 +268,17 @@ export type TRectAttrs = Omit<Konva.RectConfig, 'x' | 'y' | 'width' | 'height'>;
 export type TTextAttrs = Omit<Konva.TextConfig, 'x' | 'y' | 'width' | 'height' | 'text'>;
 
 /**
+ * Common listener
+ */
+export interface IListener extends IDisposable {
+  /**
+   * Start listening
+   * @returns Teardown function
+   */
+  startListening(): () => void;
+}
+
+/**
  * Excel sheet options
  */
 export interface ISheetOptions {
