@@ -28,21 +28,16 @@ export class SelectionStore extends ObservableDisposable implements ISelectionSt
 
     this.change$ = this.subject.pipe(
       scan(
-        (acc, payload) => {
-          const previous = acc.current;
-          const [current, action] = this.reduce(previous, payload);
-          return !action ? acc : { previous, current, action };
+        (acc, action) => {
+          const [current, actionPatch] = this.performTransition(acc.current, action);
+          return { previous: acc.current, current, actionPatch };
         },
-        {
-          previous: [] as ISelectionRegion[],
-          current: [] as ISelectionRegion[],
-          action: { type: 'reset', previous: [], current: [] } as TSelectionRegionChangePatch,
-        },
+        { previous: this.value, current: this.value, actionPatch: null } as ISelectionStoreState,
       ),
-      filter(({ previous, current }) => previous !== current), // Only emit if the state actually changed
-      map(({ current, action }) => {
+      filter((v): v is ISelectionStoreState & { actionPatch: TSelectionRegionChangePatch } => !!v.actionPatch),
+      map(({ current, actionPatch }) => {
         this.value = current;
-        return action;
+        return actionPatch;
       }),
       this.withPublish(),
     );
@@ -66,40 +61,45 @@ export class SelectionStore extends ObservableDisposable implements ISelectionSt
     this.subject.next({ type: 'reset', regions });
   }
 
-  private reduce(
+  private performTransition(
     list: ISelectionRegion[],
     action: TSelectionStoreAction,
   ): [ISelectionRegion[], TSelectionRegionChangePatch | null] {
     switch (action.type) {
       case 'add': {
-        return [[...list, action.region], { type: 'add', region: action.region }];
+        const nextList = [...list, action.region];
+        return [nextList, { type: 'add', region: action.region }];
       }
 
       case 'update': {
         const index = list.findIndex((v) => v.id === action.region.id);
-        if (index === -1) {
-          throw new Error('[SelectionStore] update action: region not found');
-        }
-        return [
-          [...list.slice(0, index), action.region, ...list.slice(index + 1)],
-          { type: 'update', previous: list[index], current: action.region },
-        ];
+        if (index === -1) return [list, null];
+
+        const nextList = [...list.slice(0, index), action.region, ...list.slice(index + 1)];
+        return [nextList, { type: 'update', previous: list[index], current: action.region }];
       }
 
-      case 'delete':
+      case 'delete': {
+        const index = list.findIndex((v) => v.id === action.id);
+        if (index === -1) return [list, null];
+
+        const nextList = [...list.slice(0, index), ...list.slice(index + 1)];
+        return [nextList, { type: 'remove', region: list[index] }];
+      }
+
       case 'distinct': {
         const index = list.findIndex((v) => v.id === action.id);
         if (index === -1) return [list, null];
 
-        if (action.type === 'delete') {
-          return [[...list.slice(0, index), ...list.slice(index + 1)], { type: 'remove', region: list[index] }];
+        const target = list[index];
+        // Exclusive Distinct: If a duplicate selection exists, remove both.
+        const hasDuplicate = list.some((item) => item !== target && isSameSelection(item, target));
+        if (hasDuplicate) {
+          const nextList = list.filter((item) => !isSameSelection(item, target));
+          return [nextList, { type: 'reset', previous: list, current: nextList }];
         }
 
-        const target = list[index];
-        const filteredList = list.filter((item) => item !== target && !isSameSelection(item, target));
-        return filteredList.length !== list.length
-          ? [filteredList, { type: 'reset', previous: list, current: filteredList }]
-          : [list, null];
+        return [list, null];
       }
 
       case 'reset': {
@@ -122,4 +122,10 @@ function isSameSelection(a: ISelectionRegion, b: ISelectionRegion): boolean {
     a.activeCell.rowIndex === b.activeCell.rowIndex &&
     a.activeCell.columnIndex === b.activeCell.columnIndex
   );
+}
+
+interface ISelectionStoreState {
+  previous: ISelectionRegion[];
+  current: ISelectionRegion[];
+  actionPatch: TSelectionRegionChangePatch | null;
 }
