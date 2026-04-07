@@ -70,7 +70,7 @@ async function bootstrap() {
   container.get(ISelectionStore).change$.subscribe((v) => console.log(v));
 
   // Start renderers
-  container.get(ICellRenderer).start();
+  container.get(ICellRenderer).startListening();
   // container.get(ISelectionRenderer).start();
 
   // connection

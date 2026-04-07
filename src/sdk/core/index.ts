@@ -6,6 +6,7 @@ import { KonvaItems } from './konva-items';
 import { ScrollOffset } from './offset';
 import { IKonvaItems, IScrollOffset, ISheetConfig } from './types';
 
+export * from './base-listener';
 export * from './constants';
 export * from './types';
 export { defaultSheetConfig, SheetConfig };

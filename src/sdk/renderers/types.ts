@@ -1,5 +1,6 @@
 import type { IDisposable, TIdentifier } from '../../container';
 import type { EFreezeMode } from '../core';
+import type { IEventListener } from '../events';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
@@ -28,7 +29,7 @@ export interface IRenderListener<T> extends IDisposable {
 /**
  * Identifier for ICellRenderer in the DI container
  */
-export const ICellRenderer: TIdentifier<IRenderListener<void>> = Symbol('ICellRenderer');
+export const ICellRenderer: TIdentifier<IEventListener> = Symbol('ICellRenderer');
 
 /**
  * Identifier for ISelectionRenderer in the DI container

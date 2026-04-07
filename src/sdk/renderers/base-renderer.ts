@@ -2,10 +2,9 @@ import type { ICellRange, IKonvaItems } from '../core';
 import type { IViewportManager } from '../ui';
 import type { Observable } from 'rxjs';
 
-import { EMPTY, filter, map, startWith } from 'rxjs';
+import { filter, map, startWith } from 'rxjs';
 
-import { EFreezeMode } from '../core';
-import { BaseListener } from '../core/base-listener';
+import { BaseListener, EFreezeMode } from '../core';
 
 import { CollectionSubscription } from './subscription';
 
@@ -16,8 +15,8 @@ import { CollectionSubscription } from './subscription';
  * It optimizes rendering by only updating cells that enter or leave the viewport range.
  */
 export abstract class BaseRenderer extends BaseListener {
-  private viewportManager: IViewportManager;
-  private konvaItems: IKonvaItems;
+  protected viewportManager: IViewportManager;
+  protected konvaItems: IKonvaItems;
 
   private subscriptions: Record<EFreezeMode, CollectionSubscription>;
 
@@ -49,14 +48,11 @@ export abstract class BaseRenderer extends BaseListener {
 
   /**
    * Builds the main rendering observable by listening to viewport changes.
-   *
-   * @returns An observable that triggers rendering updates.
    */
-  protected build(): Observable<void> {
+  protected build() {
     viewportModes.forEach((freezeMode) => {
       this.buildSingleViewport(freezeMode);
     });
-    return EMPTY;
   }
 
   private buildSingleViewport(freezeMode: EFreezeMode) {
