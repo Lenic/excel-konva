@@ -80,10 +80,9 @@ export class CursorListener extends BaseListener<TMouseMoveChangePatch> implemen
     this.disposeWithMe(() => void (this.location = null));
 
     this.change$ = this.buildResult;
-    this.disposeWithMe(this.change$.subscribe());
   }
 
-  protected build() {
+  protected activate() {
     const isScrolling$ = merge(
       this.scrollOffset.change$.pipe(map(() => true)),
       this.scrollOffset.change$.pipe(
@@ -131,6 +130,25 @@ export class CursorListener extends BaseListener<TMouseMoveChangePatch> implemen
         return from(patches);
       }),
     );
+  }
+
+  protected deactivate(): Observable<TMouseMoveChangePatch> {
+    const patches: TMouseMoveChangePatch[] = [];
+    const previousPosition = this.position;
+    const previousLocation = this.location;
+
+    this.position = null;
+    this.location = null;
+
+    if (!isEqualPoint(previousPosition, this.position)) {
+      patches.push({ type: 'point', previous: previousPosition, current: this.position });
+    }
+
+    if (!isEqualLocation(previousLocation, this.location)) {
+      patches.push({ type: 'location', previous: previousLocation, current: this.location });
+    }
+
+    return from(patches);
   }
 
   private getLocation(point: IPoint | null, offset: IOffset, frozenInformation: IFrozenInformation): ILocation | null {

@@ -35,7 +35,7 @@ export abstract class BaseListener<T = any> extends ObservableDisposable impleme
     });
 
     this.buildResult = this.activeSubject.pipe(
-      switchMap((active) => (active ? this.build() : EMPTY)),
+      switchMap((active) => (active ? this.activate() : this.deactivate())),
       this.withShare(),
     );
     this.disposeWithMe(this.buildResult.subscribe());
@@ -54,5 +54,17 @@ export abstract class BaseListener<T = any> extends ObservableDisposable impleme
     };
   }
 
-  protected abstract build(): Observable<T>;
+  /**
+   * Provides the reactive flow for the listener.
+   */
+  protected abstract activate(): Observable<T>;
+
+  /**
+   * Provides a teardown reactive flow that runs when the listener is deactivated.
+   *
+   * @returns An observable that emits final values or performs cleanup tasks.
+   */
+  protected deactivate(): Observable<T> {
+    return EMPTY;
+  }
 }

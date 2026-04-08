@@ -67,7 +67,7 @@ export class ResizeItemListener extends BaseListener {
     this.frozenInformation = frozenInformation;
   }
 
-  protected build() {
+  protected activate() {
     const container = this.konvaItems.stage.container();
 
     const state$ = merge(

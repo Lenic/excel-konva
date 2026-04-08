@@ -44,8 +44,6 @@ export class CellRenderer extends BaseRenderer {
     this.cellBox = cellBox;
     this.renderers = renderers;
     this.dataManager = dataManager;
-
-    this.build();
   }
 
   protected renderRegion(range: ICellRange, freezeMode: EFreezeMode): Map<string, () => Observable<any>> {

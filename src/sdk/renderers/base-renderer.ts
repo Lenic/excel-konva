@@ -34,7 +34,7 @@ export abstract class BaseRenderer extends BaseListener {
   /**
    * Builds the main rendering observable by listening to viewport changes.
    */
-  protected build() {
+  protected activate() {
     return from(viewportModes).pipe(
       map((freezeMode) => this.buildSingleViewport(freezeMode)),
       combineLatestAll(),

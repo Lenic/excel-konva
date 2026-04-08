@@ -19,7 +19,7 @@ export class StageDragListener extends BaseListener {
     this.selectionStore = selectionStore;
   }
 
-  protected build() {
+  protected activate() {
     return this.events.mousedown$.pipe(
       filter((e) => e.evt.button === 0),
       map((e) => [this.cursorListener.location, e.evt.ctrlKey || e.evt.metaKey] as const),
