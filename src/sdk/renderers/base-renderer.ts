@@ -44,53 +44,7 @@ export abstract class BaseRenderer extends BaseListener {
     );
   }
 
-  private buildSingleViewport(freezeMode: EFreezeMode) {
-    const viewport = this.viewportManager[freezeMode];
-    const group = this.konvaItems.background.groups[freezeMode];
-
-    const group$ = viewport.change$.pipe(
-      filter((v) => v.type === 'box'),
-      map((v) => v.current),
-      startWith(viewport.box),
-      map(
-        (box) =>
-          void group.setAttrs({
-            ...box,
-            clipX: 0,
-            clipY: 0,
-            clipWidth: box.width,
-            clipHeight: box.height,
-          }),
-      ),
-      finalize(
-        () =>
-          void group.setAttrs({
-            x: 0,
-            y: 0,
-            width: 0,
-            height: 0,
-            clipX: undefined,
-            clipY: undefined,
-            clipWidth: undefined,
-            clipHeight: undefined,
-          }),
-      ),
-    );
-
-    const subscriptions = new CollectionSubscription();
-    const range$ = viewport.change$.pipe(
-      filter((v) => v.type === 'range'),
-      map((v) => v.current),
-      startWith(viewport.range),
-      map((range: ICellRange) => this.renderRegion(range, freezeMode)),
-      map((mapper) => void subscriptions.update(mapper)),
-      finalize(() => subscriptions.dispose()),
-    );
-
-    return combineLatest([group$, range$]);
-  }
-
-  protected abstract renderRegion(range: ICellRange, freezeMode: EFreezeMode): Record<string, Observable<any>>;
+  protected abstract buildSingleViewport(freezeMode: EFreezeMode): Observable<any>;
 }
 
 const viewportModes: EFreezeMode[] = [EFreezeMode.NONE, EFreezeMode.ROW, EFreezeMode.COLUMN, EFreezeMode.BOTH];
