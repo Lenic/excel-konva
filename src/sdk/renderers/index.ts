@@ -12,9 +12,9 @@ import { ICellRenderer, IShapeStyleConfig } from './types';
 export * from './types';
 
 /**
- * Add renderer registrations to the container
+ * Adds renderer registrations to the dependency injection container.
  *
- * @param container - the target IOC container
+ * @param container - The target IOC container to register renderers into.
  */
 export function registerRenderers(container: IContainer) {
   container.register(IShapeStyleConfig).set((c, ctx) => {

@@ -12,26 +12,11 @@ import { isCellInRange } from '../utils';
 
 import { BaseRenderer } from './base-renderer';
 
-/**
- * Cell renderer implementation
- *
- * This class is responsible for rendering visible cells in each viewport.
- * It optimizes rendering by only updating cells that enter or leave the viewport range.
- */
 export class CellRenderer extends BaseRenderer {
   private cellBox: ICellBoxManager;
   private dataManager: IDataManager;
   private renderers: Map<string | symbol, IContentRenderer>;
 
-  /**
-   * Initializes a new instance of the CellRenderer class.
-   *
-   * @param cellBox - The manager providing cell box information.
-   * @param viewportManager - The manager providing viewport state and change events.
-   * @param konvaItems - The Konva items including stage, layers, and groups.
-   * @param dataManager - The data manager for cell data.
-   * @param renderers - The renderers for cell contents.
-   */
   constructor(
     cellBox: ICellBoxManager,
     viewportManager: IViewportManager,

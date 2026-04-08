@@ -20,9 +20,9 @@ import { ViewportManager } from './viewport-manager';
 export * from './types';
 
 /**
- * Add UI class registrations to the container
+ * Standardizes UI registrations within the application's dependency injection container.
  *
- * @param container - the target IOC container
+ * @param container - The target dependency injection container.
  */
 export function registerUI(container: IContainer) {
   container.register(ISheetDimension).set((c, ctx) => new SheetDimension(c.get(UIElement, KONVA_CONTAINER, ctx)));

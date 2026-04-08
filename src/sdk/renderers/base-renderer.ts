@@ -9,20 +9,24 @@ import { BaseListener, EFreezeMode } from '../core';
 import { CollectionSubscription } from './subscription';
 
 /**
- * Base renderer implementation
- *
- * This class is responsible for rendering visible cells in each viewport.
- * It optimizes rendering by only updating cells that enter or leave the viewport range.
+ * Abstract base class for implementing rendering logic across different viewports.
+ * Manages the lifecycle and core rendering pipeline for viewport-specific content.
  */
 export abstract class BaseRenderer extends BaseListener {
+  /**
+   * Manager providing access to different viewport instances.
+   */
   protected viewportManager: IViewportManager;
+  /**
+   * Access to the Konva stage, layers, and groups.
+   */
   protected konvaItems: IKonvaItems;
 
   /**
-   * Initializes a new instance of the CellRenderer class.
+   * Initializes the base renderer with required managers.
    *
-   * @param viewportManager - The manager providing viewport state and change events.
-   * @param konvaItems - The Konva items including stage, layers, and groups.
+   * @param viewportManager - The manager for sheet viewports.
+   * @param konvaItems - The items for Konva stage and groups.
    */
   constructor(viewportManager: IViewportManager, konvaItems: IKonvaItems) {
     super();
@@ -31,9 +35,6 @@ export abstract class BaseRenderer extends BaseListener {
     this.konvaItems = konvaItems;
   }
 
-  /**
-   * Builds the main rendering observable by listening to viewport changes.
-   */
   protected activate() {
     return from(viewportModes).pipe(
       map((freezeMode) => this.buildSingleViewport(freezeMode)),
@@ -89,15 +90,7 @@ export abstract class BaseRenderer extends BaseListener {
     return combineLatest([group$, range$]);
   }
 
-  /**
-   * Renders a specific region of cells in the spreadsheet.
-   *
-   * @param range - The range of cells to render.
-   * @param freezeMode - The freeze mode affecting the rendering.
-   * @returns A map of cell IDs to observables that trigger the rendering of each cell.
-   */
   protected abstract renderRegion(range: ICellRange, freezeMode: EFreezeMode): Map<string, () => Observable<any>>;
 }
 
-// Collect all viewport change observables (one for each freeze mode)
 const viewportModes: EFreezeMode[] = [EFreezeMode.NONE, EFreezeMode.ROW, EFreezeMode.COLUMN, EFreezeMode.BOTH];

@@ -25,7 +25,6 @@ export function diffRanges(previous: ICellRange, current: ICellRange): IRangeDif
   const added: ILocation[] = [];
   const removed: ILocation[] = [];
 
-  // Find added cells: in 'current' but not in 'previous'
   for (let r = current.rowStartIndex; r <= current.rowEndIndex; r++) {
     for (let c = current.columnStartIndex; c <= current.columnEndIndex; c++) {
       if (
@@ -39,7 +38,6 @@ export function diffRanges(previous: ICellRange, current: ICellRange): IRangeDif
     }
   }
 
-  // Find removed cells: in 'previous' but not in 'current'
   for (let r = previous.rowStartIndex; r <= previous.rowEndIndex; r++) {
     for (let c = previous.columnStartIndex; c <= previous.columnEndIndex; c++) {
       if (

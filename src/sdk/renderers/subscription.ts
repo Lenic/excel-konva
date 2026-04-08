@@ -23,17 +23,14 @@ export class CollectionSubscription extends ObservableDisposable {
 
     const currentKeys = new Set<string>();
 
-    // 1. Add new subscriptions
     for (const [key, getter] of items) {
       currentKeys.add(key);
 
-      // New → create subscription
       if (!this.subscriptions.has(key)) {
         this.subscriptions.set(key, getter().subscribe());
       }
     }
 
-    // 2. Remove old subscriptions
     Array.from(this.subscriptions.entries()).forEach(([key, item]) => {
       if (!currentKeys.has(key)) {
         item.unsubscribe();

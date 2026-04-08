@@ -1,14 +1,5 @@
-/**
- * Queue node interface
- */
 interface IQueueNode<T> {
-  /**
-   * Node value
-   */
   value: T;
-  /**
-   * Next node reference, undefined if it is the last node
-   */
   next: IQueueNode<T> | null;
 }
 
@@ -16,19 +7,8 @@ interface IQueueNode<T> {
  * Queue class
  */
 export class Queue<T> {
-  /**
-   * Head node
-   */
   private head: IQueueNode<T> | null;
-
-  /**
-   * Tail node
-   */
   private tail: IQueueNode<T> | null;
-
-  /**
-   * Queue size
-   */
   private size: number;
 
   /**
@@ -77,7 +57,6 @@ export class Queue<T> {
     this.head = this.head.next;
     this.size--;
 
-    // Queue becomes empty
     if (!this.head) {
       this.tail = null;
     }

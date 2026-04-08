@@ -5,9 +5,6 @@ import { animationFrameScheduler, auditTime, distinctUntilChanged, filter, map, 
 
 import { ObservableDisposable } from '../utils';
 
-/**
- * Sheet dimension
- */
 export class SheetDimension extends ObservableDisposable implements ISheetDimension {
   width: number;
   height: number;
@@ -15,11 +12,6 @@ export class SheetDimension extends ObservableDisposable implements ISheetDimens
 
   change$: Observable<TSheetDimensionChangePatch>;
 
-  /**
-   * SheetDimension constructor
-   *
-   * @param el - The element to observe for dimension changes
-   */
   constructor(el: HTMLElement) {
     super();
 

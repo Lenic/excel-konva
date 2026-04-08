@@ -6,9 +6,6 @@ import { Subject } from 'rxjs';
 
 import { getDefaultValue, ObservableDisposable } from '../utils';
 
-/**
- * Viewport
- */
 export class Viewport extends ObservableDisposable implements IViewport {
   box: IRectBox;
   offset: IOffset;
@@ -16,13 +13,6 @@ export class Viewport extends ObservableDisposable implements IViewport {
 
   change$: Observable<TViewportChangePatch>;
 
-  /**
-   * Create a new viewport
-   *
-   * @param box$ - Viewport box observable
-   * @param offset$ - Viewport offset observable
-   * @param range$ - Viewport range observable
-   */
   constructor(box$: Observable<IRectBox>, offset$: Observable<IOffset>, range$: Observable<ICellRange>) {
     super();
 

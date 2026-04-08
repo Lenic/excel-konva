@@ -6,6 +6,9 @@ import { distinctUntilChanged, finalize, map } from 'rxjs';
 
 import { ObservableDisposable } from '../utils';
 
+/**
+ * Default configuration options for the spreadsheet.
+ */
 export const defaultSheetConfig: Required<ISheetOptions> = {
   headerHeight: 30,
   headerWidth: 40,
@@ -82,7 +85,7 @@ export const defaultSheetConfig: Required<ISheetOptions> = {
 type TChange = [key: string, patch: IChangePatch<any>];
 
 /**
- * Sheet Config
+ * Manages the configuration state of a spreadsheet, allowing for reactive updates and retrievals.
  */
 export class SheetConfig extends ObservableDisposable implements ISheetConfig {
   private changeListSubject: Subject<TChange[]>;
@@ -91,11 +94,6 @@ export class SheetConfig extends ObservableDisposable implements ISheetConfig {
 
   options: Required<ISheetOptions>;
 
-  /**
-   * Constructor
-   *
-   * @param options - Sheet options
-   */
   constructor(options: ISheetOptions = {}) {
     super();
 

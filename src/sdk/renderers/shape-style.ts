@@ -8,9 +8,6 @@ import { combineLatest, map, of } from 'rxjs';
 import { EFreezeMode } from '../core';
 import { ObservableDisposable } from '../utils';
 
-/**
- * Shape style configuration implementation
- */
 export class ShapeStyleConfig extends ObservableDisposable implements IShapeStyleConfig {
   private config: ISheetConfig;
 
@@ -34,17 +31,10 @@ export class ShapeStyleConfig extends ObservableDisposable implements IShapeStyl
   private columnHeaderTextAttrs$: Observable<Partial<Konva.TextConfig>>;
   private rowHeaderTextAttrs$: Observable<Partial<Konva.TextConfig>>;
 
-  /**
-   * Constructor
-   *
-   * @param config - Sheet configuration
-   */
   constructor(config: ISheetConfig) {
     super();
 
     this.config = config;
-
-    // ---- Rect Attributes ----
 
     this.defaultRectAttrs$ = this.config.get$('defaultCellRectAttrs');
 
@@ -145,8 +135,6 @@ export class ShapeStyleConfig extends ObservableDisposable implements IShapeStyl
       this.withPublish(),
     );
     this.disposeWithMe(this.cornerCellRectAttrs$.subscribe());
-
-    // ---- Text Attributes ----
 
     this.defaultTextAttrs$ = this.config.get$('defaultCellTextAttrs');
 

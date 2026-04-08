@@ -11,19 +11,19 @@ import { ICellTextPool, IRectPool } from './types';
 export * from './types';
 
 /**
- * Symbol for selection rectangle pool
+ * Dependency injection identifier for the selection rectangle pool.
  */
 export const SELECTION_RECT_POOL = Symbol('SELECTION_RECT_POOL');
 
 /**
- * Symbol for active cell rectangle pool
+ * Dependency injection identifier for the active cell rectangle pool.
  */
 export const ACTIVE_CELL_POOL = Symbol('ACTIVE_CELL_POOL');
 
 /**
- * Registers pool-related services in the DI container
+ * Registers pool-related services into the dependency injection container.
  *
- * @param container - The target IOC container
+ * @param container - The target IOC container for pool registrations.
  */
 export function registerPools(container: IContainer) {
   container

@@ -24,7 +24,7 @@ export const DEFAULT_TEXT = Symbol('DEFAULT_TEXT');
 export const HEADER_TEXT = Symbol('HEADER_TEXT');
 
 /**
- * Registers content renderers into the dependency injection container.
+ * Registers various content renderers into the dependency injection container.
  *
  * @param container - The application's dependency injection container.
  */

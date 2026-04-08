@@ -5,18 +5,13 @@ import type { TSelectionStoreAction } from './types.internal';
 import { getDefaultValue, ObservableDisposable } from '../../utils';
 
 /**
- * Handles live updates to a selection region during mouse interaction.
+ * Coordinates live updates to a selection region, typically during mouse or pointer drag interactions.
  */
 export class SelectionRegionUpdater extends ObservableDisposable implements ISelectionRegionUpdater {
   private readonly startLocation: ILocation;
   private region: ISelectionRegion;
   private callback: (action: TSelectionStoreAction) => void;
 
-  /**
-   * Initializes a new selection updater.
-   * @param startLocation - The initial point where the selection started.
-   * @param callback - Function to notify the store of region changes.
-   */
   constructor(startLocation: ILocation, callback: (action: TSelectionStoreAction) => void) {
     super();
 
@@ -40,10 +35,6 @@ export class SelectionRegionUpdater extends ObservableDisposable implements ISel
     callback({ type: 'add', region: this.region });
   }
 
-  /**
-   * Updates the selection range based on the new end coordinates.
-   * @param endLocation - The current mouse/pointer location during dragging.
-   */
   update(endLocation: ILocation): void {
     this.region = {
       ...this.region,
@@ -57,9 +48,6 @@ export class SelectionRegionUpdater extends ObservableDisposable implements ISel
     this.callback({ type: 'update', region: this.region });
   }
 
-  /**
-   * Finalizes the selection and triggers redundancy checks.
-   */
   complete(): void {
     this.callback({ type: 'distinct', id: this.region.id });
   }

@@ -16,23 +16,12 @@ import { getDefaultValue, ObservableDisposable } from '../utils';
 
 import { Viewport } from './viewport';
 
-/**
- * ViewportManager
- */
 export class ViewportManager extends ObservableDisposable implements IViewportManager {
   [EFreezeMode.NONE]!: IViewport;
   [EFreezeMode.ROW]!: IViewport;
   [EFreezeMode.COLUMN]!: IViewport;
   [EFreezeMode.BOTH]!: IViewport;
 
-  /**
-   * ViewportManager constructor
-   *
-   * @param offset - The offset to observe for dimension changes
-   * @param sheet - The sheet to observe for dimension changes
-   * @param scrollableRange - The scrollable range to observe for dimension changes
-   * @param frozenInformation - The frozen information to observe for dimension changes
-   */
   constructor(
     offset: IScrollOffset,
     sheet: ISheetDimension,

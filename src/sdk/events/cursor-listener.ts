@@ -108,15 +108,12 @@ export class CursorListener extends BaseListener<TMouseMoveChangePatch> implemen
       concatMap(([position, scrolling, offset, frozenInformation]) => {
         const patches: TMouseMoveChangePatch[] = [];
 
-        // Update the current cursor position if a change is detected
         if (!isEqualPoint(this.position, position)) {
           const previousPosition = this.position;
           this.position = position;
           patches.push({ type: 'point', previous: previousPosition, current: this.position });
         }
 
-        // Calculate the logical grid location based on the current position and scrolling state.
-        // Note: During active scrolling, the location is forced to null for consistency.
         const effectivePosition = scrolling ? null : this.position;
         const nextLocation = this.getLocation(effectivePosition, offset, frozenInformation);
 
@@ -126,7 +123,6 @@ export class CursorListener extends BaseListener<TMouseMoveChangePatch> implemen
           patches.push({ type: 'location', previous: previousLocation, current: this.location });
         }
 
-        // Sequence the patches as discrete notifications to the external listeners
         return from(patches);
       }),
     );

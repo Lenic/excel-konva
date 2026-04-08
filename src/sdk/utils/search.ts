@@ -14,36 +14,23 @@
  * @returns The found index, or -1 if no matching index is found.
  */
 export function binarySearch(begin: number, end: number, comparer: (mid: number) => number, exact = 0): number {
-  // Basic validity check
   if (begin > end) return -1;
 
-  // 1. Boundary test: Start point
   const resBegin = comparer(begin);
-  if (resBegin === 0) return begin; // Exactly the start point
+  if (resBegin === 0) return begin;
   if (resBegin > 0) {
-    // Target value < list minimum (list[begin])
-    // exact > 0 (find >=): The first item in the list
-    // exact <= 0 (find == or <=): Not found or nothing on the left
     return exact > 0 ? begin : -1;
   }
 
-  // 2. Boundary test: End point
   const resEnd = comparer(end);
-  if (resEnd === 0) return end; // Exactly the end point
+  if (resEnd === 0) return end;
   if (resEnd < 0) {
-    // Target value > list maximum (list[end])
-    // exact < 0 (find <=): The last item in the list
-    // exact >= 0 (find == or >=): Not found or nothing on the right
     return exact < 0 ? end : -1;
   }
 
-  // 3. Core loop: The target value must be within the range (begin, end)
   let left = begin + 1;
   let right = end - 1;
 
-  // Preset candidate value
-  // If exact > 0, no equal value found, the closest "greater" value is at least end
-  // If exact < 0, no equal value found, the closest "smaller" value is at least begin
   let candidate = exact > 0 ? end : exact < 0 ? begin : -1;
 
   while (left <= right) {
@@ -53,11 +40,9 @@ export function binarySearch(begin: number, end: number, comparer: (mid: number)
     if (result === 0) {
       return mid;
     } else if (result < 0) {
-      // mid value is too small, look to the right
       if (exact < 0) candidate = mid;
       left = mid + 1;
     } else {
-      // mid value is too large, look to the left
       if (exact > 0) candidate = mid;
       right = mid - 1;
     }

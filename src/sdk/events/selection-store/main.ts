@@ -9,6 +9,10 @@ import { getDefaultValue, isSameRange, ObservableDisposable } from '../../utils'
 
 import { SelectionRegionUpdater } from './updater';
 
+/**
+ * A central store managing multiple selection regions within a spreadsheet.
+ * Facilitates adding, updating, and removing selections with integrated change notifications.
+ */
 export class SelectionStore extends ObservableDisposable implements ISelectionStore {
   private readonly subject: Subject<TSelectionStoreAction>;
 
@@ -50,7 +54,6 @@ export class SelectionStore extends ObservableDisposable implements ISelectionSt
       if (!isMultiSelect && action.type === 'add') {
         this.subject.next({ type: 'reset', regions: [action.region] });
       } else if (!isMultiSelect && action.type === 'distinct') {
-        // No-op for non-multi-select on completion
       } else {
         this.subject.next(action);
       }
@@ -92,7 +95,6 @@ export class SelectionStore extends ObservableDisposable implements ISelectionSt
         if (index === -1) return [list, null];
 
         const target = list[index];
-        // Exclusive Distinct: If a duplicate selection exists, remove both.
         const hasDuplicate = list.some((item) => item !== target && isSameSelection(item, target));
         if (hasDuplicate) {
           const nextList = list.filter((item) => !isSameSelection(item, target));
@@ -113,9 +115,6 @@ export class SelectionStore extends ObservableDisposable implements ISelectionSt
   }
 }
 
-/**
- * Utility to check if two selection regions represent the same range and active cell.
- */
 function isSameSelection(a: ISelectionRegion, b: ISelectionRegion): boolean {
   return (
     isSameRange(a.range, b.range) &&

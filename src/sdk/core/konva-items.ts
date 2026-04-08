@@ -8,21 +8,12 @@ import { getDefaultValue, ObservableDisposable } from '../utils';
 
 import { EFreezeMode } from './types';
 
-/**
- * Konva items
- */
 export class KonvaItems extends ObservableDisposable implements IKonvaItems {
   stage: Konva.Stage;
   background: IRenderGroup;
   selection: IRenderGroup;
   resizeLine: Konva.Line;
 
-  /**
-   * Create a new instance of KonvaItems
-   * @param konvaContainer - Konva container
-   * @param scrollContainer - Scroll container
-   * @param config - Sheet config
-   */
   constructor(konvaContainer: HTMLDivElement, scrollContainer: HTMLDivElement, config: ISheetConfig) {
     super();
 
@@ -54,7 +45,6 @@ export class KonvaItems extends ObservableDisposable implements IKonvaItems {
       }),
     );
 
-    // Connect Canvas wheel events to scroll container scroll events
     this.disposeWithMe(
       fromEventPattern<Konva.KonvaEventObject<WheelEvent>>(
         (fn) => this.stage.on('wheel', fn),
@@ -123,9 +113,6 @@ export class KonvaItems extends ObservableDisposable implements IKonvaItems {
       this.selection.groups[EFreezeMode.BOTH],
     );
 
-    /**
-     * Helper line for resizing by dragging
-     */
     this.resizeLine = new Konva.Line({
       points: [0, 0, 0, 0],
       stroke: config.options.resizeLineColor,

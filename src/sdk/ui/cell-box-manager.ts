@@ -6,14 +6,6 @@ import { type Observable, Subject } from 'rxjs';
 
 import { ObservableDisposable } from '../utils';
 
-/**
- * Implementation of the `ICellBoxManager` that calculates and caches cell
- * geometry information.
- *
- * It coordinates with dimension managers to determine exact coordinates (x, y)
- * and sizes (width, height) for cells, using an internal cache to avoid
- * redundant calculations during spreadsheet rendering.
- */
 export class CellBoxManager extends ObservableDisposable implements ICellBoxManager {
   private row: IDimensionManager;
   private column: IDimensionManager;
@@ -23,14 +15,6 @@ export class CellBoxManager extends ObservableDisposable implements ICellBoxMana
 
   change$: Observable<TCellBoxChangePatch>;
 
-  /**
-   * Initializes a new instance of the CellBoxManager class.
-   *
-   * @param row - The manager for individual row dimensions.
-   * @param column - The manager for individual column dimensions.
-   * @param rowA - The manager for accumulated row dimensions.
-   * @param columnA - The manager for accumulated column dimensions.
-   */
   constructor(
     row: IDimensionManager,
     column: IDimensionManager,
