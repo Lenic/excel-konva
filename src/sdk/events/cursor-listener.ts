@@ -12,21 +12,21 @@ import {
   concatMap,
   debounceTime,
   distinctUntilChanged,
-  EMPTY,
   from,
   fromEvent,
   map,
   merge,
   mergeWith,
   startWith,
-  switchMap,
 } from 'rxjs';
 
+import { BaseListener } from '../core';
 import { createNewFindOptions, getDefaultValue, isEqualLocation, isEqualPoint } from '../utils';
 
-import { BaseListener } from './base-listener';
-
-export class CursorListener extends BaseListener implements ICursorListener {
+export class CursorListener extends BaseListener<TMouseMoveChangePatch> implements ICursorListener {
+  private stage: Konva.Stage;
+  private events: IStageMouseEvent;
+  private scrollOffset: IScrollOffset;
   private row: IAccumulatedDimensionManager;
   private column: IAccumulatedDimensionManager;
   private rowFindOptions: IAccumulatedFindOptions;
@@ -69,71 +69,67 @@ export class CursorListener extends BaseListener implements ICursorListener {
     );
 
     this.row = row;
+    this.stage = stage;
     this.column = column;
+    this.events = events;
+    this.scrollOffset = scrollOffset;
 
     this.position = null;
     this.disposeWithMe(() => void (this.position = null));
     this.location = null;
     this.disposeWithMe(() => void (this.location = null));
 
-    this.change$ = this.buildChangePatch(events, scrollOffset, stage);
+    this.change$ = this.buildResult;
     this.disposeWithMe(this.change$.subscribe());
   }
 
-  private buildChangePatch(events: IStageMouseEvent, scrollOffset: IScrollOffset, stage: Konva.Stage) {
+  protected build() {
     const isScrolling$ = merge(
-      scrollOffset.change$.pipe(map(() => true)),
-      scrollOffset.change$.pipe(
+      this.scrollOffset.change$.pipe(map(() => true)),
+      this.scrollOffset.change$.pipe(
         debounceTime(100),
         map(() => false),
       ),
     ).pipe(startWith(false), distinctUntilChanged());
 
-    const mousePosition$ = events.mouseMove$.pipe(
+    const mousePosition$ = this.events.mouseMove$.pipe(
       auditTime(16, animationFrameScheduler),
-      map(() => stage.getPointerPosition()),
-      mergeWith(fromEvent(stage.container(), 'mouseleave').pipe(map(() => null))),
+      map(() => this.stage.getPointerPosition()),
+      mergeWith(fromEvent(this.stage.container(), 'mouseleave').pipe(map(() => null))),
       map((v): IPoint | null => (!v ? null : { x: Math.floor(v.x), y: Math.floor(v.y) })),
       distinctUntilChanged(isEqualPoint),
     );
 
-    const scrollOffset$ = scrollOffset.change$.pipe(
-      map(() => scrollOffset.offset),
-      startWith(scrollOffset.offset),
+    const scrollOffset$ = this.scrollOffset.change$.pipe(
+      map(() => this.scrollOffset.offset),
+      startWith(this.scrollOffset.offset),
     );
 
-    return this.activeSubject.pipe(
-      switchMap((active) => {
-        if (!active) return EMPTY;
+    return combineLatest([mousePosition$, isScrolling$, scrollOffset$, this.frozenInformation.value$]).pipe(
+      concatMap(([position, scrolling, offset, frozenInformation]) => {
+        const patches: TMouseMoveChangePatch[] = [];
 
-        return combineLatest([mousePosition$, isScrolling$, scrollOffset$, this.frozenInformation.value$]).pipe(
-          concatMap(([position, scrolling, offset, frozenInformation]) => {
-            const patches: TMouseMoveChangePatch[] = [];
+        // Update the current cursor position if a change is detected
+        if (!isEqualPoint(this.position, position)) {
+          const previousPosition = this.position;
+          this.position = position;
+          patches.push({ type: 'point', previous: previousPosition, current: this.position });
+        }
 
-            // Update the current cursor position if a change is detected
-            if (!isEqualPoint(this.position, position)) {
-              const previousPosition = this.position;
-              this.position = position;
-              patches.push({ type: 'point', previous: previousPosition, current: this.position });
-            }
+        // Calculate the logical grid location based on the current position and scrolling state.
+        // Note: During active scrolling, the location is forced to null for consistency.
+        const effectivePosition = scrolling ? null : this.position;
+        const nextLocation = this.getLocation(effectivePosition, offset, frozenInformation);
 
-            // Calculate the logical grid location based on the current position and scrolling state.
-            // Note: During active scrolling, the location is forced to null for consistency.
-            const effectivePosition = scrolling ? null : this.position;
-            const nextLocation = this.getLocation(effectivePosition, offset, frozenInformation);
+        if (!isEqualLocation(this.location, nextLocation)) {
+          const previousLocation = this.location;
+          this.location = nextLocation;
+          patches.push({ type: 'location', previous: previousLocation, current: this.location });
+        }
 
-            if (!isEqualLocation(this.location, nextLocation)) {
-              const previousLocation = this.location;
-              this.location = nextLocation;
-              patches.push({ type: 'location', previous: previousLocation, current: this.location });
-            }
-
-            // Sequence the patches as discrete notifications to the external listeners
-            return from(patches);
-          }),
-        );
+        // Sequence the patches as discrete notifications to the external listeners
+        return from(patches);
       }),
-      this.withShare(),
     );
   }
 

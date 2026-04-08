@@ -1,12 +1,12 @@
 import type { ILocation } from '../core';
 import type { ISelectionStore } from './selection-store';
-import type { ICursorListener, IEventListener, IStageMouseEvent } from './types';
+import type { ICursorListener, IStageMouseEvent } from './types';
 
 import { filter, finalize, map, switchMap, takeUntil, takeWhile } from 'rxjs';
 
-import { BaseListener } from './base-listener';
+import { BaseListener } from '../core';
 
-export class StageDragListener extends BaseListener implements IEventListener {
+export class StageDragListener extends BaseListener {
   private events: IStageMouseEvent;
   private selectionStore: ISelectionStore;
   private cursorListener: ICursorListener;
@@ -17,11 +17,9 @@ export class StageDragListener extends BaseListener implements IEventListener {
     this.events = events;
     this.cursorListener = cursorListener;
     this.selectionStore = selectionStore;
-
-    this.disposeWithMe(this.build().subscribe());
   }
 
-  private build() {
+  protected build() {
     return this.events.mousedown$.pipe(
       filter((e) => e.evt.button === 0),
       map((e) => [this.cursorListener.location, e.evt.ctrlKey || e.evt.metaKey] as const),

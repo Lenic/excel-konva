@@ -5,7 +5,7 @@ import type { ICursorListener, IStageMouseEvent } from './types';
 
 import { distinctUntilChanged, EMPTY, filter, finalize, map, merge, scan, startWith, switchMap, tap } from 'rxjs';
 
-import { BaseListener } from './base-listener';
+import { BaseListener } from '../core';
 
 /**
  * Listener responsible for handling item (row/column) resizing interactions.
@@ -65,113 +65,104 @@ export class ResizeItemListener extends BaseListener {
     this.cursorListener = cursorListener;
     this.sheetDimension = sheetDimension;
     this.frozenInformation = frozenInformation;
+  }
 
+  protected build() {
     const container = this.konvaItems.stage.container();
-    this.disposeWithMe(
-      this.activeSubject
-        .pipe(
-          switchMap((active) => {
-            if (!active) return EMPTY;
 
-            const state$ = merge(
-              this.cursorListener.change$.pipe(
-                filter((v) => v.type === 'point'),
-                map((v) => ({ type: 'move', pos: v.current }) as const),
-              ),
-              this.mouseEvents.mousedown$.pipe(
-                tap(() => {
-                  this.konvaItems.resizeLine.visible(true);
-                  this.konvaItems.selection.layer.batchDraw();
-                }),
-                map(() => ({ type: 'down' }) as const),
-              ),
-              this.mouseEvents.mouseUp$.pipe(
-                tap(() => {
-                  this.konvaItems.resizeLine.visible(false);
-                  this.konvaItems.selection.layer.batchDraw();
-                }),
-                map(() => {
-                  const { position } = this.cursorListener;
-                  if (!position) {
-                    throw new Error('[ResizeItemListener]: position is not found.');
-                  }
-                  return { type: 'up', pos: position } as const;
-                }),
-              ),
-            ).pipe(
-              scan(
-                (state: IResizeState, event) => {
-                  if (event.type === 'up') {
-                    let nextTarget = state.target;
-                    if (nextTarget) {
-                      const { location } = this.cursorListener;
-                      if (nextTarget.key === 'x' && location?.rowIndex === 0) {
-                        nextTarget = { ...nextTarget, beginValue: event.pos.x };
-                      } else if (nextTarget.key === 'y' && location?.columnIndex === 0) {
-                        nextTarget = { ...nextTarget, beginValue: event.pos.y };
-                      } else {
-                        nextTarget = null;
-                      }
-                    }
+    const state$ = merge(
+      this.cursorListener.change$.pipe(
+        filter((v) => v.type === 'point'),
+        map((v) => ({ type: 'move', pos: v.current }) as const),
+      ),
+      this.mouseEvents.mousedown$.pipe(
+        tap(() => {
+          this.konvaItems.resizeLine.visible(true);
+          this.konvaItems.selection.layer.batchDraw();
+        }),
+        map(() => ({ type: 'down' }) as const),
+      ),
+      this.mouseEvents.mouseUp$.pipe(
+        tap(() => {
+          this.konvaItems.resizeLine.visible(false);
+          this.konvaItems.selection.layer.batchDraw();
+        }),
+        map(() => {
+          const { position } = this.cursorListener;
+          if (!position) {
+            throw new Error('[ResizeItemListener]: position is not found.');
+          }
+          return { type: 'up', pos: position } as const;
+        }),
+      ),
+    ).pipe(
+      scan(
+        (state: IResizeState, event) => {
+          if (event.type === 'up') {
+            let nextTarget = state.target;
+            if (nextTarget) {
+              const { location } = this.cursorListener;
+              if (nextTarget.key === 'x' && location?.rowIndex === 0) {
+                nextTarget = { ...nextTarget, beginValue: event.pos.x };
+              } else if (nextTarget.key === 'y' && location?.columnIndex === 0) {
+                nextTarget = { ...nextTarget, beginValue: event.pos.y };
+              } else {
+                nextTarget = null;
+              }
+            }
 
-                    return {
-                      ...state,
-                      isDragging: false,
-                      target: nextTarget,
-                    };
-                  }
+            return {
+              ...state,
+              isDragging: false,
+              target: nextTarget,
+            };
+          }
 
-                  if (event.type === 'down' && state.target) {
-                    return {
-                      ...state,
-                      isDragging: true,
-                    };
-                  }
+          if (event.type === 'down' && state.target) {
+            return {
+              ...state,
+              isDragging: true,
+            };
+          }
 
-                  if (!state.isDragging && event.type === 'move') {
-                    return {
-                      ...state,
-                      target: this.getTargetInformation(event.pos, this.cursorListener.location),
-                    };
-                  }
+          if (!state.isDragging && event.type === 'move') {
+            return {
+              ...state,
+              target: this.getTargetInformation(event.pos, this.cursorListener.location),
+            };
+          }
 
-                  return state;
-                },
-                { isDragging: false, target: null } as IResizeState,
-              ),
-              distinctUntilChanged((x, y) => {
-                if (x === y) return true;
-                if (x.isDragging !== y.isDragging) return false;
-                if (x.target === y.target) return true;
-                if (!x.target || !y.target) return false;
+          return state;
+        },
+        { isDragging: false, target: null } as IResizeState,
+      ),
+      distinctUntilChanged((x, y) => {
+        if (x === y) return true;
+        if (x.isDragging !== y.isDragging) return false;
+        if (x.target === y.target) return true;
+        if (!x.target || !y.target) return false;
 
-                const prev = x.target;
-                const curr = y.target;
-                return prev.cursor === curr.cursor && prev.index === curr.index && prev.key === curr.key;
-              }),
-              this.withPublish(),
-            );
-
-            const cursor$ = state$.pipe(
-              map((state) => state.target?.cursor ?? DEFAULT_CURSOR),
-              distinctUntilChanged(),
-              tap((cursor) => {
-                container.style.cursor = cursor;
-              }),
-              finalize(() => {
-                container.style.cursor = DEFAULT_CURSOR;
-              }),
-            );
-
-            const resize$ = state$.pipe(
-              switchMap((v) => (v.isDragging && v.target ? this.onResizeItem(v.target) : EMPTY)),
-            );
-
-            return merge(cursor$, resize$);
-          }),
-        )
-        .subscribe(),
+        const prev = x.target;
+        const curr = y.target;
+        return prev.cursor === curr.cursor && prev.index === curr.index && prev.key === curr.key;
+      }),
+      this.withPublish(),
     );
+
+    const cursor$ = state$.pipe(
+      map((state) => state.target?.cursor ?? DEFAULT_CURSOR),
+      distinctUntilChanged(),
+      tap((cursor) => {
+        container.style.cursor = cursor;
+      }),
+      finalize(() => {
+        container.style.cursor = DEFAULT_CURSOR;
+      }),
+    );
+
+    const resize$ = state$.pipe(switchMap((v) => (v.isDragging && v.target ? this.onResizeItem(v.target) : EMPTY)));
+
+    return merge(cursor$, resize$);
   }
 
   private getTargetInformation(point: IPoint | null, location: ILocation | null): ITargetInformation | null {

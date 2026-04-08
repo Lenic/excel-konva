@@ -1,5 +1,5 @@
 import type { IDisposable, TIdentifier } from '../../container';
-import type { IChangePatch, ILocation, IPoint } from '../core';
+import type { IChangePatch, IListener, ILocation, IPoint } from '../core';
 import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
@@ -35,17 +35,9 @@ export interface IStageMouseEvent extends IDisposable {
   mouseUp$: Observable<Konva.KonvaEventObject<MouseEvent>>;
   dblclick$: Observable<Konva.KonvaEventObject<MouseEvent>>;
 }
-
 export const IStageMouseEvent: TIdentifier<IStageMouseEvent> = Symbol('IStageMouseEvent');
 
-/**
- * Basic event listener interface
- */
-export interface IEventListener extends IDisposable {
-  startListening(): () => void;
-}
-
-export const IStageDragListener: TIdentifier<IEventListener> = Symbol('IStageDragListener');
+export const IStageDragListener: TIdentifier<IListener> = Symbol('IStageDragListener');
 
 /**
  * Represents a change patch specifically for the mouse cursor's coordinate point.
@@ -75,7 +67,7 @@ export type TMouseMoveChangePatch = IMousePointChangePatch | IMouseLocationChang
 /**
  * Interface defining a listener that tracks mouse movement across the workspace.
  */
-export interface ICursorListener extends IEventListener {
+export interface ICursorListener extends IListener {
   /**
    * The current absolute coordinate position of the mouse.
    */
@@ -99,4 +91,4 @@ export const ICursorListener: TIdentifier<ICursorListener> = Symbol('ICursorList
 /**
  * The dependency injection identifier for the resize item listener.
  */
-export const IResizeItemListener: TIdentifier<IEventListener> = Symbol('IResizeItemListener');
+export const IResizeItemListener: TIdentifier<IListener> = Symbol('IResizeItemListener');

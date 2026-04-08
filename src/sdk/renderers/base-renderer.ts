@@ -2,7 +2,7 @@ import type { ICellRange, IKonvaItems } from '../core';
 import type { IViewportManager } from '../ui';
 import type { Observable } from 'rxjs';
 
-import { filter, map, startWith } from 'rxjs';
+import { combineLatest, combineLatestAll, filter, finalize, from, map, startWith } from 'rxjs';
 
 import { BaseListener, EFreezeMode } from '../core';
 
@@ -18,8 +18,6 @@ export abstract class BaseRenderer extends BaseListener {
   protected viewportManager: IViewportManager;
   protected konvaItems: IKonvaItems;
 
-  private subscriptions: Record<EFreezeMode, CollectionSubscription>;
-
   /**
    * Initializes a new instance of the CellRenderer class.
    *
@@ -31,63 +29,64 @@ export abstract class BaseRenderer extends BaseListener {
 
     this.viewportManager = viewportManager;
     this.konvaItems = konvaItems;
-
-    this.subscriptions = {
-      [EFreezeMode.NONE]: new CollectionSubscription(),
-      [EFreezeMode.ROW]: new CollectionSubscription(),
-      [EFreezeMode.COLUMN]: new CollectionSubscription(),
-      [EFreezeMode.BOTH]: new CollectionSubscription(),
-    };
-    this.disposeWithMe(() => {
-      this.subscriptions[EFreezeMode.NONE].dispose();
-      this.subscriptions[EFreezeMode.ROW].dispose();
-      this.subscriptions[EFreezeMode.COLUMN].dispose();
-      this.subscriptions[EFreezeMode.BOTH].dispose();
-    });
   }
 
   /**
    * Builds the main rendering observable by listening to viewport changes.
    */
   protected build() {
-    viewportModes.forEach((freezeMode) => {
-      this.buildSingleViewport(freezeMode);
-    });
+    return from(viewportModes).pipe(
+      map((freezeMode) => this.buildSingleViewport(freezeMode)),
+      combineLatestAll(),
+      map(() => void this.konvaItems.background.layer.batchDraw()),
+      this.withDestroy(),
+    );
   }
 
   private buildSingleViewport(freezeMode: EFreezeMode) {
     const viewport = this.viewportManager[freezeMode];
-
     const group = this.konvaItems.background.groups[freezeMode];
-    this.disposeWithMe(
-      viewport.change$
-        .pipe(
-          filter((v) => v.type === 'box'),
-          map((v) => v.current),
-          startWith(viewport.box),
-        )
-        .subscribe((box) => {
-          group.setAttrs({
+
+    const group$ = viewport.change$.pipe(
+      filter((v) => v.type === 'box'),
+      map((v) => v.current),
+      startWith(viewport.box),
+      map(
+        (box) =>
+          void group.setAttrs({
             ...box,
             clipX: 0,
             clipY: 0,
             clipWidth: box.width,
             clipHeight: box.height,
-          });
-        }),
+          }),
+      ),
+      finalize(
+        () =>
+          void group.setAttrs({
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+            clipX: undefined,
+            clipY: undefined,
+            clipWidth: undefined,
+            clipHeight: undefined,
+          }),
+      ),
     );
 
-    viewport.change$
-      .pipe(
-        filter((v) => v.type === 'range'),
-        map((v) => v.current),
-        startWith(viewport.range),
-        map((range: ICellRange) => this.renderRegion(range, freezeMode)),
-        this.withDestroy(),
-      )
-      .subscribe((mapper) => {
-        this.subscriptions[freezeMode].update(mapper);
-      });
+    const subscriptions = new CollectionSubscription();
+    const range$ = viewport.change$.pipe(
+      filter((v) => v.type === 'range'),
+      map((v) => v.current),
+      startWith(viewport.range),
+      map((range: ICellRange) => this.renderRegion(range, freezeMode)),
+      map((mapper) => void subscriptions.update(mapper)),
+      finalize(() => subscriptions.dispose()),
+    );
+
+    return combineLatest([group$, range$]);
   }
 
   /**

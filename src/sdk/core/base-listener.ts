@@ -1,6 +1,7 @@
 import type { IListener } from './types';
+import type { Observable } from 'rxjs';
 
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, EMPTY, switchMap } from 'rxjs';
 
 import { ObservableDisposable } from '../utils';
 
@@ -10,12 +11,17 @@ import { ObservableDisposable } from '../utils';
  *
  * It extends ObservableDisposable to handle subscription cleanups automatically.
  */
-export abstract class BaseListener extends ObservableDisposable implements IListener {
+export abstract class BaseListener<T = any> extends ObservableDisposable implements IListener {
   /**
    * Internal subject tracking whether the listener is active and processing events.
    * Emits true when listening starts and false when it stops.
    */
   protected activeSubject: BehaviorSubject<boolean>;
+
+  /**
+   * The result of the build method, which is an observable that emits values when the listener is active.
+   */
+  protected buildResult: Observable<T>;
 
   /**
    * Initializes a new instance of the BaseListener and sets up the active subject.
@@ -27,6 +33,12 @@ export abstract class BaseListener extends ObservableDisposable implements IList
     this.disposeWithMe(() => {
       this.activeSubject.complete();
     });
+
+    this.buildResult = this.activeSubject.pipe(
+      switchMap((active) => (active ? this.build() : EMPTY)),
+      this.withShare(),
+    );
+    this.disposeWithMe(this.buildResult.subscribe());
   }
 
   /**
@@ -41,4 +53,6 @@ export abstract class BaseListener extends ObservableDisposable implements IList
       this.activeSubject.next(false);
     };
   }
+
+  protected abstract build(): Observable<T>;
 }
