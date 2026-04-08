@@ -90,7 +90,7 @@ export abstract class BaseRenderer extends BaseListener {
     return combineLatest([group$, range$]);
   }
 
-  protected abstract renderRegion(range: ICellRange, freezeMode: EFreezeMode): Map<string, () => Observable<any>>;
+  protected abstract renderRegion(range: ICellRange, freezeMode: EFreezeMode): Record<string, Observable<any>>;
 }
 
 const viewportModes: EFreezeMode[] = [EFreezeMode.NONE, EFreezeMode.ROW, EFreezeMode.COLUMN, EFreezeMode.BOTH];
