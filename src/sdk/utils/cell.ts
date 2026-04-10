@@ -49,3 +49,28 @@ export function isCellInRange(...args: any[]): boolean {
     columnIndex <= range.columnEndIndex
   );
 }
+
+/**
+ * Get the intersection of two ranges
+ *
+ * @param range1 - The first range
+ * @param range2 - The second range
+ * @returns The intersection of the two ranges, or null if they don't intersect
+ */
+export function intersectRanges(range1: ICellRange, range2: ICellRange): ICellRange | null {
+  const rowStartIndex = Math.max(range1.rowStartIndex, range2.rowStartIndex);
+  const rowEndIndex = Math.min(range1.rowEndIndex, range2.rowEndIndex);
+  const columnStartIndex = Math.max(range1.columnStartIndex, range2.columnStartIndex);
+  const columnEndIndex = Math.min(range1.columnEndIndex, range2.columnEndIndex);
+
+  if (rowStartIndex > rowEndIndex || columnStartIndex > columnEndIndex) {
+    return null;
+  }
+
+  return {
+    rowStartIndex,
+    rowEndIndex,
+    columnStartIndex,
+    columnEndIndex,
+  };
+}

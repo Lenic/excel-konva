@@ -1,17 +1,15 @@
 import type { IContentRenderer } from '../contents';
-import type { ICellRange, IKonvaItems } from '../core';
+import type { ICellRange, IKonvaItems, ILocation } from '../core';
 import type { EFreezeMode } from '../core';
 import type { IDataManager } from '../data';
 import type { ICellBoxManager, IViewportManager } from '../ui';
-import type { Observable } from 'rxjs';
 
-import { combineLatest, filter, finalize, map, of, startWith, switchMap, tap } from 'rxjs';
+import { combineLatest, combineLatestAll, filter, finalize, from, map, of, startWith, switchMap, tap } from 'rxjs';
 
 import { DEFAULT_TEXT, HEADER_TEXT } from '../contents';
 import { isCellInRange } from '../utils';
 
 import { BaseRenderer } from './base-renderer';
-import { CollectionSubscription } from './subscription';
 
 export class CellRenderer extends BaseRenderer {
   private cellBox: ICellBoxManager;
@@ -65,58 +63,60 @@ export class CellRenderer extends BaseRenderer {
       ),
     );
 
-    const subscriptions = new CollectionSubscription();
     const range$ = viewport.change$.pipe(
       filter((v) => v.type === 'range'),
       map((v) => v.current),
       startWith(viewport.range),
       map((range: ICellRange) => {
-        const render$Map: Record<string, Observable<any>> = {};
+        const list: ILocation[] = [];
         for (let rowIndex = range.rowStartIndex; rowIndex <= range.rowEndIndex; rowIndex++) {
           for (let columnIndex = range.columnStartIndex; columnIndex <= range.columnEndIndex; columnIndex++) {
-            render$Map[`render:${freezeMode}:${rowIndex}:${columnIndex}`] = this.dataManager.change$.pipe(
-              filter((patch) => isCellInRange(rowIndex, columnIndex, patch.range)),
-              map(() => this.dataManager.get(rowIndex, columnIndex)),
-              startWith(this.dataManager.get(rowIndex, columnIndex)),
-              switchMap((content) => {
-                const contentTypes = ['', rowIndex === 0 || columnIndex === 0 ? HEADER_TEXT : DEFAULT_TEXT];
-                if (!(content === null || typeof content === 'string')) {
-                  contentTypes.push(...content.type);
-                }
-
-                const partialContext = { rowIndex, columnIndex, content, freezeMode, viewport, group };
-                return this.cellBox.change$.pipe(
-                  filter((patch) => {
-                    if (patch.type === 'reset') return true;
-                    if (patch.type === 'row' && patch.index <= rowIndex) return true;
-                    if (patch.type === 'column' && patch.index <= columnIndex) return true;
-
-                    return false;
-                  }),
-                  map(() => this.cellBox.getCellBox(rowIndex, columnIndex)),
-                  startWith(this.cellBox.getCellBox(rowIndex, columnIndex)),
-                  switchMap((cellBox) => {
-                    const renderObservables = contentTypes.map(
-                      (contentType) =>
-                        this.renderers.get(contentType)?.render({ ...partialContext, cellBox }) ?? of(null),
-                    );
-
-                    return combineLatest(renderObservables).pipe(
-                      tap(() => {
-                        this.konvaItems.background.layer.batchDraw();
-                      }),
-                    );
-                  }),
-                  this.withDestroy(),
-                );
-              }),
-            );
+            list.push({ rowIndex, columnIndex });
           }
         }
-        return render$Map;
+        return list;
       }),
-      map((mapper) => void subscriptions.update(mapper)),
-      finalize(() => subscriptions.dispose()),
+      this.transferSourceItems(
+        (item) => `cell:${freezeMode}:${item.rowIndex}:${item.columnIndex}`,
+        ({ rowIndex, columnIndex }) =>
+          this.dataManager.change$.pipe(
+            filter((patch) => isCellInRange(rowIndex, columnIndex, patch.range)),
+            map(() => this.dataManager.get(rowIndex, columnIndex)),
+            startWith(this.dataManager.get(rowIndex, columnIndex)),
+            switchMap((content) => {
+              const contentTypes = ['', rowIndex === 0 || columnIndex === 0 ? HEADER_TEXT : DEFAULT_TEXT];
+              if (!(content === null || typeof content === 'string')) {
+                contentTypes.push(...content.type);
+              }
+
+              const partialContext = { rowIndex, columnIndex, content, freezeMode, viewport, group };
+              return this.cellBox.change$.pipe(
+                filter((patch) => {
+                  if (patch.type === 'reset') return true;
+                  if (patch.type === 'row' && patch.index <= rowIndex) return true;
+                  if (patch.type === 'column' && patch.index <= columnIndex) return true;
+
+                  return false;
+                }),
+                map(() => this.cellBox.getCellBox(rowIndex, columnIndex)),
+                startWith(this.cellBox.getCellBox(rowIndex, columnIndex)),
+                switchMap((cellBox) =>
+                  from(contentTypes).pipe(
+                    map(
+                      (contentType) =>
+                        this.renderers.get(contentType)?.render({ ...partialContext, cellBox }) ?? of(null),
+                    ),
+                    combineLatestAll(),
+                    tap(() => {
+                      this.konvaItems.background.layer.batchDraw();
+                    }),
+                  ),
+                ),
+                this.withDestroy(),
+              );
+            }),
+          ),
+      ),
     );
 
     return combineLatest([group$, range$]);

@@ -1,12 +1,11 @@
-import type { ICellRange, IKonvaItems } from '../core';
+import type { IKonvaItems } from '../core';
 import type { IViewportManager } from '../ui';
 import type { Observable } from 'rxjs';
 
-import { combineLatest, combineLatestAll, filter, finalize, from, map, startWith } from 'rxjs';
+import { endWith, exhaustMap, groupBy, ignoreElements, mergeMap, share, take, takeUntil } from 'rxjs';
+import { combineLatestAll, filter, from, map } from 'rxjs';
 
 import { BaseListener, EFreezeMode } from '../core';
-
-import { CollectionSubscription } from './subscription';
 
 /**
  * Abstract base class for implementing rendering logic across different viewports.
@@ -35,6 +34,11 @@ export abstract class BaseRenderer extends BaseListener {
     this.konvaItems = konvaItems;
   }
 
+  /**
+   * Activates the renderer by building all viewports and subscribing to their changes.
+   *
+   * @returns An observable that emits when all viewports have been built and subscribed to.
+   */
   protected activate() {
     return from(viewportModes).pipe(
       map((freezeMode) => this.buildSingleViewport(freezeMode)),
@@ -44,7 +48,41 @@ export abstract class BaseRenderer extends BaseListener {
     );
   }
 
+  /**
+   * Builds a single viewport for a specific freeze mode.
+   *
+   * @param freezeMode - The freeze mode for which to build the viewport.
+   * @returns An observable that emits the viewport.
+   */
   protected abstract buildSingleViewport(freezeMode: EFreezeMode): Observable<any>;
+
+  /**
+   * Transfers items from a source observable to a converter observable based on a key selector.
+   *
+   * @param keySelector - A function that returns a unique key for each item.
+   * @param converter - A function that converts an item to an observable.
+   * @returns An observable that emits the converted items.
+   */
+  protected transferSourceItems<TSource, TResult>(
+    keySelector: (item: TSource) => unknown,
+    converter: (item: TSource) => Observable<TResult>,
+  ) {
+    return function transferItems(observable$: Observable<TSource[]>): Observable<TResult> {
+      const source$ = observable$.pipe(share());
+
+      return source$.pipe(
+        mergeMap((range) => from(range)),
+        groupBy(keySelector, {
+          duration: (group$) =>
+            source$.pipe(
+              filter((latestArray) => !latestArray.some((x) => keySelector(x) === group$.key)),
+              take(1),
+            ),
+        }),
+        mergeMap((group$) => group$.pipe(exhaustMap(converter), takeUntil(group$.pipe(ignoreElements(), endWith(1))))),
+      );
+    };
+  }
 }
 
 const viewportModes: EFreezeMode[] = [EFreezeMode.NONE, EFreezeMode.ROW, EFreezeMode.COLUMN, EFreezeMode.BOTH];
