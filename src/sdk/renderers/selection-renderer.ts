@@ -1,11 +1,13 @@
 import type { ICellRange, IKonvaItems } from '../core';
 import type { EFreezeMode } from '../core';
 import type { IDataManager } from '../data';
-import type { ISelectionStore } from '../events';
+import type { ISelectionRegion, ISelectionStore } from '../events';
+import type { IShapePool } from '../pools';
 import type { IViewportManager } from '../ui';
+import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
-import { combineLatest, EMPTY, filter, map, of, scan, startWith, switchMap, tap } from 'rxjs';
+import { combineLatest, EMPTY, filter, finalize, from, map, of, scan, startWith, switchMap, tap } from 'rxjs';
 
 import { DEFAULT_TEXT, HEADER_TEXT } from '../contents';
 import { intersectRanges, isCellInRange } from '../utils';
@@ -15,17 +17,85 @@ import { BaseRenderer } from './base-renderer';
 export class SelectionRenderer extends BaseRenderer {
   private store: ISelectionStore;
   private dataManager: IDataManager;
+  private regionList$: Observable<ISelectionRegion[]>;
+  private activeCellPool: IShapePool<Konva.RectConfig, Konva.Rect>;
+  private selectionRectPool: IShapePool<Konva.RectConfig, Konva.Rect>;
 
   constructor(
     store: ISelectionStore,
     viewportManager: IViewportManager,
     konvaItems: IKonvaItems,
     dataManager: IDataManager,
+    activeCellPool: IShapePool<Konva.RectConfig, Konva.Rect>,
+    selectionRectPool: IShapePool<Konva.RectConfig, Konva.Rect>,
   ) {
     super(viewportManager, konvaItems);
 
     this.store = store;
     this.dataManager = dataManager;
+    this.activeCellPool = activeCellPool;
+    this.selectionRectPool = selectionRectPool;
+
+    this.regionList$ = this.store.change$.pipe(
+      map(() => this.store.value),
+      startWith(this.store.value),
+      this.withPublish(),
+    );
+  }
+
+  protected buildSingleViewport(freezeMode: EFreezeMode): Observable<any> {
+    const viewport = this.viewportManager[freezeMode];
+    const group = this.konvaItems.selection.groups[freezeMode];
+
+    const group$ = viewport.change$.pipe(
+      filter((v) => v.type === 'box'),
+      map((v) => v.current),
+      startWith(viewport.box),
+      map(
+        (box) =>
+          void group.setAttrs({
+            ...box,
+            clipX: 0,
+            clipY: 0,
+            clipWidth: box.width,
+            clipHeight: box.height,
+          }),
+      ),
+      finalize(
+        () =>
+          void group.setAttrs({
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+            clipX: undefined,
+            clipY: undefined,
+            clipWidth: undefined,
+            clipHeight: undefined,
+          }),
+      ),
+    );
+
+    const range$ = viewport.change$.pipe(
+      filter((v) => v.type === 'range'),
+      map((v) => v.current),
+      startWith(viewport.range),
+      switchMap((range) => {
+        from(this.regionList$).pipe(
+          this.transferSourceItems(
+            (v) => v.id,
+            (region) => {
+              const intersectRange = intersectRanges(region.range, range);
+              if (intersectRange === null) return EMPTY;
+
+              this.sele;
+            },
+          ),
+        );
+      }),
+    );
+
+    return combineLatest([group$, range$]);
   }
 
   protected renderRegion(range: ICellRange, freezeMode: EFreezeMode): Map<string, () => Observable<any>> {
