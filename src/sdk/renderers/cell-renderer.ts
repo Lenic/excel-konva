@@ -1,10 +1,22 @@
-import type { IContentRenderer } from '../contents';
+import type { IContentContext, IContentRenderer } from '../contents';
 import type { ICellRange, IKonvaItems, ILocation } from '../core';
 import type { EFreezeMode } from '../core';
 import type { IDataManager } from '../data';
 import type { ICellBoxManager, IViewportManager } from '../ui';
 
-import { combineLatest, combineLatestAll, filter, finalize, from, map, of, startWith, switchMap, tap } from 'rxjs';
+import {
+  combineLatest,
+  combineLatestAll,
+  combineLatestWith,
+  filter,
+  finalize,
+  from,
+  map,
+  of,
+  startWith,
+  switchMap,
+  tap,
+} from 'rxjs';
 
 import { DEFAULT_TEXT, HEADER_TEXT } from '../contents';
 import { isCellInRange } from '../utils';
@@ -83,35 +95,27 @@ export class CellRenderer extends BaseRenderer {
             filter((patch) => isCellInRange(rowIndex, columnIndex, patch.range)),
             map(() => this.dataManager.get(rowIndex, columnIndex)),
             startWith(this.dataManager.get(rowIndex, columnIndex)),
-            switchMap((content) => {
+            combineLatestWith(this.cellBox.getAbsoluteBox$(rowIndex, columnIndex)),
+            switchMap(([content, cellBox]) => {
               const contentTypes = ['', rowIndex === 0 || columnIndex === 0 ? HEADER_TEXT : DEFAULT_TEXT];
               if (!(content === null || typeof content === 'string')) {
                 contentTypes.push(...content.type);
               }
 
-              const partialContext = { rowIndex, columnIndex, content, freezeMode, viewport, group };
-              return this.cellBox.change$.pipe(
-                filter((patch) => {
-                  if (patch.type === 'reset') return true;
-                  if (patch.type === 'row' && patch.index <= rowIndex) return true;
-                  if (patch.type === 'column' && patch.index <= columnIndex) return true;
+              const context: IContentContext = {
+                rowIndex,
+                columnIndex,
+                content,
+                freezeMode,
+                viewport,
+                group,
+                cellBox,
+              };
 
-                  return false;
-                }),
-                map(() => this.cellBox.getCellBox(rowIndex, columnIndex)),
-                startWith(this.cellBox.getCellBox(rowIndex, columnIndex)),
-                switchMap((cellBox) =>
-                  from(contentTypes).pipe(
-                    map(
-                      (contentType) =>
-                        this.renderers.get(contentType)?.render({ ...partialContext, cellBox }) ?? of(null),
-                    ),
-                    combineLatestAll(),
-                    tap(() => {
-                      this.konvaItems.background.layer.batchDraw();
-                    }),
-                  ),
-                ),
+              return from(contentTypes).pipe(
+                map((contentType) => this.renderers.get(contentType)?.render(context) ?? of(null)),
+                combineLatestAll(),
+                tap(() => this.konvaItems.background.layer.batchDraw()),
                 this.withDestroy(),
               );
             }),

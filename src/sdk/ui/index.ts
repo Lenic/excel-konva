@@ -68,6 +68,8 @@ export function registerUI(container: IContainer) {
       c.get(IDimensionManager, COLUMN_TAG, ctx),
       c.get(IAccumulatedDimensionManager, ROW_TAG, ctx),
       c.get(IAccumulatedDimensionManager, COLUMN_TAG, ctx),
+      c.get(IScrollOffset, ctx),
+      c.get(IFrozenInformationManager, ctx),
     );
   });
 }
