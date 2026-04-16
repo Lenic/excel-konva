@@ -4,6 +4,7 @@ import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
 import {
+  combineLatestWith,
   distinctUntilChanged,
   endWith,
   exhaustMap,
@@ -14,6 +15,7 @@ import {
   ignoreElements,
   map,
   mergeMap,
+  of,
   shareReplay,
   startWith,
   switchMap,
@@ -114,13 +116,16 @@ export abstract class BaseRenderer extends BaseListener {
    * Transfers items from a source observable to a converter observable based on a key selector.
    *
    * @param keySelector - A function that returns a unique key for each item.
+   * @param elementComparer - A function that compares two items.
    * @param converter - A function that converts an item to an observable.
+   * @param initializer - A function that initializes an item.
    * @returns An observable that emits the converted items.
    */
-  protected transferSourceItems<TSource, TResult>(
-    keySelector: (item: TSource) => unknown,
+  protected transferSourceItems<TSource, TKey, TResult, TInitializer = null>(
+    keySelector: (item: TSource) => TKey,
     elementComparer: (a: TSource, b: TSource) => boolean,
-    converter: (item: TSource) => Observable<TResult>,
+    converter: (item: TSource, initializer: TInitializer) => Observable<TResult>,
+    initializer?: (key: TKey) => Observable<TInitializer>,
   ) {
     return function transferItems(observable$: Observable<TSource[]>): Observable<TResult> {
       const source$ = observable$.pipe(shareReplay({ bufferSize: 1, refCount: true }));
@@ -134,13 +139,14 @@ export abstract class BaseRenderer extends BaseListener {
               take(1),
             ),
         }),
-        mergeMap((group$) =>
-          group$.pipe(
+        mergeMap((group$) => {
+          return group$.pipe(
             distinctUntilChanged(elementComparer),
-            switchMap(converter),
+            combineLatestWith(initializer ? initializer(group$.key) : of(null as TInitializer)),
+            switchMap(([item, init]) => converter(item, init)),
             takeUntil(group$.pipe(ignoreElements(), endWith(1))),
-          ),
-        ),
+          );
+        }),
       );
     };
   }

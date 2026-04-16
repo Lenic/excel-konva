@@ -4,10 +4,9 @@ import type { IShapePool } from '../pools';
 import type { ICellBoxManager, IViewport, IViewportManager } from '../ui';
 import type Konva from 'konva';
 
-import { combineLatestWith, Observable } from 'rxjs';
-import { combineLatest, filter, map, startWith, switchMap } from 'rxjs';
+import { combineLatest, filter, map, Observable, startWith, switchMap } from 'rxjs';
 
-import { isEqualLocation, isEqualRange } from '../utils';
+import { isEqualRange } from '../utils';
 
 import { BaseRenderer } from './base-renderer';
 
@@ -34,18 +33,37 @@ export class SelectionRenderer extends BaseRenderer {
   }
 
   protected buildSingleViewport(viewport: IViewport, group: Konva.Group): Observable<any> {
+    const initializer$ = combineLatest([this.selectionRectPool.get$, this.config.get$('selectionRectAttrs')]).pipe(
+      switchMap(
+        ([getter, attrs]) =>
+          new Observable<Konva.Rect>((observer) => {
+            const rect = getter(attrs);
+            if (rect.parent !== group) {
+              rect.moveTo(group);
+            }
+            observer.next(rect);
+
+            return () => {
+              console.log('destrory rect');
+              this.selectionRectPool.reuse(rect);
+            };
+          }),
+      ),
+    );
+
     return this.store.change$.pipe(
       map(() => this.store.value),
       startWith(this.store.value),
       this.transferSourceItems(
         (v) => v.id,
         (x, y) => isEqualRange(x.range, y.range),
-        (selection) => this.renderRegion(selection, viewport, group),
+        (selection, rect) => this.renderRegion(selection, viewport, rect),
+        () => initializer$,
       ),
     );
   }
 
-  private renderRegion(selection: ISelectionRegion, viewport: IViewport, group: Konva.Group): Observable<any> {
+  private renderRegion(selection: ISelectionRegion, viewport: IViewport, rect: Konva.Rect): Observable<any> {
     const { range } = selection;
 
     const offset$ = viewport.change$.pipe(
@@ -60,30 +78,15 @@ export class SelectionRenderer extends BaseRenderer {
       startWith(viewport.box),
     );
 
-    return combineLatest([this.selectionRectPool.get$, this.config.get$('selectionRectAttrs')]).pipe(
-      switchMap(
-        ([getter, attrs]) =>
-          new Observable<Konva.Rect>((observer) => {
-            const rect = getter(attrs);
-            if (rect.parent !== group) {
-              rect.moveTo(group);
-            }
-            observer.next(rect);
-
-            return () => {
-              this.selectionRectPool.reuse(rect);
-            };
-          }),
-      ),
-      combineLatestWith(this.cellBoxManager.getAbsoluteBox$(range), offset$, viewportBox$),
-      map(([rect, rangeBox, offset, viewportBox]) => {
+    return combineLatest([this.cellBoxManager.getAbsoluteBox$(range), offset$, viewportBox$]).pipe(
+      map(([rangeBox, offset, viewportBox]) => {
         const attrs = {
           x: rangeBox.x - offset.deltaX - viewportBox.x,
           y: rangeBox.y - offset.deltaY - viewportBox.y,
           width: rangeBox.width,
           height: rangeBox.height,
         };
-        console.log('attrs', attrs, rect);
+        // console.log('attrs', attrs, rect);
         return rect.setAttrs(attrs);
       }),
     );
