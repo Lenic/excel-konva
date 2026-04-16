@@ -2,7 +2,7 @@ import type { IContainer } from '../../container';
 
 import { IScrollOffset, ISheetConfig } from '../core';
 import { KONVA_CONTAINER, UIElement } from '../core';
-import { COLUMN_TAG, IAccumulatedDimensionManager, IDimensionManager, ROW_TAG } from '../data';
+import { COLUMN_TAG, IAccumulatedDimensionManager, ROW_TAG } from '../data';
 
 import { CellBoxManager } from './cell-box-manager';
 import { FrozenInformationManager } from './frozen-information-manager';
