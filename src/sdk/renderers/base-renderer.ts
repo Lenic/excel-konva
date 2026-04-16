@@ -1,9 +1,26 @@
-import type { IKonvaItems } from '../core';
-import type { IViewportManager } from '../ui';
+import type { IRenderGroup } from '../core';
+import type { IViewport, IViewportManager } from '../ui';
+import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
-import { endWith, exhaustMap, groupBy, ignoreElements, mergeMap, share, take, takeUntil } from 'rxjs';
-import { combineLatestAll, filter, from, map } from 'rxjs';
+import {
+  distinctUntilChanged,
+  endWith,
+  exhaustMap,
+  filter,
+  finalize,
+  from,
+  groupBy,
+  ignoreElements,
+  map,
+  mergeMap,
+  shareReplay,
+  startWith,
+  switchMap,
+  take,
+  takeUntil,
+  tap,
+} from 'rxjs';
 
 import { BaseListener, EFreezeMode } from '../core';
 
@@ -19,19 +36,19 @@ export abstract class BaseRenderer extends BaseListener {
   /**
    * Access to the Konva stage, layers, and groups.
    */
-  protected konvaItems: IKonvaItems;
+  protected renderGroup: IRenderGroup;
 
   /**
    * Initializes the base renderer with required managers.
    *
    * @param viewportManager - The manager for sheet viewports.
-   * @param konvaItems - The items for Konva stage and groups.
+   * @param renderGroup - The items for Konva stage and groups.
    */
-  constructor(viewportManager: IViewportManager, konvaItems: IKonvaItems) {
+  constructor(viewportManager: IViewportManager, renderGroup: IRenderGroup) {
     super();
 
     this.viewportManager = viewportManager;
-    this.konvaItems = konvaItems;
+    this.renderGroup = renderGroup;
   }
 
   /**
@@ -40,10 +57,41 @@ export abstract class BaseRenderer extends BaseListener {
    * @returns An observable that emits when all viewports have been built and subscribed to.
    */
   protected activate() {
-    return from(viewportModes).pipe(
-      map((freezeMode) => this.buildSingleViewport(freezeMode)),
-      combineLatestAll(),
-      map(() => void this.konvaItems.background.layer.batchDraw()),
+    return from(VIEWPORT_MODES).pipe(
+      mergeMap((freezeMode) => {
+        const viewport = this.viewportManager[freezeMode];
+        const group = this.renderGroup.groups[freezeMode];
+
+        return viewport.change$.pipe(
+          filter((v) => v.type === 'box'),
+          map((v) => v.current),
+          startWith(viewport.box),
+          map((box) =>
+            group.setAttrs({
+              ...box,
+              clipX: 0,
+              clipY: 0,
+              clipWidth: box.width,
+              clipHeight: box.height,
+            }),
+          ),
+          finalize(
+            () =>
+              void group.setAttrs({
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0,
+                clipX: undefined,
+                clipY: undefined,
+                clipWidth: undefined,
+                clipHeight: undefined,
+              }),
+          ),
+          exhaustMap((group) => this.buildSingleViewport(viewport, group, freezeMode)),
+        );
+      }),
+      tap(() => void this.renderGroup.layer.batchDraw()),
       this.withDestroy(),
     );
   }
@@ -51,10 +99,16 @@ export abstract class BaseRenderer extends BaseListener {
   /**
    * Builds a single viewport for a specific freeze mode.
    *
+   * @param viewport - The viewport for the freeze mode.
+   * @param group - The group for the viewport.
    * @param freezeMode - The freeze mode for which to build the viewport.
    * @returns An observable that emits the viewport.
    */
-  protected abstract buildSingleViewport(freezeMode: EFreezeMode): Observable<any>;
+  protected abstract buildSingleViewport(
+    viewport: IViewport,
+    group: Konva.Group,
+    freezeMode: EFreezeMode,
+  ): Observable<any>;
 
   /**
    * Transfers items from a source observable to a converter observable based on a key selector.
@@ -65,10 +119,11 @@ export abstract class BaseRenderer extends BaseListener {
    */
   protected transferSourceItems<TSource, TResult>(
     keySelector: (item: TSource) => unknown,
+    elementComparer: (a: TSource, b: TSource) => boolean,
     converter: (item: TSource) => Observable<TResult>,
   ) {
     return function transferItems(observable$: Observable<TSource[]>): Observable<TResult> {
-      const source$ = observable$.pipe(share());
+      const source$ = observable$.pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
       return source$.pipe(
         mergeMap((range) => from(range)),
@@ -79,10 +134,16 @@ export abstract class BaseRenderer extends BaseListener {
               take(1),
             ),
         }),
-        mergeMap((group$) => group$.pipe(exhaustMap(converter), takeUntil(group$.pipe(ignoreElements(), endWith(1))))),
+        mergeMap((group$) =>
+          group$.pipe(
+            distinctUntilChanged(elementComparer),
+            switchMap(converter),
+            takeUntil(group$.pipe(ignoreElements(), endWith(1))),
+          ),
+        ),
       );
     };
   }
 }
 
-const viewportModes: EFreezeMode[] = [EFreezeMode.NONE, EFreezeMode.ROW, EFreezeMode.COLUMN, EFreezeMode.BOTH];
+const VIEWPORT_MODES: EFreezeMode[] = [EFreezeMode.NONE, EFreezeMode.ROW, EFreezeMode.COLUMN, EFreezeMode.BOTH];

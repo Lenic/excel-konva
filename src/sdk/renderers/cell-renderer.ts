@@ -1,25 +1,14 @@
 import type { IContentContext, IContentRenderer } from '../contents';
-import type { ICellRange, IKonvaItems, ILocation } from '../core';
+import type { ICellRange, ILocation, IRenderGroup } from '../core';
 import type { EFreezeMode } from '../core';
 import type { IDataManager } from '../data';
-import type { ICellBoxManager, IViewportManager } from '../ui';
+import type { ICellBoxManager, IViewport, IViewportManager } from '../ui';
+import type Konva from 'konva';
 
-import {
-  combineLatest,
-  combineLatestAll,
-  combineLatestWith,
-  filter,
-  finalize,
-  from,
-  map,
-  of,
-  startWith,
-  switchMap,
-  tap,
-} from 'rxjs';
+import { combineLatestAll, combineLatestWith, filter, from, map, of, startWith, switchMap, tap } from 'rxjs';
 
 import { DEFAULT_TEXT, HEADER_TEXT } from '../contents';
-import { isCellInRange } from '../utils';
+import { isCellInRange, isEqualLocation } from '../utils';
 
 import { BaseRenderer } from './base-renderer';
 
@@ -31,51 +20,19 @@ export class CellRenderer extends BaseRenderer {
   constructor(
     cellBox: ICellBoxManager,
     viewportManager: IViewportManager,
-    konvaItems: IKonvaItems,
+    renderGroup: IRenderGroup,
     dataManager: IDataManager,
     renderers: Map<string | symbol, IContentRenderer>,
   ) {
-    super(viewportManager, konvaItems);
+    super(viewportManager, renderGroup);
 
     this.cellBox = cellBox;
     this.renderers = renderers;
     this.dataManager = dataManager;
   }
 
-  protected buildSingleViewport(freezeMode: EFreezeMode) {
-    const viewport = this.viewportManager[freezeMode];
-    const group = this.konvaItems.background.groups[freezeMode];
-
-    const group$ = viewport.change$.pipe(
-      filter((v) => v.type === 'box'),
-      map((v) => v.current),
-      startWith(viewport.box),
-      map(
-        (box) =>
-          void group.setAttrs({
-            ...box,
-            clipX: 0,
-            clipY: 0,
-            clipWidth: box.width,
-            clipHeight: box.height,
-          }),
-      ),
-      finalize(
-        () =>
-          void group.setAttrs({
-            x: 0,
-            y: 0,
-            width: 0,
-            height: 0,
-            clipX: undefined,
-            clipY: undefined,
-            clipWidth: undefined,
-            clipHeight: undefined,
-          }),
-      ),
-    );
-
-    const range$ = viewport.change$.pipe(
+  protected buildSingleViewport(viewport: IViewport, group: Konva.Group, freezeMode: EFreezeMode) {
+    return viewport.change$.pipe(
       filter((v) => v.type === 'range'),
       map((v) => v.current),
       startWith(viewport.range),
@@ -90,6 +47,7 @@ export class CellRenderer extends BaseRenderer {
       }),
       this.transferSourceItems(
         (item) => `cell:${freezeMode}:${item.rowIndex}:${item.columnIndex}`,
+        (x, y) => isEqualLocation(x, y),
         ({ rowIndex, columnIndex }) =>
           this.dataManager.change$.pipe(
             filter((patch) => isCellInRange(rowIndex, columnIndex, patch.range)),
@@ -115,14 +73,12 @@ export class CellRenderer extends BaseRenderer {
               return from(contentTypes).pipe(
                 map((contentType) => this.renderers.get(contentType)?.render(context) ?? of(null)),
                 combineLatestAll(),
-                tap(() => this.konvaItems.background.layer.batchDraw()),
+                tap(() => this.renderGroup.layer.batchDraw()),
                 this.withDestroy(),
               );
             }),
           ),
       ),
     );
-
-    return combineLatest([group$, range$]);
   }
 }

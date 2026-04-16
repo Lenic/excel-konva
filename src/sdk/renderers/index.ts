@@ -3,11 +3,14 @@ import type { IContainer } from '../../container';
 import { IContentRenderer } from '../contents';
 import { IKonvaItems, ISheetConfig } from '../core';
 import { IDataManager } from '../data';
+import { ISelectionStore } from '../events';
+import { IRectPool, SELECTION_RECT_POOL } from '../pools';
 import { ICellBoxManager, IViewportManager } from '../ui';
 
 import { CellRenderer } from './cell-renderer';
+import { SelectionRenderer } from './selection-renderer';
 import { ShapeStyleConfig } from './shape-style';
-import { ICellRenderer, IShapeStyleConfig } from './types';
+import { ICellRenderer, ISelectionRenderer, IShapeStyleConfig } from './types';
 
 export * from './types';
 
@@ -25,9 +28,20 @@ export function registerRenderers(container: IContainer) {
     return new CellRenderer(
       c.get(ICellBoxManager, ctx),
       c.get(IViewportManager, ctx),
-      c.get(IKonvaItems, ctx),
+      c.get(IKonvaItems, ctx).background,
       c.get(IDataManager, ctx),
       c.getAll(IContentRenderer, ctx),
+    );
+  });
+
+  container.register(ISelectionRenderer).set((c, ctx) => {
+    return new SelectionRenderer(
+      c.get(ISelectionStore, ctx),
+      c.get(IViewportManager, ctx),
+      c.get(IKonvaItems, ctx).selection,
+      c.get(IRectPool, SELECTION_RECT_POOL, ctx),
+      c.get(ICellBoxManager, ctx),
+      c.get(ISheetConfig, ctx),
     );
   });
 }

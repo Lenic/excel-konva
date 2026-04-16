@@ -64,12 +64,8 @@ export function registerUI(container: IContainer) {
 
   container.register(ICellBoxManager).set((c, ctx) => {
     return new CellBoxManager(
-      c.get(IDimensionManager, ROW_TAG, ctx),
-      c.get(IDimensionManager, COLUMN_TAG, ctx),
       c.get(IAccumulatedDimensionManager, ROW_TAG, ctx),
       c.get(IAccumulatedDimensionManager, COLUMN_TAG, ctx),
-      c.get(IScrollOffset, ctx),
-      c.get(IFrozenInformationManager, ctx),
     );
   });
 }

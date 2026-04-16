@@ -9,7 +9,7 @@ import { COLUMN_TAG, IAccumulatedDimensionManager, registerData, ROW_TAG } from 
 import { IResizeItemListener, ISelectionStore, registerEvents } from './sdk/events';
 import { ICursorListener, IStageDragListener } from './sdk/events';
 import { registerPools } from './sdk/pools';
-import { ICellRenderer, registerRenderers } from './sdk/renderers';
+import { ICellRenderer, ISelectionRenderer, registerRenderers } from './sdk/renderers';
 import { IScrollableRangeManager, registerUI } from './sdk/ui';
 
 /**
@@ -67,11 +67,11 @@ async function bootstrap() {
   container.get(ICursorListener).startListening();
   container.get(IResizeItemListener).startListening();
 
-  container.get(ISelectionStore).change$.subscribe((v) => console.log(v));
+  // container.get(ISelectionStore).change$.subscribe((v) => console.log(v));
 
   // Start renderers
   container.get(ICellRenderer).startListening();
-  // container.get(ISelectionRenderer).start();
+  container.get(ISelectionRenderer).startListening();
 
   // connection
   const virtualContent = container.get(UIElement, VIRTUAL_CONTENT);

@@ -144,16 +144,15 @@ export interface ICellBoxManager extends IDisposable {
   getAbsoluteBox$(rowIndex: number, columnIndex: number): Observable<IRectBox>;
 
   /**
-   * Retrieves an observable stream that emits the relative bounding box dimensions for a specific
+   * Retrieves an observable stream that emits the absolute bounding box dimensions for a specific
    * cell, identified by its row and column indices.
    *
-   * - Scroll offset is applied to the bounding box.
+   * - No scroll offset is applied to the bounding box.
    *
-   * @param rowIndex - The zero-based index of the row.
-   * @param columnIndex - The zero-based index of the column.
-   * @returns An observable that emits the relative rectangular area occupied by the specified cell.
+   * @param range - The cell range.
+   * @returns An observable that emits the absolute rectangular area occupied by the specified cell.
    */
-  getRelativeBox$(rowIndex: number, columnIndex: number): Observable<IRectBox>;
+  getAbsoluteBox$(range: ICellRange): Observable<IRectBox>;
 }
 
 /**

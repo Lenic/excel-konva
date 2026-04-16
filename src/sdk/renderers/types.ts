@@ -4,28 +4,6 @@ import type Konva from 'konva';
 import type { Observable } from 'rxjs';
 
 /**
- * Common interface for all render listeners
- */
-export interface IRenderListener<T> extends IDisposable {
-  /**
-   * Current data state of the renderer
-   */
-  value: T | null;
-
-  /**
-   * Observable that emits data state changes
-   */
-  value$: Observable<T>;
-
-  /**
-   * Starts the rendering listener
-   *
-   * @returns A function that can be used to stop the rendering listener
-   */
-  start(): () => void;
-}
-
-/**
  * Identifier for ICellRenderer in the DI container
  */
 export const ICellRenderer: TIdentifier<IListener> = Symbol('ICellRenderer');
@@ -33,7 +11,7 @@ export const ICellRenderer: TIdentifier<IListener> = Symbol('ICellRenderer');
 /**
  * Identifier for ISelectionRenderer in the DI container
  */
-export const ISelectionRenderer: TIdentifier<IRenderListener<number>> = Symbol('ISelectionRenderer');
+export const ISelectionRenderer: TIdentifier<IListener> = Symbol('ISelectionRenderer');
 
 /**
  * Shape style configuration interface

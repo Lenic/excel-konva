@@ -1,108 +1,64 @@
-import type { IObservableValue, IOffset, IScrollOffset } from '../core';
-import type { IAccumulatedDimensionManager, IDimensionManager } from '../data';
-import type { ICellBoxManager, IFrozenInformation, IRectBox } from './types';
+import type { ICellRange } from '../core';
+import type { IAccumulatedDimensionManager } from '../data';
+import type { ICellBoxManager, IRectBox } from './types';
 import type { Observable } from 'rxjs';
 
-import { combineLatest, distinctUntilChanged, filter, map, of, startWith, switchMap } from 'rxjs';
+import { combineLatest, filter, map, startWith } from 'rxjs';
 
 import { ObservableDisposable } from '../utils';
 
 export class CellBoxManager extends ObservableDisposable implements ICellBoxManager {
-  private row: IDimensionManager;
-  private column: IDimensionManager;
   private rowA: IAccumulatedDimensionManager;
   private columnA: IAccumulatedDimensionManager;
-  private offset$: Observable<IOffset>;
-  private frozenInfo: IObservableValue<IFrozenInformation>;
 
-  constructor(
-    row: IDimensionManager,
-    column: IDimensionManager,
-    rowA: IAccumulatedDimensionManager,
-    columnA: IAccumulatedDimensionManager,
-    scroller: IScrollOffset,
-    frozenInfo: IObservableValue<IFrozenInformation>,
-  ) {
+  constructor(rowA: IAccumulatedDimensionManager, columnA: IAccumulatedDimensionManager) {
     super();
 
-    this.row = row;
-    this.column = column;
     this.rowA = rowA;
     this.columnA = columnA;
-    this.frozenInfo = frozenInfo;
-
-    this.offset$ = scroller.change$.pipe(
-      map(() => scroller.offset),
-      startWith(scroller.offset),
-      this.withPublish(),
-    );
   }
 
-  getAbsoluteBox$(rowIndex: number, columnIndex: number): Observable<IRectBox> {
+  getAbsoluteBox$(range: ICellRange): Observable<IRectBox>;
+  getAbsoluteBox$(rowIndex: number, columnIndex: number): Observable<IRectBox>;
+  getAbsoluteBox$(...args: any[]): Observable<IRectBox> {
     this.checkDisposed();
 
-    const width$ = this.column.change$.pipe(
-      filter((v) => v.type === 'options' || v.index === columnIndex),
-      map(() => this.column.get(columnIndex)),
-      startWith(this.column.get(columnIndex)),
-    );
+    let range: ICellRange | null = null;
+    if (args.length === 2) {
+      const rowIndex = args[0] as number;
+      const columnIndex = args[1] as number;
 
-    const height$ = this.row.change$.pipe(
-      filter((v) => v.type === 'options' || v.index === rowIndex),
-      map(() => this.row.get(rowIndex)),
-      startWith(this.row.get(rowIndex)),
-    );
+      range = {
+        rowStartIndex: rowIndex,
+        columnStartIndex: columnIndex,
+        rowEndIndex: rowIndex,
+        columnEndIndex: columnIndex,
+      };
+    } else {
+      range = args[0] as ICellRange;
+    }
 
-    const x$ = this.columnA.change$.pipe(
-      filter((v) => v.type === 'options' || (v.type === 'dimension' && v.current < columnIndex)),
-      map(() => this.columnA.get(columnIndex)),
-      startWith(this.columnA.get(columnIndex)),
-    );
+    const leftTopX$ = this.getCoordinateBeginValue$(this.columnA, range.columnStartIndex);
+    const leftTopY$ = this.getCoordinateBeginValue$(this.rowA, range.rowStartIndex);
+    const rightBottomX$ = this.getCoordinateBeginValue$(this.columnA, range.columnEndIndex + 1);
+    const rightBottomY$ = this.getCoordinateBeginValue$(this.rowA, range.rowEndIndex + 1);
 
-    const y$ = this.rowA.change$.pipe(
-      filter((v) => v.type === 'options' || (v.type === 'dimension' && v.current < rowIndex)),
-      map(() => this.rowA.get(rowIndex)),
-      startWith(this.rowA.get(rowIndex)),
-    );
-
-    return combineLatest([x$, y$, width$, height$]).pipe(
-      map(([x, y, width, height]) => ({ x, y, width, height })),
+    return combineLatest([leftTopX$, leftTopY$, rightBottomX$, rightBottomY$]).pipe(
+      map(([leftTopX, leftTopY, rightBottomX, rightBottomY]) => ({
+        x: leftTopX,
+        y: leftTopY,
+        width: rightBottomX - leftTopX,
+        height: rightBottomY - leftTopY,
+      })),
       this.withPublish(),
     );
   }
 
-  getRelativeBox$(rowIndex: number, columnIndex: number): Observable<IRectBox> {
-    const box$ = this.getAbsoluteBox$(rowIndex, columnIndex);
-
-    const currentOffset$ = this.frozenInfo.value$.pipe(
-      switchMap(({ rowCount, columnCount }) => {
-        const deltaY$ =
-          rowIndex < rowCount
-            ? of(0)
-            : this.offset$.pipe(
-                map((v) => v.deltaY),
-                distinctUntilChanged(),
-              );
-        const deltaX$ =
-          columnIndex < columnCount
-            ? of(0)
-            : this.offset$.pipe(
-                map((v) => v.deltaX),
-                distinctUntilChanged(),
-              );
-        return combineLatest([deltaY$, deltaX$]).pipe(map(([deltaY, deltaX]): IOffset => ({ deltaX, deltaY })));
-      }),
-      distinctUntilChanged((a, b) => a.deltaX === b.deltaX && a.deltaY === b.deltaY),
-    );
-
-    return combineLatest([box$, currentOffset$]).pipe(
-      map(([box, offset]) => ({
-        x: box.x - offset.deltaX,
-        y: box.y - offset.deltaY,
-        width: box.width,
-        height: box.height,
-      })),
-      this.withPublish(),
+  private getCoordinateBeginValue$(manager: IAccumulatedDimensionManager, index: number): Observable<number> {
+    return manager.change$.pipe(
+      filter((v) => v.type === 'options' || (v.type === 'dimension' && v.current < index)),
+      map(() => manager.get(index)),
+      startWith(manager.get(index)),
     );
   }
 }
