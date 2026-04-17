@@ -1,5 +1,4 @@
 import type { ICellRange, IRenderGroup, ISheetConfig } from '../core';
-import type { EFreezeMode } from '../core';
 import type { ISelectionRegion, ISelectionStore } from '../events';
 import type { IShapePool } from '../pools';
 import type { ICellBoxManager, IViewport, IViewportManager } from '../ui';
@@ -8,6 +7,7 @@ import type Konva from 'konva';
 
 import { combineLatest, filter, map, merge, Observable, startWith, switchMap } from 'rxjs';
 
+import { EFreezeMode } from '../core';
 import { isEqualRange, mergeIntervals } from '../utils';
 
 import { BaseRenderer } from './base-renderer';
