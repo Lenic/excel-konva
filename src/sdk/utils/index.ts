@@ -4,6 +4,7 @@ export * from './default-value';
 export * from './disposable';
 export * from './equal';
 export * from './find-options';
+export * from './interval';
 export * from './queue';
 export * from './range';
 export * from './search';
