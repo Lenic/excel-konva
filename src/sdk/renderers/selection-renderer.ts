@@ -42,34 +42,91 @@ export class SelectionRenderer extends BaseRenderer {
   }
 
   private buildSelection(viewport: IViewport, group: Konva.Group) {
-    const selectionInitializer$ = combineLatest([
-      this.selectionRectPool.get$,
-      this.config.get$('selectionRectAttrs'),
-    ]).pipe(
-      switchMap(
-        ([getter, attrs]) =>
-          new Observable<Konva.Rect>((observer) => {
-            const rect = getter(attrs);
-            if (rect.parent !== group) {
-              rect.moveTo(group);
-            }
-            observer.next(rect);
-
-            return () => this.selectionRectPool.reuse(rect);
-          }),
-      ),
-    );
-
     return this.store.change$.pipe(
       map(() => this.store.value),
       startWith(this.store.value),
-      this.transferSourceItems(
-        (v) => v.id,
+      map((regions) => this.buildSelectionItems(regions)),
+      this.transferSourceItems<ISelectionItem, string, Konva.Rect, Konva.Rect>(
+        (item) => item.id,
         (x, y) => isEqualRange(x.range, y.range),
-        (selection, rect) => this.renderRangeRect(selection.range, viewport, rect),
-        () => selectionInitializer$,
+        (item, rect) => this.renderRangeRect(item.range, viewport, rect),
+        (key) => {
+          const type = key.split('-')[0];
+          const rectAttrsKey = type === 'active' ? 'activeCellRectAttrs' : 'selectionRectAttrs';
+
+          return combineLatest([this.selectionRectPool.get$, this.config.get$(rectAttrsKey)]).pipe(
+            switchMap(
+              ([getter, attrs]) =>
+                new Observable<Konva.Rect>((observer) => {
+                  const rect = getter({
+                    ...attrs,
+                    strokeEnabled: type !== 'bg',
+                    fillEnabled: type !== 'border',
+                  });
+                  if (rect.parent !== group) {
+                    rect.moveTo(group);
+                  }
+                  observer.next(rect);
+
+                  return () => this.selectionRectPool.reuse(rect);
+                }),
+            ),
+          );
+        },
       ),
     );
+  }
+
+  private buildSelectionItems(regions: ISelectionRegion[]): ISelectionItem[] {
+    const items: ISelectionItem[] = [];
+
+    for (const region of regions) {
+      const { range, activeCell, id } = region;
+      const r1 = range.rowStartIndex;
+      const r2 = range.rowEndIndex;
+      const c1 = range.columnStartIndex;
+      const c2 = range.columnEndIndex;
+
+      const ar = Math.max(r1, Math.min(r2, activeCell.rowIndex));
+      const ac = Math.max(c1, Math.min(c2, activeCell.columnIndex));
+
+      items.push({ id: `border-${id}`, range });
+
+      if (ar > r1) {
+        items.push({
+          id: `bg-${id}-top`,
+          range: { rowStartIndex: r1, rowEndIndex: ar - 1, columnStartIndex: c1, columnEndIndex: c2 },
+        });
+      }
+
+      if (ar < r2) {
+        items.push({
+          id: `bg-${id}-bottom`,
+          range: { rowStartIndex: ar + 1, rowEndIndex: r2, columnStartIndex: c1, columnEndIndex: c2 },
+        });
+      }
+
+      if (ac > c1) {
+        items.push({
+          id: `bg-${id}-left`,
+          range: { rowStartIndex: ar, rowEndIndex: ar, columnStartIndex: c1, columnEndIndex: ac - 1 },
+        });
+      }
+
+      if (ac < c2) {
+        items.push({
+          id: `bg-${id}-right`,
+          range: { rowStartIndex: ar, rowEndIndex: ar, columnStartIndex: ac + 1, columnEndIndex: c2 },
+        });
+      }
+
+      items.push({
+        id: `active-${id}`,
+        range: { rowStartIndex: ar, rowEndIndex: ar, columnStartIndex: ac, columnEndIndex: ac },
+      });
+    }
+
+    return items;
   }
 
   private buildHeaderHighlight(viewport: IViewport, group: Konva.Group, freezeMode: EFreezeMode) {
@@ -80,7 +137,7 @@ export class SelectionRenderer extends BaseRenderer {
       switchMap(
         ([getter, attrs]) =>
           new Observable<Konva.Rect>((observer) => {
-            const rect = getter({ ...attrs, strokeWidth: 0 });
+            const rect = getter({ ...attrs, strokeEnabled: false });
             if (rect.parent !== group) {
               rect.moveTo(group);
             }
@@ -135,7 +192,7 @@ export class SelectionRenderer extends BaseRenderer {
     return items;
   }
 
-  private renderRangeRect(range: ICellRange, viewport: IViewport, rect: Konva.Rect): Observable<any> {
+  private renderRangeRect(range: ICellRange, viewport: IViewport, rect: Konva.Rect) {
     const offset$ = viewport.change$.pipe(
       filter((v) => v.type === 'offset'),
       map((v) => v.current),
@@ -163,6 +220,11 @@ export class SelectionRenderer extends BaseRenderer {
 }
 
 interface IHeaderHighlightItem {
+  id: string;
+  range: ICellRange;
+}
+
+interface ISelectionItem {
   id: string;
   range: ICellRange;
 }
