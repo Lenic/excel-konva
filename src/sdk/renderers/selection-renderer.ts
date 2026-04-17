@@ -105,33 +105,31 @@ export class SelectionRenderer extends BaseRenderer {
   }
 
   private buildHighlightItems(regions: ISelectionRegion[], freezeMode: EFreezeMode): IHeaderHighlightItem[] {
-    const items: IHeaderHighlightItem[] = [];
+    let items: IHeaderHighlightItem[] = [];
 
     const hasRowHeader = freezeMode === EFreezeMode.COLUMN || freezeMode === EFreezeMode.BOTH;
     const hasColumnHeader = freezeMode === EFreezeMode.ROW || freezeMode === EFreezeMode.BOTH;
 
     if (hasRowHeader) {
       const rowIntervals = regions.map((r) => [r.range.rowStartIndex, r.range.rowEndIndex] as TInterval);
-      const mergedRows = mergeIntervals(rowIntervals);
-      for (let i = 0; i < mergedRows.length; i++) {
-        const [start, end] = mergedRows[i];
-        items.push({
-          id: `row-highlight:${i}`,
+      items = mergeIntervals(rowIntervals).reduce((acc, [start, end]) => {
+        acc.push({
+          id: `row-highlight:${start}-${end}`,
           range: { rowStartIndex: start, rowEndIndex: end, columnStartIndex: 0, columnEndIndex: 0 },
         });
-      }
+        return acc;
+      }, items);
     }
 
     if (hasColumnHeader) {
       const colIntervals = regions.map((r) => [r.range.columnStartIndex, r.range.columnEndIndex] as TInterval);
-      const mergedCols = mergeIntervals(colIntervals);
-      for (let i = 0; i < mergedCols.length; i++) {
-        const [start, end] = mergedCols[i];
-        items.push({
-          id: `column-highlight:${i}`,
+      items = mergeIntervals(colIntervals).reduce((acc, [start, end]) => {
+        acc.push({
+          id: `column-highlight:${start}-${end}`,
           range: { rowStartIndex: 0, rowEndIndex: 0, columnStartIndex: start, columnEndIndex: end },
         });
-      }
+        return acc;
+      }, items);
     }
 
     return items;
