@@ -34,7 +34,7 @@ export function binarySearch(begin: number, end: number, comparer: (mid: number)
   let candidate = exact > 0 ? end : exact < 0 ? begin : -1;
 
   while (left <= right) {
-    const mid = Math.floor(left + (right - left) / 2);
+    const mid = left + ((right - left) >> 1);
     const result = comparer(mid);
 
     if (result === 0) {
