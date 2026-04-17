@@ -1,4 +1,5 @@
 import type { ICellRange, IRenderGroup, ISheetConfig } from '../core';
+import type { EFreezeMode } from '../core';
 import type { ISelectionRegion, ISelectionStore } from '../events';
 import type { IShapePool } from '../pools';
 import type { ICellBoxManager, IViewport, IViewportManager } from '../ui';
@@ -7,7 +8,6 @@ import type Konva from 'konva';
 
 import { combineLatest, filter, map, merge, Observable, startWith, switchMap } from 'rxjs';
 
-import { EFreezeMode } from '../core';
 import { isEqualRange, mergeIntervals } from '../utils';
 
 import { BaseRenderer } from './base-renderer';
@@ -36,7 +36,7 @@ export class SelectionRenderer extends BaseRenderer {
 
   protected buildSingleViewport(viewport: IViewport, group: Konva.Group, freezeMode: EFreezeMode): Observable<any> {
     const selection$ = this.buildSelection(viewport, group);
-    const headerHighlight$ = this.buildHeaderHighlight(viewport, group, freezeMode);
+    const headerHighlight$ = this.buildHighlight(viewport, group, freezeMode);
 
     return merge(selection$, headerHighlight$);
   }
@@ -46,7 +46,7 @@ export class SelectionRenderer extends BaseRenderer {
       map(() => this.store.value),
       startWith(this.store.value),
       map((regions) => this.buildSelectionItems(regions)),
-      this.transferSourceItems<ISelectionItem, string, Konva.Rect, Konva.Rect>(
+      this.transferSourceItems<IIdentifiedRange, string, Konva.Rect, Konva.Rect>(
         (item) => item.id,
         (x, y) => isEqualRange(x.range, y.range),
         (item, rect) => this.renderRangeRect(item.range, viewport, rect),
@@ -77,8 +77,36 @@ export class SelectionRenderer extends BaseRenderer {
     );
   }
 
-  private buildSelectionItems(regions: ISelectionRegion[]): ISelectionItem[] {
-    const items: ISelectionItem[] = [];
+  private buildHighlight(viewport: IViewport, group: Konva.Group, freezeMode: EFreezeMode) {
+    return this.store.change$.pipe(
+      map(() => this.store.value),
+      startWith(this.store.value),
+      map((regions) => this.buildHighlightItems(regions, freezeMode)),
+      this.transferSourceItems(
+        (item) => item.id,
+        (x, y) => isEqualRange(x.range, y.range),
+        (item, rect) => this.renderRangeRect(item.range, viewport, rect),
+        () =>
+          combineLatest([this.selectionRectPool.get$, this.config.get$('selectionRectAttrs')]).pipe(
+            switchMap(
+              ([getter, attrs]) =>
+                new Observable<Konva.Rect>((observer) => {
+                  const rect = getter({ ...attrs, strokeEnabled: false });
+                  if (rect.parent !== group) {
+                    rect.moveTo(group);
+                  }
+                  observer.next(rect);
+
+                  return () => this.selectionRectPool.reuse(rect);
+                }),
+            ),
+          ),
+      ),
+    );
+  }
+
+  private buildSelectionItems(regions: ISelectionRegion[]) {
+    const items: IIdentifiedRange[] = [];
 
     for (const region of regions) {
       const { range, activeCell, id } = region;
@@ -129,40 +157,8 @@ export class SelectionRenderer extends BaseRenderer {
     return items;
   }
 
-  private buildHeaderHighlight(viewport: IViewport, group: Konva.Group, freezeMode: EFreezeMode) {
-    const highlightInitializer$ = combineLatest([
-      this.selectionRectPool.get$,
-      this.config.get$('selectionRectAttrs'),
-    ]).pipe(
-      switchMap(
-        ([getter, attrs]) =>
-          new Observable<Konva.Rect>((observer) => {
-            const rect = getter({ ...attrs, strokeEnabled: false });
-            if (rect.parent !== group) {
-              rect.moveTo(group);
-            }
-            observer.next(rect);
-
-            return () => this.selectionRectPool.reuse(rect);
-          }),
-      ),
-    );
-
-    return this.store.change$.pipe(
-      map(() => this.store.value),
-      startWith(this.store.value),
-      map((regions) => this.buildHighlightItems(regions, freezeMode)),
-      this.transferSourceItems(
-        (item) => item.id,
-        (x, y) => isEqualRange(x.range, y.range),
-        (item, rect) => this.renderRangeRect(item.range, viewport, rect),
-        () => highlightInitializer$,
-      ),
-    );
-  }
-
-  private buildHighlightItems(regions: ISelectionRegion[], freezeMode: EFreezeMode): IHeaderHighlightItem[] {
-    let items: IHeaderHighlightItem[] = [];
+  private buildHighlightItems(regions: ISelectionRegion[], freezeMode: EFreezeMode) {
+    let items: IIdentifiedRange[] = [];
 
     const hasRowHeader = freezeMode === EFreezeMode.COLUMN || freezeMode === EFreezeMode.BOTH;
     const hasColumnHeader = freezeMode === EFreezeMode.ROW || freezeMode === EFreezeMode.BOTH;
@@ -219,12 +215,7 @@ export class SelectionRenderer extends BaseRenderer {
   }
 }
 
-interface IHeaderHighlightItem {
-  id: string;
-  range: ICellRange;
-}
-
-interface ISelectionItem {
+interface IIdentifiedRange {
   id: string;
   range: ICellRange;
 }
