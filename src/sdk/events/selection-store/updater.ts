@@ -36,6 +36,8 @@ export class SelectionRegionUpdater extends ObservableDisposable implements ISel
   }
 
   update(endLocation: ILocation): void {
+    this.checkDisposed();
+
     this.region = {
       ...this.region,
       range: {
@@ -49,6 +51,10 @@ export class SelectionRegionUpdater extends ObservableDisposable implements ISel
   }
 
   complete(): void {
+    this.checkDisposed();
+
     this.callback({ type: 'distinct', id: this.region.id });
+
+    this.dispose();
   }
 }

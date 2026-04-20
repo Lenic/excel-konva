@@ -28,7 +28,12 @@ export function registerEvents(container: IContainer) {
     .register(IStageDragListener)
     .set(
       (c, ctx) =>
-        new StageDragListener(c.get(IStageMouseEvent, ctx), c.get(ICursorListener, ctx), c.get(ISelectionStore, ctx)),
+        new StageDragListener(
+          c.get(ISheetConfig, ctx),
+          c.get(IStageMouseEvent, ctx),
+          c.get(ICursorListener, ctx),
+          c.get(ISelectionStore, ctx),
+        ),
     );
 
   container
