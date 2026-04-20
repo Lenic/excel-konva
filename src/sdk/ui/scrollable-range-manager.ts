@@ -3,7 +3,7 @@ import type { IAccumulatedDimensionManager, IAccumulatedFindOptions } from '../d
 import type { IScrollableRange, ISheetDimension } from './types';
 import type { Observable } from 'rxjs';
 
-import { combineLatest, distinctUntilChanged, map, scan, startWith } from 'rxjs';
+import { combineLatest, distinctUntilChanged, map, scan, startWith, tap } from 'rxjs';
 
 import { createNewFindOptions, getDefaultValue, ObservableDisposable } from '../utils';
 
@@ -46,19 +46,6 @@ export class ScrollableRangeManager extends ObservableDisposable implements IObs
     this.columnFindBeginOptions = createNewFindOptions(1);
     this.disposeWithMe(() => void (this.columnFindBeginOptions = getDefaultValue<IAccumulatedFindOptions>()));
 
-    this.disposeWithMe(
-      row.change$.subscribe(() => {
-        this.rowFindEndOptions = createNewFindOptions(-1);
-        this.rowFindBeginOptions = createNewFindOptions(1);
-      }),
-    );
-    this.disposeWithMe(
-      column.change$.subscribe(() => {
-        this.columnFindEndOptions = createNewFindOptions(-1);
-        this.columnFindBeginOptions = createNewFindOptions(1);
-      }),
-    );
-
     const size$ = sheet.change$.pipe(
       map(() => sheet.size),
       startWith(sheet.size),
@@ -69,25 +56,52 @@ export class ScrollableRangeManager extends ObservableDisposable implements IObs
       startWith(offset.offset),
     );
 
-    this.value$ = combineLatest([frozenDimension.value$, offset$, size$]).pipe(
+    const rowVersion$ = row.change$.pipe(
+      tap(() => {
+        this.rowFindEndOptions = createNewFindOptions(-1);
+        this.rowFindBeginOptions = createNewFindOptions(1);
+      }),
+      startWith(null),
+      scan((acc) => acc + 1, 0),
+    );
+
+    const columnVersion$ = column.change$.pipe(
+      tap(() => {
+        this.columnFindEndOptions = createNewFindOptions(-1);
+        this.columnFindBeginOptions = createNewFindOptions(1);
+      }),
+      startWith(null),
+      scan((acc) => acc + 1, 0),
+    );
+
+    this.value$ = combineLatest([frozenDimension.value$, offset$, size$, rowVersion$, columnVersion$]).pipe(
       scan(
-        (acc, [{ width, height }, { deltaX, deltaY }, { width: sheetWidth, height: sheetHeight }]) => {
+        (
+          acc,
+          [
+            { width, height },
+            { deltaX, deltaY },
+            { width: sheetWidth, height: sheetHeight },
+            rowVersion,
+            columnVersion,
+          ],
+        ) => {
           let changed = false;
 
           let nextVertical = acc.vertical;
-          const rowKey = `${height}-${sheetHeight}-${deltaY}`;
-          if (rowKey !== acc.vertical[2]) {
+          const verticalKey = `${height}-${sheetHeight}-${deltaY}-${rowVersion}`;
+          if (verticalKey !== acc.vertical[2]) {
             changed = true;
             const beginIndex = row.findIndex(height + deltaY, this.rowFindBeginOptions);
             nextVertical = [
               beginIndex,
               row.findIndex(sheetHeight + deltaY, { ...this.rowFindEndOptions, startIndex: beginIndex }),
-              rowKey,
+              verticalKey,
             ];
           }
 
           let nextHorizontal = acc.horizontal;
-          const horizontalKey = `${width}-${sheetWidth}-${deltaX}`;
+          const horizontalKey = `${width}-${sheetWidth}-${deltaX}-${columnVersion}`;
           if (horizontalKey !== acc.horizontal[2]) {
             changed = true;
             const beginIndex = column.findIndex(width + deltaX, this.columnFindBeginOptions);

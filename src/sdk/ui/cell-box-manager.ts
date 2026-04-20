@@ -56,7 +56,7 @@ export class CellBoxManager extends ObservableDisposable implements ICellBoxMana
 
   private getCoordinateBeginValue$(manager: IAccumulatedDimensionManager, index: number): Observable<number> {
     return manager.change$.pipe(
-      filter((v) => v.type === 'options' || (v.type === 'dimension' && v.current < index)),
+      filter((v) => v.type === 'options' || (v.type === 'dimension' && v.index < index)),
       map(() => manager.get(index)),
       startWith(manager.get(index)),
     );
