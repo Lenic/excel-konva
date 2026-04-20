@@ -23,7 +23,7 @@ export class StageDragListener extends BaseListener {
     return this.events.mousedown$.pipe(
       filter((e) => e.evt.button === 0),
       map((e) => [this.cursorListener.location, e.evt.ctrlKey || e.evt.metaKey] as const),
-      filter((v): v is [ILocation, boolean] => v[0] != null),
+      filter((v): v is [ILocation, boolean] => v[0] !== null && v[0].rowIndex > 0 && v[0].columnIndex > 0),
       switchMap(([location, isMultipleSelect]) => {
         const selectionUpdater = this.selectionStore.create(location, isMultipleSelect);
 
@@ -31,7 +31,7 @@ export class StageDragListener extends BaseListener {
           filter((v) => v.type === 'location'),
           map((v) => v.current),
           takeUntil(this.events.mouseUp$),
-          takeWhile((v) => v != null),
+          takeWhile((v) => v !== null),
           map((nextLocation) => selectionUpdater.update(nextLocation)),
           finalize(() => selectionUpdater.complete()),
         );
