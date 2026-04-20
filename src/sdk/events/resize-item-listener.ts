@@ -75,14 +75,14 @@ export class ResizeItemListener extends BaseListener {
         filter((v) => v.type === 'point'),
         map((v) => ({ type: 'move', pos: v.current }) as const),
       ),
-      this.mouseEvents.mousedown$.pipe(
+      this.mouseEvents.pointerdown$.pipe(
         tap(() => {
           this.konvaItems.resizeLine.visible(true);
           this.konvaItems.selection.layer.batchDraw();
         }),
         map(() => ({ type: 'down' }) as const),
       ),
-      this.mouseEvents.mouseUp$.pipe(
+      this.mouseEvents.pointerup$.pipe(
         tap(() => {
           this.konvaItems.resizeLine.visible(false);
           this.konvaItems.selection.layer.batchDraw();

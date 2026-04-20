@@ -20,7 +20,7 @@ export class StageDragListener extends BaseListener {
   }
 
   protected activate() {
-    return this.events.mousedown$.pipe(
+    return this.events.pointerdown$.pipe(
       filter((e) => e.evt.button === 0),
       map((e) => [this.cursorListener.location, e.evt.ctrlKey || e.evt.metaKey] as const),
       filter((v): v is [ILocation, boolean] => v[0] !== null && v[0].rowIndex > 0 && v[0].columnIndex > 0),
@@ -30,7 +30,7 @@ export class StageDragListener extends BaseListener {
         return this.cursorListener.change$.pipe(
           filter((v) => v.type === 'location'),
           map((v) => v.current),
-          takeUntil(this.events.mouseUp$),
+          takeUntil(this.events.pointerup$),
           takeWhile((v) => v !== null),
           map((nextLocation) => selectionUpdater.update(nextLocation)),
           finalize(() => selectionUpdater.complete()),

@@ -52,21 +52,25 @@ export type EBoundaryTypes = (typeof EBoundaryTypes)[keyof typeof EBoundaryTypes
  */
 export interface IStageMouseEvent extends IDisposable {
   /**
-   * Observable stream for mouse down events
+   * Observable stream for pointer down events
    */
-  mousedown$: Observable<Konva.KonvaEventObject<MouseEvent>>;
+  pointerdown$: Observable<Konva.KonvaEventObject<PointerEvent>>;
   /**
-   * Observable stream for mouse move events
+   * Observable stream for pointer move events
    */
-  mouseMove$: Observable<Konva.KonvaEventObject<MouseEvent>>;
+  pointermove$: Observable<Konva.KonvaEventObject<PointerEvent>>;
   /**
-   * Observable stream for mouse up events
+   * Observable stream for pointer up events
    */
-  mouseUp$: Observable<Konva.KonvaEventObject<MouseEvent>>;
+  pointerup$: Observable<Konva.KonvaEventObject<PointerEvent>>;
   /**
    * Observable stream for double-click events
    */
-  dblclick$: Observable<Konva.KonvaEventObject<MouseEvent>>;
+  dblclick$: Observable<Konva.KonvaEventObject<PointerEvent>>;
+  /**
+   * Observable stream for click events
+   */
+  click$: Observable<Konva.KonvaEventObject<PointerEvent>>;
 }
 /**
  * Dependency injection identifier for stage mouse events

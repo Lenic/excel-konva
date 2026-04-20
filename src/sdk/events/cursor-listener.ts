@@ -91,7 +91,7 @@ export class CursorListener extends BaseListener<TMouseMoveChangePatch> implemen
       ),
     ).pipe(startWith(false), distinctUntilChanged());
 
-    const mousePosition$ = this.events.mouseMove$.pipe(
+    const mousePosition$ = this.events.pointermove$.pipe(
       auditTime(16, animationFrameScheduler),
       map(() => this.stage.getPointerPosition()),
       mergeWith(fromEvent(this.stage.container(), 'mouseleave').pipe(map(() => null))),
